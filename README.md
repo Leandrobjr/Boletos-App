@@ -1,10 +1,10 @@
-# Sistema de Gestão de Boletos - BXC
+# Sistema de Gestão de Boletos - BoletoXCrypto
 
 ## Visão Geral
 
 Este projeto implementa um sistema de gestão de boletos com integração de carteiras de criptomoedas, permitindo o pagamento de boletos com travamento de valores em USDT. O sistema possui interfaces para compradores, vendedores e gestores administrativos.
 
-> **IMPORTANTE**: Este repositório contém o protótipo funcional desenvolvido para validação de conceito e interface. A implementação final utilizará componentes do shadcn UI e integração real com carteiras via wagmi/viem.
+> **IMPORTANTE**: Este repositório contém o protótipo funcional desenvolvido para validação de conceito e interface. A implementação está sendo aprimorada com componentes personalizados e seguirá a integração real com carteiras via wagmi/viem.
 
 ## Funcionalidades Principais
 
@@ -29,10 +29,12 @@ Este projeto implementa um sistema de gestão de boletos com integração de car
 ## Tecnologias Utilizadas
 
 - **Frontend**: React com Vite
-- **Estilização**: Tailwind CSS
+- **Estilização**: Tailwind CSS + CSS personalizado
 - **Roteamento**: React Router
 - **Ícones**: React Icons
 - **Integração de Carteiras**: Simulação de WalletConnect/MetaMask
+- **Fonte Bitcoin**: Fonte personalizada para elementos de destaque
+- **Sistema de Design**: Biblioteca de componentes UI personalizada
 
 ## Estrutura do Projeto
 
@@ -42,15 +44,72 @@ src/
 │   ├── Layout.jsx    # Layout principal com navegação
 │   ├── WalletConnector.jsx # Componente de conexão de carteira
 │   ├── LivroOrdens.jsx # Componente do livro de ordens
-│   └── HistoricoTransacoes.jsx # Componente de histórico de transações
+│   ├── HistoricoTransacoes.jsx # Componente de histórico de transações
+│   └── ui/           # Componentes de interface do usuário
+│       ├── Button.jsx  # Componente de botão reutilizável
+│       └── ButtonShowcase.jsx # Demonstração dos botões
 ├── pages/            # Páginas da aplicação
 │   ├── LoginPage.jsx
 │   ├── CadastroPage.jsx
 │   ├── CompradorPage.jsx
 │   ├── VendedorPage.jsx
-│   └── DashboardGestaoPage.jsx
+│   ├── DashboardGestaoPage.jsx
+│   └── UIShowcasePage.jsx # Página de demonstração dos componentes UI
+├── styles/           # Arquivos de estilo
+│   ├── colors.js     # Paleta de cores do projeto
+│   └── bitcoin-font.css # Configuração da fonte Bitcoin
+├── fonts/            # Arquivos de fonte
+│   ├── bitcoin.woff  # Fonte Bitcoin formato WOFF
+│   └── bitcoin.woff2 # Fonte Bitcoin formato WOFF2
 └── App.jsx          # Configuração de rotas
 ```
+
+## Identidade Visual
+
+O projeto possui um guia completo de identidade visual documentado no arquivo [IDENTIDADE-VISUAL.md](./IDENTIDADE-VISUAL.md). Este guia inclui:
+
+- **Paleta de Cores**: Escalas completas para verde, laranja Bitcoin e cinzas neutros
+- **Tipografia**: Hierarquia de texto e uso da fonte Bitcoin
+- **Componentes**: Guia de estilo para botões, cards, tabelas e formulários
+- **Espaçamento e Grid**: Sistema de espaçamento consistente
+- **Responsividade**: Breakpoints e adaptações para diferentes dispositivos
+
+A implementação da identidade visual pode ser visualizada na página de demonstração UI acessível em `/ui` na aplicação.
+
+## Componentes UI
+
+### Button
+
+O componente `Button` é um componente reutilizável que suporta várias variantes, tamanhos e estados.
+
+```jsx
+import Button from '../components/ui/Button';
+import { FaPlus } from 'react-icons/fa';
+
+// Uso básico
+<Button variant="primary">Botão Primário</Button>
+
+// Com ícone
+<Button variant="secondary" leftIcon={<FaPlus />}>Adicionar</Button>
+
+// Tamanhos diferentes
+<Button variant="bitcoin" size="sm">Pequeno</Button>
+<Button variant="bitcoin" size="lg">Grande</Button>
+
+// Largura total
+<Button variant="primary" fullWidth>Botão de largura completa</Button>
+
+// Desabilitado
+<Button variant="danger" disabled>Botão Desabilitado</Button>
+```
+
+### Página de Demonstração UI
+
+A página de demonstração UI (`/ui`) exibe todos os componentes disponíveis e a paleta de cores do projeto. É uma referência útil para desenvolvedores que trabalham no projeto.
+
+## Resumo das Melhorias
+
+Um resumo detalhado das melhorias implementadas está disponível no arquivo [RESUMO-MELHORIAS.md](./RESUMO-MELHORIAS.md).
 
 ## Sobre o Protótipo
 
