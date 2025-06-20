@@ -1,6 +1,16 @@
+/* Definição da fonte Bitcoin */
+@font-face {
+  font-family: 'Bitcoin';
+  src: url('../fonts/bitcoin.woff2') format('woff2'),
+       url('../fonts/bitcoin.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Estilização para a fonte Bitcoin */
 .bitcoin-font {
-  font-family: 'Inter', sans-serif;
+  font-family: 'Bitcoin', 'Inter', sans-serif;
   font-weight: bold;
   letter-spacing: -0.5px;
   color: #f7931a; /* Cor padrão do Bitcoin */
