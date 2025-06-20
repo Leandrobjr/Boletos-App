@@ -61,6 +61,18 @@ function Layout() {
             >
               Dashboard Gestão
             </NavLink>
+            <NavLink 
+              to="/ui" 
+              className="py-2 px-1"
+              style={({ isActive }) => ({
+                fontWeight: isActive ? 'bold' : 'normal',
+                borderBottom: isActive ? `2px solid ${colors.white}` : 'none',
+                color: colors.white,
+                transition: 'all 0.2s ease-in-out'
+              })}
+            >
+              UI Kit
+            </NavLink>
           </nav>
           
           {/* Perfil e botão de menu mobile */}
@@ -143,6 +155,20 @@ function Layout() {
                 onClick={() => setIsMobileMenuOpen(false)}
               >
                 Dashboard Gestão
+              </NavLink>
+              <NavLink 
+                to="/ui" 
+                className="py-2"
+                style={({ isActive }) => ({
+                  fontWeight: isActive ? 'bold' : 'normal',
+                  borderLeft: isActive ? `4px solid ${colors.white}` : 'none',
+                  paddingLeft: isActive ? '8px' : '12px',
+                  color: colors.white,
+                  transition: 'all 0.2s ease-in-out'
+                })}
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                UI Kit
               </NavLink>
             </nav>
           </div>

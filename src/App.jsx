@@ -10,6 +10,7 @@ import CadastroPage from './pages/CadastroPage';
 import VendedorPage from './pages/VendedorPage';
 import CompradorPage from './pages/CompradorPage';
 import DashboardGestaoPage from './pages/DashboardGestaoPage';
+import UIShowcasePage from './pages/UIShowcasePage';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -35,6 +36,7 @@ function App() {
           <Route path="vendedor" element={<VendedorPage />} />
           <Route path="comprador" element={<CompradorPage />} />
           <Route path="gestao" element={<DashboardGestaoPage />} />
+          <Route path="ui" element={<UIShowcasePage />} />
         </Route>
       </Routes>
     </Router>
