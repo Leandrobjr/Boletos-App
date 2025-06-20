@@ -1,0 +1,13 @@
+/* Estilização para a fonte Bitcoin */
+.bitcoin-font {
+  font-family: 'Inter', sans-serif;
+  font-weight: bold;
+  letter-spacing: -0.5px;
+  color: #f7931a; /* Cor padrão do Bitcoin */
+  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+}
+
+/* Estilização específica para o BoletoXCrypto */
+.bitcoin-font::first-letter {
+  font-size: 1.2em;
+}
