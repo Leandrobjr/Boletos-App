@@ -31,8 +31,7 @@ module.exports = {
         info: "#2196F3",          // azul para travado/informativo
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        bitcoin: ['Bitcoin', 'sans-serif']
+        sans: ['Inter', 'system-ui', 'sans-serif']
       },
     },
   },

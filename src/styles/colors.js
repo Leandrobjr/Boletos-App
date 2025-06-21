@@ -1,8 +1,20 @@
 // Paleta de cores do BoletoXCrypto
 export const colors = {
-  // Cores principais da marca
-  primary: '#00A86B',         // verde esmeralda (cor principal)
-  secondary: '#F7931A',       // laranja bitcoin (cor de destaque)
+  // Cores principais da marca com variações
+  primary: {
+    main: '#00A86B',         // verde esmeralda (cor principal)
+    light: '#7FDCB6',        // verde claro
+    lighter: '#D0F2E6',      // verde muito claro
+    dark: '#007C4F',         // verde escuro
+    darker: '#005A3A',       // verde muito escuro
+  },
+  secondary: {
+    main: '#F7931A',         // laranja bitcoin (cor de destaque)
+    light: '#FFBB66',        // laranja claro
+    lighter: '#FFE8CC',      // laranja muito claro
+    dark: '#E58108',         // laranja escuro
+    darker: '#B36500',       // laranja muito escuro
+  },
   
   // Verdes - escala completa
   green: {

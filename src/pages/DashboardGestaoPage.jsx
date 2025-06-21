@@ -1,5 +1,16 @@
 import { useState } from 'react';
-import { FaSearch, FaFileInvoiceDollar, FaFilter, FaDownload, FaImage, FaChartBar, FaExchangeAlt, FaUsers, FaUserCheck, FaIdCard } from 'react-icons/fa';
+import { 
+  FaSearch, 
+  FaFileInvoiceDollar, 
+  FaFilter, 
+  FaDownload, 
+  FaImage, 
+  FaChartBar, 
+  FaExchangeAlt, 
+  FaUsers, 
+  FaUserCheck, 
+  FaIdCard 
+} from 'react-icons/fa';
 
 function DashboardGestaoPage() {
   // Estado para controle de abas
@@ -82,6 +93,8 @@ function DashboardGestaoPage() {
       status: 'Ativo'
     }
   ]);
+  
+  // As estatísticas são calculadas dinamicamente abaixo com base nos dados dos boletos
   
   // Dados simulados de boletos para o dashboard de gestão
   const [boletos, setBoletos] = useState([
@@ -265,58 +278,58 @@ function DashboardGestaoPage() {
         <div>
           {/* Cards de estatísticas */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="card bg-blue-50 border-l-4 border-primary">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-primary text-white mr-4">
-              <FaFileInvoiceDollar className="text-xl" />
+            <div className="card bg-blue-50 border-l-4 border-primary">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-primary text-white mr-4">
+                  <FaFileInvoiceDollar className="text-xl" />
+                </div>
+                <div>
+                  <div className="text-sm text-gray-500">Total de Boletos</div>
+                  <div className="text-2xl font-bold">{totalBoletos}</div>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Total de Boletos</p>
-              <p className="text-xl font-bold">{totalBoletos}</p>
+            
+            <div className="card bg-green-50 border-l-4 border-green-500">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-green-500 text-white mr-4">
+                  <FaChartBar className="text-xl" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Boletos Pagos</p>
+                  <p className="text-xl font-bold">{totalPagos}</p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        
-        <div className="card bg-green-50 border-l-4 border-green-500">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-green-500 text-white mr-4">
-              <FaChartBar className="text-xl" />
+            
+            <div className="card bg-yellow-50 border-l-4 border-yellow-500">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-yellow-500 text-white mr-4">
+                  <FaExchangeAlt className="text-xl" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Boletos Travados</p>
+                  <p className="text-xl font-bold">{totalTravados}</p>
+                </div>
+              </div>
             </div>
-            <div>
-              <p className="text-sm text-gray-500">Boletos Pagos</p>
-              <p className="text-xl font-bold">{totalPagos}</p>
+            
+            <div className="card bg-purple-50 border-l-4 border-purple-500">
+              <div className="flex items-center">
+                <div className="p-3 rounded-full bg-purple-500 text-white mr-4">
+                  <FaFileInvoiceDollar className="text-xl" />
+                </div>
+                <div>
+                  <p className="text-sm text-gray-500">Valor Total</p>
+                  <p className="text-xl font-bold">
+                    {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                  <p className="text-xs text-gray-500">
+                    Taxas: {valorTaxas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-        </div>
-        
-        <div className="card bg-yellow-50 border-l-4 border-yellow-500">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-yellow-500 text-white mr-4">
-              <FaExchangeAlt className="text-xl" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Boletos Travados</p>
-              <p className="text-xl font-bold">{totalTravados}</p>
-            </div>
-          </div>
-        </div>
-        
-        <div className="card bg-purple-50 border-l-4 border-purple-500">
-          <div className="flex items-center">
-            <div className="p-3 rounded-full bg-purple-500 text-white mr-4">
-              <FaFileInvoiceDollar className="text-xl" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Valor Total</p>
-              <p className="text-xl font-bold">
-                {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </p>
-              <p className="text-xs text-gray-500">
-                Taxas: {valorTaxas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-              </p>
-            </div>
-          </div>
-        </div>
       </div>
       
       {/* Filtros e pesquisa */}

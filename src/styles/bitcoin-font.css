@@ -1,20 +1,22 @@
-/* Definição da fonte Bitcoin */
-@font-face {
-  font-family: 'Bitcoin';
-  src: url('../fonts/bitcoin.woff2') format('woff2'),
-       url('../fonts/bitcoin.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
+/* 
+ * Arquivo mantido para compatibilidade
+ * As fontes Bitcoin foram completamente removidas
+ * Qualquer referência a estas fontes foi substituída por fontes do sistema
+ */
+
+/* Substituição da fonte Bitcoin por fontes do sistema */
+.bitcoin-font {
+  font-family: sans-serif;
 }
 
-/* Estilização para a fonte Bitcoin */
-.bitcoin-font {
-  font-family: 'Bitcoin', 'Inter', sans-serif;
-  font-weight: bold;
-  letter-spacing: -0.5px;
-  color: #f7931a; /* Cor padrão do Bitcoin */
-  text-shadow: 1px 1px 1px rgba(0, 0, 0, 0.1);
+/* Classes de ícones substituídas por fontes do sistema */
+.btc-icon::before {
+  font-family: sans-serif;
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  -webkit-font-smoothing: antialiased;
 }
 
 /* Estilização específica para o BoletoXCrypto */

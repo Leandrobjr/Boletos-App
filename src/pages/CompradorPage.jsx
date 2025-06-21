@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { FaPlus, FaTrash, FaWallet, FaFileInvoiceDollar, FaList, FaCheck, FaTimes, FaImage, FaUpload, FaLock, FaBook, FaHistory } from 'react-icons/fa';
-import LivroOrdens from '../components/LivroOrdens';
-import HistoricoTransacoes from '../components/HistoricoTransacoes';
+import { FaTrash, FaWallet, FaCheck, FaTimes, FaLock, FaImage, FaUpload, FaBitcoin } from 'react-icons/fa';
+import Button from '../components/ui/Button';
 
 function CompradorPage() {
-  const [activeTab, setActiveTab] = useState('cadastrar');
   const [formData, setFormData] = useState({
     beneficiario: '',
     cpfCnpj: '',
@@ -47,55 +45,69 @@ function CompradorPage() {
       valor: 100.00,
       valorTravado: 20.00,
       taxaServico: 1.00,
-      status: 'Travado para Pagamento',
+      status: 'Pendente',
       comprovante: null
     },
     {
       id: 3,
       numeroBoleto: '45678912',
-      codigoBarras: '34191.79001 01043.510047 91020.150008 7 89130000268500',
-      beneficiario: 'Serviços Gerais Ltda',
+      codigoBarras: '34191.79001 01043.510047 91020.150008 5 89840000010000',
+      beneficiario: 'Serviços Tech Ltda',
       cpfCnpj: '45.678.912/0001-34',
-      dataVencimento: '2025-08-05',
+      dataVencimento: '2025-06-25',
       dataPagamento: null,
-      valor: 268.50,
-      valorTravado: null,
-      taxaServico: null,
-      status: 'Pendente',
+      valor: 250.00,
+      valorTravado: 0,
+      taxaServico: 0,
+      status: 'Cancelado',
       comprovante: null
     }
   ]);
   
+  // Função para lidar com mudanças no formulário
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    const newValue = type === 'checkbox' ? checked : value;
+    
+    setFormData(prev => {
+      const updatedData = { ...prev, [name]: newValue };
+      
+      // Atualizar valor em USDT quando o valor em R$ mudar
+      if (name === 'valor' && value) {
+        updatedData.valorUsdt = (parseFloat(value) / taxaConversao).toFixed(2);
+      }
+      
+      return updatedData;
+    });
   };
   
+  // Função para lidar com o envio do formulário
   const handleSubmit = (e) => {
     e.preventDefault();
+    alert('Carteira conectada e boleto travado para pagamento!');
     
-    // Adicionar novo boleto à lista
+    // Aqui seria a integração com a carteira e o backend
+    console.log('Dados do formulário:', formData);
+    
+    // Adicionar o novo boleto à lista (simulação)
     const novoBoleto = {
       id: boletos.length + 1,
       numeroBoleto: Math.floor(10000000 + Math.random() * 90000000).toString(),
       codigoBarras: formData.codigoBarras,
-      beneficiario: formData.beneficiario,
+      beneficiario: formData.beneficiario || 'Beneficiário não informado',
       cpfCnpj: formData.cpfCnpj,
       dataVencimento: formData.dataVencimento,
       dataPagamento: null,
       valor: parseFloat(formData.valor),
-      valorTravado: formData.travarParaPagamento ? parseFloat(formData.valor) * 0.2 : null, // 20% do valor como exemplo
-      taxaServico: formData.travarParaPagamento ? parseFloat(formData.valor) * 0.01 : null, // 1% do valor como exemplo
-      status: formData.travarParaPagamento ? 'Travado para Pagamento' : 'Pendente',
+      valorTravado: parseFloat(formData.valorUsdt),
+      taxaServico: parseFloat(formData.valor) * taxaComissao,
+      status: 'Pendente',
       comprovante: null
     };
     
-    setBoletos([...boletos, novoBoleto]);
+    setBoletos([novoBoleto, ...boletos]);
     
-    // Limpar formulário
+    // Limpar o formulário
     setFormData({
       beneficiario: '',
       cpfCnpj: '',
@@ -105,374 +117,277 @@ function CompradorPage() {
       dataVencimento: '',
       travarParaPagamento: true
     });
-    
-    // Mudar para a aba de listagem
-    setActiveTab('listar');
   };
   
-  const handleDelete = (id) => {
-    setBoletos(boletos.filter(boleto => boleto.id !== id));
+  // Função para cancelar um boleto
+  const handleCancelarBoleto = (id) => {
+    if (window.confirm('Tem certeza que deseja cancelar este boleto?')) {
+      setBoletos(boletos.map(boleto => 
+        boleto.id === id ? { ...boleto, status: 'Cancelado' } : boleto
+      ));
+    }
   };
   
+  // Função para fazer upload de comprovante
   const handleUploadComprovante = (id) => {
-    // Simulação de upload de comprovante
+    // Simulação de upload
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
     fileInput.onchange = (e) => {
-      if (e.target.files.length > 0) {
-        const file = e.target.files[0];
-        const reader = new FileReader();
-        reader.onload = () => {
-          setBoletos(boletos.map(boleto => 
-            boleto.id === id 
-              ? { ...boleto, comprovante: reader.result, status: 'Pago', dataPagamento: new Date().toISOString().split('T')[0] } 
-              : boleto
-          ));
-        };
-        reader.readAsDataURL(file);
+      const file = e.target.files[0];
+      if (file) {
+        // Simulando URL do comprovante
+        const comprovante = URL.createObjectURL(file);
+        
+        setBoletos(boletos.map(boleto => 
+          boleto.id === id ? { ...boleto, comprovante, status: 'Pago' } : boleto
+        ));
       }
     };
     fileInput.click();
   };
-
+  
+  // Função para visualizar comprovante
+  const handleVerComprovante = (url) => {
+    // Se a URL for externa (placeholder), usar uma imagem local em vez disso
+    if (url.includes('placeholder.com')) {
+      alert('Visualizando comprovante local');
+    } else {
+      window.open(url, '_blank');
+    }
+  };
+  
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-greenDark">Comprar USDT</h1>
-      
-      {/* Abas */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'livroOrdens'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            onClick={() => setActiveTab('livroOrdens')}
-          >
-            <FaBook className="inline mr-2" /> Livro de Ordens
-          </button>
-          <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'cadastrar'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            onClick={() => setActiveTab('cadastrar')}
-          >
-            <FaLock className="inline mr-2" /> Travar Boleto
-          </button>
-          <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'listar'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            onClick={() => setActiveTab('listar')}
-          >
-            <FaList className="inline mr-2" /> Meus Boletos
-          </button>
-          <button
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${
-              activeTab === 'historico'
-                ? 'border-primary text-primary'
-                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-            }`}
-            onClick={() => setActiveTab('historico')}
-          >
-            <FaHistory className="inline mr-2" /> Histórico de Transações
-          </button>
-        </nav>
-      </div>
-      
-      {/* Conteúdo da aba */}
-      <div className="mt-6">
-        {activeTab === 'historico' ? (
-          <HistoricoTransacoes tipoUsuario="comprador" />
-        ) : activeTab === 'livroOrdens' ? (
-          <LivroOrdens />
-        ) : activeTab === 'cadastrar' ? (
-          <div className="card">
-            <h2 className="text-xl font-semibold text-greenDark mb-4">Travar Boleto</h2>
-            <p className="text-grayMedium mb-6">Confira os dados do boleto selecionado abaixo e conecte sua carteira para TRAVAR O BOLETO para pagamento.</p>
+    <div className="w-full py-6 px-4 bg-gray-50">
+      {/* Conteúdo principal */}
+      <div className="flex flex-col md:flex-row gap-6 max-w-[1200px] mx-auto">
+          {/* Coluna 1: Seção de Cadastro de Boleto */}
+          <div className="w-full md:w-2/5 bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">Cadastrar Novo Boleto</h2>
+          </div>
+          <div className="p-6">
+            <p className="text-gray-600 mb-6">Confira os dados do boleto selecionado abaixo e conecte sua carteira para TRAVAR O BOLETO para pagamento.</p>
             
-            <form onSubmit={handleSubmit} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Beneficiário - Somente leitura */}
-                <div>
-                  <label htmlFor="beneficiario" className="block text-sm font-medium text-gray-700 mb-1">
-                    Beneficiário
-                  </label>
+                {/* Beneficiário */}
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="beneficiario">Beneficiário</label>
                   <input
+                    type="text"
                     id="beneficiario"
                     name="beneficiario"
-                    type="text"
                     value={formData.beneficiario}
                     onChange={handleChange}
-                    className="form-input bg-grayLight"
-                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="Nome do beneficiário"
                   />
                 </div>
                 
                 {/* CPF/CNPJ */}
-                <div>
-                  <label htmlFor="cpfCnpj" className="block text-sm font-medium text-gray-700 mb-1">
-                    CPF/CNPJ do Beneficiário
-                  </label>
+                <div className="mb-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="cpfCnpj">CPF/CNPJ</label>
                   <input
+                    type="text"
                     id="cpfCnpj"
                     name="cpfCnpj"
-                    type="text"
                     value={formData.cpfCnpj}
                     onChange={handleChange}
-                    className="form-input bg-grayLight"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
                     placeholder="000.000.000-00 ou 00.000.000/0001-00"
-                    readOnly
                   />
                 </div>
                 
                 {/* Código de Barras */}
-                <div className="md:col-span-2">
-                  <label htmlFor="codigoBarras" className="block text-sm font-medium text-gray-700 mb-1">
-                    Código de Barras
-                  </label>
+                <div className="mb-4 md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="codigoBarras">Código de Barras</label>
                   <input
+                    type="text"
                     id="codigoBarras"
                     name="codigoBarras"
-                    type="text"
                     value={formData.codigoBarras}
                     onChange={handleChange}
-                    className="form-input bg-grayLight"
-                    readOnly
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    placeholder="00000.00000 00000.000000 00000.000000 0 00000000000000"
                   />
                 </div>
                 
-                {/* Valor em Reais */}
-                <div>
-                  <label htmlFor="valor" className="block text-sm font-medium text-gray-700 mb-1">
-                    Valor (R$)
-                  </label>
-                  <input
-                    id="valor"
-                    name="valor"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.valor}
-                    onChange={handleChange}
-                    className="form-input bg-grayLight"
-                    readOnly
-                  />
-                </div>
-                
-                {/* Valor em USDT */}
-                <div>
-                  <label htmlFor="valorUsdt" className="block text-sm font-medium text-greenDark mb-1 font-semibold">
-                    Valor em USDT
-                  </label>
-                  <div className="relative">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="valor">Valor (R$)</label>
                     <input
-                      id="valorUsdt"
-                      name="valorUsdt"
                       type="number"
+                      id="valor"
+                      name="valor"
+                      value={formData.valor}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                      placeholder="0,00"
                       step="0.01"
-                      min="0"
-                      value={formData.valor ? (parseFloat(formData.valor) / taxaConversao).toFixed(2) : ''}
-                      className="form-input bg-greenLight border-greenPrimary"
-                      readOnly
                     />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-greenDark">
-                      USDT
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="valorUsdt">Valor (USDT)</label>
+                    <div className="relative">
+                      <input
+                        type="number"
+                        id="valorUsdt"
+                        name="valorUsdt"
+                        value={formData.valorUsdt}
+                        onChange={handleChange}
+                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                        placeholder="0,00"
+                        step="0.01"
+                        readOnly
+                      />
+                      <FaBitcoin className="absolute left-2.5 top-2.5 text-primary" size={18} />
                     </div>
+                  </div>
+                  
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="dataVencimento">Data de Vencimento</label>
+                    <input
+                      type="date"
+                      id="dataVencimento"
+                      name="dataVencimento"
+                      value={formData.dataVencimento}
+                      onChange={handleChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
+                    />
                   </div>
                 </div>
                 
-                {/* Valor Final (após comissão) */}
-                <div>
-                  <label htmlFor="valorFinal" className="block text-sm font-medium text-greenDark mb-1 font-semibold">
-                    Valor Final (após 3% de comissão)
-                  </label>
-                  <div className="relative">
-                    <input
-                      id="valorFinal"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      value={formData.valor ? ((parseFloat(formData.valor) / taxaConversao) * (1 - taxaComissao)).toFixed(2) : ''}
-                      className="form-input bg-greenLight border-greenPrimary"
-                      readOnly
-                    />
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none text-greenDark">
-                      USDT
-                    </div>
-                  </div>
-                </div>
-                
-                {/* Data de Vencimento */}
-                <div>
-                  <label htmlFor="dataVencimento" className="block text-sm font-medium text-gray-700 mb-1">
-                    Data de Vencimento
-                  </label>
-                  <input
-                    id="dataVencimento"
-                    name="dataVencimento"
-                    type="date"
-                    value={formData.dataVencimento}
-                    onChange={handleChange}
-                    className="form-input bg-grayLight"
-                    readOnly
-                  />
-                </div>
-                
-                {/* Opção de travar para pagamento */}
-                <div className="md:col-span-2">
+                <div className="mb-4 md:col-span-2">
                   <div className="flex items-center">
                     <input
+                      type="checkbox"
                       id="travarParaPagamento"
                       name="travarParaPagamento"
-                      type="checkbox"
                       checked={formData.travarParaPagamento}
                       onChange={handleChange}
                       className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
                     />
-                    <label htmlFor="travarParaPagamento" className="ml-2 block text-sm text-gray-700">
-                      <FaLock className="inline mr-1 text-primary" /> Travar este boleto para pagamento imediato
+                    <label className="ml-2 block text-sm text-gray-700" htmlFor="travarParaPagamento">
+                      Travar boleto para pagamento imediato
                     </label>
                   </div>
                   
                   {formData.travarParaPagamento && (
-                    <div className="mt-2 p-3 bg-blue-50 rounded-md text-sm text-blue-700">
-                      <p className="font-medium">Informação sobre travamento:</p>
-                      <p>Ao travar o boleto, você reserva o valor em USDT para garantir o pagamento. A taxa de serviço é de 1% do valor do boleto.</p>
+                    <div className="mt-3 p-4 bg-primary-50 border border-primary-200 rounded-lg text-sm">
+                      <p className="font-medium text-primary-800 mb-1">Informação sobre travamento:</p>
+                      <p className="text-gray-700">Ao travar o boleto, você reserva o valor em USDT para garantir o pagamento. A taxa de serviço é de {taxaComissao * 100}% do valor do boleto.</p>
                     </div>
                   )}
                 </div>
               </div>
               
-              <div className="flex justify-end mt-6">
-                <button
+              <div className="flex justify-between items-center pt-5 border-t border-gray-200 mt-8">
+                <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
+                  <p className="text-sm font-medium text-gray-800">Taxa de serviço: <span className="text-primary-700 font-bold">{taxaComissao * 100}%</span></p>
+                  {formData.valor && (
+                    <p className="text-sm text-gray-700 mt-1">Taxa estimada: <span className="font-medium text-primary-700">R$ {(parseFloat(formData.valor) * taxaComissao).toFixed(2)}</span></p>
+                  )}
+                </div>
+                <Button
                   type="submit"
-                  className="btn-primary flex items-center"
+                  variant="primary"
+                  size="md"
+                  leftIcon={<FaWallet />}
                 >
-                  <FaWallet className="inline mr-2" /> Conectar Carteira e Travar Boleto
-                </button>
+                  Conectar Carteira e Travar Boleto
+                </Button>
               </div>
             </form>
           </div>
-        ) : (
-          <div className="card">
-            <h2 className="text-xl font-semibold text-gray-800 mb-6">Meus Boletos</h2>
-            
-            <div className="table-container">
-              <table className="table">
-                <thead className="table-header">
+        </div>
+        
+        {/* Coluna 2: Seção de Listagem de Boletos */}
+        <div className="w-full md:w-3/5 bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
+          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
+            <h2 className="text-xl font-semibold text-gray-800">Meus Boletos</h2>
+          </div>
+          <div className="p-6">
+            <div className="overflow-hidden">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
                   <tr>
-                    <th className="table-header-cell">Nº Boleto</th>
-                    <th className="table-header-cell">Detalhes</th>
-                    <th className="table-header-cell">Datas</th>
-                    <th className="table-header-cell">Valores</th>
-                    <th className="table-header-cell">Status</th>
-                    <th className="table-header-cell">Ações</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº Boleto</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Beneficiário</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
                   </tr>
                 </thead>
-                <tbody className="table-body">
-                  {boletos.map((boleto) => (
-                    <tr key={boleto.id} className="table-row">
-                      <td className="table-cell font-medium">
-                        {boleto.numeroBoleto}
-                        <div className="text-xs text-gray-500 mt-1">
-                          Cód: {boleto.codigoBarras.substring(0, 10)}...
-                        </div>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {boletos.map((boleto, index) => (
+                    <tr key={boleto.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{boleto.numeroBoleto}</td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div>{boleto.beneficiario}</div>
+                        <div className="text-xs text-gray-400">{boleto.cpfCnpj}</div>
                       </td>
-                      <td className="table-cell">
-                        <div className="font-medium">{boleto.beneficiario}</div>
-                        <div className="text-xs text-gray-500">{boleto.cpfCnpj}</div>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
                       </td>
-                      <td className="table-cell">
-                        <div>
-                          <span className="text-xs font-medium text-gray-500">Vencimento:</span>{' '}
-                          {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
-                        </div>
-                        {boleto.dataPagamento && (
-                          <div>
-                            <span className="text-xs font-medium text-gray-500">Pagamento:</span>{' '}
-                            {new Date(boleto.dataPagamento).toLocaleDateString('pt-BR')}
-                          </div>
-                        )}
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <div>R$ {boleto.valor.toFixed(2)}</div>
+                        <div className="text-xs text-gray-400">USDT {boleto.valorTravado.toFixed(2)}</div>
                       </td>
-                      <td className="table-cell">
-                        <div>
-                          <span className="text-xs font-medium text-gray-500">Valor:</span>{' '}
-                          {boleto.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                        </div>
-                        {boleto.valorTravado && (
-                          <div>
-                            <span className="text-xs font-medium text-gray-500">Travado (USDT):</span>{' '}
-                            {boleto.valorTravado.toFixed(2)}
-                          </div>
-                        )}
-                        {boleto.taxaServico && (
-                          <div>
-                            <span className="text-xs font-medium text-gray-500">Taxa:</span>{' '}
-                            {boleto.taxaServico.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                          </div>
-                        )}
-                      </td>
-                      <td className="table-cell">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          boleto.status === 'Pago' 
-                            ? 'bg-green-100 text-green-800' 
-                            : boleto.status === 'Travado para Pagamento'
-                            ? 'bg-blue-100 text-blue-800'
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {boleto.status === 'Pago' ? <FaCheck className="mr-1" /> : null}
-                          {boleto.status === 'Travado para Pagamento' ? <FaLock className="mr-1" /> : null}
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={
+                          `px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
+                            boleto.status === 'Pago' ? 'bg-green-100 text-green-800' : 
+                            boleto.status === 'Pendente' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
+                          }`
+                        }>
+                          {boleto.status === 'Pago' ? <FaCheck className="mr-1" size={10} /> : 
+                           boleto.status === 'Pendente' ? <FaLock className="mr-1" size={10} /> : 
+                           <FaTimes className="mr-1" size={10} />}
                           {boleto.status}
                         </span>
                       </td>
-                      <td className="table-cell">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                         <div className="flex space-x-2">
                           {boleto.status === 'Travado para Pagamento' && (
-                            <button
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              leftIcon={<FaUpload />}
                               onClick={() => handleUploadComprovante(boleto.id)}
-                              className="text-blue-600 hover:text-blue-900"
-                              title="Enviar Comprovante"
                             >
-                              <FaUpload />
-                            </button>
+                              Comprovante
+                            </Button>
                           )}
                           
                           {boleto.comprovante && (
-                            <button
-                              onClick={() => window.open(boleto.comprovante, '_blank')}
-                              className="text-green-600 hover:text-green-900"
-                              title="Ver Comprovante"
+                            <Button
+                              variant="secondary"
+                              size="sm"
+                              leftIcon={<FaImage />}
+                              onClick={() => handleVerComprovante(boleto.comprovante)}
                             >
-                              <FaImage />
-                            </button>
+                              Ver
+                            </Button>
                           )}
                           
-                          <button
-                            onClick={() => handleDelete(boleto.id)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Excluir"
-                          >
-                            <FaTrash />
-                          </button>
+                          {boleto.status !== 'Cancelado' && boleto.status !== 'Pago' && (
+                            <Button
+                              variant="danger"
+                              size="sm"
+                              leftIcon={<FaTrash />}
+                              onClick={() => handleCancelarBoleto(boleto.id)}
+                            >
+                              Cancelar
+                            </Button>
+                          )}
                         </div>
                       </td>
                     </tr>
                   ))}
-                  
-                  {boletos.length === 0 && (
-                    <tr>
-                      <td colSpan="6" className="px-6 py-4 text-center text-gray-500">
-                        Nenhum boleto cadastrado
-                      </td>
-                    </tr>
-                  )}
                 </tbody>
               </table>
             </div>
@@ -482,18 +397,17 @@ function CompradorPage() {
               <div className="mt-8">
                 <h3 className="text-lg font-semibold text-gray-800 mb-4">Comprovantes de Pagamento</h3>
                 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {boletos.filter(boleto => boleto.comprovante).map(boleto => (
-                    <div key={`comprovante-${boleto.id}`} className="border border-gray-200 rounded-lg overflow-hidden">
-                      <div className="p-2 bg-gray-50 border-b border-gray-200">
-                        <p className="text-sm font-medium">Boleto #{boleto.numeroBoleto}</p>
+                    <div key={`comprovante-${boleto.id}`} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
+                      <div className="p-3 bg-gray-50 border-b border-gray-200">
+                        <h4 className="font-medium text-sm">Boleto #{boleto.numeroBoleto}</h4>
+                        <p className="text-xs text-gray-500">Pago em: {boleto.dataPagamento ? new Date(boleto.dataPagamento).toLocaleDateString('pt-BR') : 'N/A'}</p>
                       </div>
-                      <div className="p-2">
-                        <img 
-                          src={boleto.comprovante} 
-                          alt={`Comprovante do boleto ${boleto.numeroBoleto}`} 
-                          className="w-full h-auto object-cover"
-                        />
+                      <div className="p-3">
+                        <div className="w-[300px] h-[400px] bg-gray-100 flex items-center justify-center border border-gray-200 rounded">
+                          <span className="text-gray-500 text-base">Comprovante de Pagamento</span>
+                        </div>
                       </div>
                     </div>
                   ))}
@@ -501,8 +415,8 @@ function CompradorPage() {
               </div>
             )}
           </div>
-        )}
-      </div>
+          </div>
+        </div>
     </div>
   );
 }

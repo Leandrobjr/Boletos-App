@@ -1,9 +1,19 @@
 import { Outlet, NavLink } from 'react-router-dom';
 import { useState } from 'react';
-import { FaUser, FaBars, FaTimes } from 'react-icons/fa';
+import { 
+  FaUser, 
+  FaBars, 
+  FaTimes, 
+  FaHome, 
+  FaFileInvoiceDollar, 
+  FaChartBar, 
+  FaWallet, 
+  FaBitcoin,
+  FaGithub,
+  FaTwitter,
+  FaLinkedin
+} from 'react-icons/fa';
 import WalletConnector from './WalletConnector';
-import { FaHome, FaFileInvoiceDollar, FaChartBar, FaWallet, FaBitcoin } from 'react-icons/fa';
-import '../styles/fonts.css';
 import { colors } from '../styles/colors';
 
 function Layout() {
@@ -14,13 +24,14 @@ function Layout() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: colors.gray[50] }}>
+    <div className="min-h-screen flex flex-col">
       {/* Cabeçalho */}
-      <header style={{ backgroundColor: colors.primary, color: colors.white, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
+      <header className="bxc-gradient-primary sticky top-0 z-50" style={{ color: colors.white, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">
           <div className="flex items-center space-x-2">
-            <FaBitcoin className="text-3xl" style={{ color: colors.secondary }} />
-            <h1 className="text-2xl font-bold bitcoin-font" style={{ color: colors.white }}>BoletoXCrypto</h1>
+            <h1 className="text-2xl font-bold" style={{ color: colors.white }}>
+              <span className="bitcoin-font" style={{ color: colors.secondary }}>B</span>oletoXCrypto
+            </h1>
           </div>
           
           {/* Menu para desktop */}
@@ -176,21 +187,49 @@ function Layout() {
       </header>
       
       {/* Conteúdo principal */}
-      <main className="container mx-auto px-4 py-8">
-        <Outlet />
+      <main className="flex-grow bg-gradient-to-br from-gray-50 to-gray-100">
+        <div className="bxc-page-container">
+          <Outlet />
+        </div>
       </main>
       
-      {/* Rodapé */}
-      <footer style={{ backgroundColor: colors.gray[900], color: colors.white, padding: '16px 0' }}>
-        <div className="container mx-auto px-4">
-          <div className="flex flex-col md:flex-row justify-between items-center">
-            <div className="flex items-center mb-4 md:mb-0">
-              <FaBitcoin style={{ color: colors.secondary, marginRight: '8px', fontSize: '1.5rem' }} />
-              <span className="bitcoin-font" style={{ color: colors.white }}>BoletoXCrypto</span>
+      {/* Rodapé compacto */}
+      <footer className="bg-[#00A86B] border-t border-[#007C4F] mt-auto">
+        <div className="container mx-auto px-4 py-3">
+          <div className="flex flex-wrap justify-between items-center text-sm">
+            <div className="w-full md:w-auto mb-2 md:mb-0">
+              <div className="flex items-center">
+                <h2 className="text-base font-bold text-white">
+                  <span style={{ color: colors.secondary }}>B</span>oletoXCrypto
+                </h2>
+                <span className="mx-2 text-gray-200">|</span>
+                <p className="text-gray-100 text-xs">A ponte entre boletos e cripto</p>
+              </div>
             </div>
-            <p style={{ color: colors.gray[400], fontSize: '0.875rem' }}>
-              &copy; {new Date().getFullYear()} Sistema de Gerenciamento de Boletos. Todos os direitos reservados.
-            </p>
+            
+            <div className="w-full md:w-auto flex flex-wrap justify-center md:justify-end">
+              <div className="flex space-x-4 mr-6">
+                <NavLink to="/comprador" className="text-gray-100 hover:text-white text-xs">Área do Comprador</NavLink>
+                <NavLink to="/vendedor" className="text-gray-100 hover:text-white text-xs">Área do Vendedor</NavLink>
+                <NavLink to="/gestao" className="text-gray-100 hover:text-white text-xs">Gestão</NavLink>
+              </div>
+              
+              <div className="flex space-x-3 items-center">
+                <a href="#" className="text-white hover:text-gray-200 transition-colors">
+                  <FaTwitter size={16} />
+                </a>
+                <a href="#" className="text-white hover:text-gray-200 transition-colors">
+                  <FaGithub size={16} />
+                </a>
+                <a href="#" className="text-white hover:text-gray-200 transition-colors">
+                  <FaLinkedin size={16} />
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div className="border-t border-green-600 mt-2 pt-2 text-center">
+            <p className="text-gray-100 text-xs">&copy; {new Date().getFullYear()} BoletoXCrypto. Todos os direitos reservados.</p>
           </div>
         </div>
       </footer>
