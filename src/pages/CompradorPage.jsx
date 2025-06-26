@@ -1,424 +1,606 @@
-import { useState } from 'react';
-import { FaTrash, FaWallet, FaCheck, FaTimes, FaLock, FaImage, FaUpload, FaBitcoin } from 'react-icons/fa';
-import Button from '../components/ui/Button';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
+import { 
+  FaTrash, FaWallet, FaCheck, FaShoppingCart, FaMoneyBillWave,
+  FaExclamationTriangle, FaInfoCircle, FaList, FaHistory, 
+  FaCreditCard, FaLock, FaArrowRight, FaUpload, FaClock, FaTimesCircle
+} from 'react-icons/fa';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
+import { Alert, AlertTitle, AlertDescription } from '../components/ui/alert';
 
-function CompradorPage() {
-  const [formData, setFormData] = useState({
-    beneficiario: '',
-    cpfCnpj: '',
-    codigoBarras: '',
-    valor: '',
-    valorUsdt: '',
-    dataVencimento: '',
-    travarParaPagamento: true
-  });
-  
-  // Taxa de conversão simulada (1 USDT = R$ 5,00)
+const CompradorPage = () => {
+  const [activeTab, setActiveTab] = useState('comprar');
+  const [selectedBoleto, setSelectedBoleto] = useState(null);
+  const [showModal, setShowModal] = useState(false);
+  const [etapaCompra, setEtapaCompra] = useState(0);
+  const [carteiraConectada, setCarteiraConectada] = useState(false);
+  const [enderecoCarteira, setEnderecoCarteira] = useState('');
+  const [tempoRestante, setTempoRestante] = useState(null);
+  const [comprovante, setComprovante] = useState(null);
+  const [alertInfo, setAlertInfo] = useState(null);
+
   const taxaConversao = 5.0;
-  // Taxa de comissão do serviço (3%)
-  const taxaComissao = 0.03;
-  
-  // Dados simulados de boletos
-  const [boletos, setBoletos] = useState([
+
+  const [boletosDisponiveis, setBoletosDisponiveis] = useState([
     {
       id: 1,
       numeroBoleto: '12345678',
       codigoBarras: '03399.63290 64000.000006 00125.201020 4 89150000017832',
-      beneficiario: 'Empresa ABC Ltda',
-      cpfCnpj: '12.345.678/0001-99',
       dataVencimento: '2025-07-15',
-      dataPagamento: '2025-06-10',
       valor: 178.32,
-      valorTravado: 35.66,
-      taxaServico: 1.78,
-      status: 'Pago',
-      comprovante: 'https://via.placeholder.com/300x400?text=Comprovante'
+      beneficiario: 'Empresa ABC Ltda',
+      cnpj: '12.345.678/0001-90',
+      status: 'Disponível'
     },
     {
       id: 2,
       numeroBoleto: '87654321',
       codigoBarras: '23791.22928 60005.762908 52000.063305 9 89840000010000',
-      beneficiario: 'Fornecedor XYZ S/A',
-      cpfCnpj: '98.765.432/0001-10',
       dataVencimento: '2025-06-30',
-      dataPagamento: null,
       valor: 100.00,
-      valorTravado: 20.00,
-      taxaServico: 1.00,
-      status: 'Pendente',
-      comprovante: null
+      beneficiario: 'Fornecedor XYZ S.A.',
+      cnpj: '98.765.432/0001-10',
+      status: 'Disponível'
     },
     {
       id: 3,
       numeroBoleto: '45678912',
       codigoBarras: '34191.79001 01043.510047 91020.150008 5 89840000010000',
-      beneficiario: 'Serviços Tech Ltda',
-      cpfCnpj: '45.678.912/0001-34',
       dataVencimento: '2025-06-25',
-      dataPagamento: null,
       valor: 250.00,
-      valorTravado: 0,
-      taxaServico: 0,
-      status: 'Cancelado',
-      comprovante: null
+      beneficiario: 'Serviços Tech Ltda',
+      cnpj: '45.678.912/0001-23',
+      status: 'Disponível'
     }
   ]);
-  
-  // Função para lidar com mudanças no formulário
-  const handleChange = (e) => {
-    const { name, value, type, checked } = e.target;
-    const newValue = type === 'checkbox' ? checked : value;
-    
-    setFormData(prev => {
-      const updatedData = { ...prev, [name]: newValue };
-      
-      // Atualizar valor em USDT quando o valor em R$ mudar
-      if (name === 'valor' && value) {
-        updatedData.valorUsdt = (parseFloat(value) / taxaConversao).toFixed(2);
-      }
-      
-      return updatedData;
-    });
+
+  const [meusBoletos, setMeusBoletos] = useState([]);
+
+  const handleSelecionarBoleto = (boleto) => {
+    setSelectedBoleto(boleto);
+    setEtapaCompra(1);
+    setShowModal(true);
   };
-  
-  // Função para lidar com o envio do formulário
-  const handleSubmit = (e) => {
+
+  const handleConectarCarteira = () => {
+    setAlertInfo({
+      type: 'default',
+      title: 'Conectando carteira...',
+      description: 'Aguarde enquanto conectamos sua carteira.'
+    });
+
+    setTimeout(() => {
+      const enderecoAleatorio = '0x' + Math.random().toString(16).substring(2, 14) + Math.random().toString(16).substring(2, 14);
+      setEnderecoCarteira(enderecoAleatorio);
+      setCarteiraConectada(true);
+      setEtapaCompra(2);
+
+      setAlertInfo({
+        type: 'success',
+        title: 'Carteira conectada com sucesso!',
+        description: `Endereço: ${enderecoAleatorio.substring(0, 6)}...${enderecoAleatorio.substring(enderecoAleatorio.length - 4)}`
+      });
+
+      setTimeout(() => setAlertInfo(null), 3000);
+    }, 1500);
+  };
+
+  const handleTravarBoleto = () => {
+    setAlertInfo({
+      type: 'default',
+      title: 'Travando boleto...',
+      description: 'Aguarde enquanto reservamos o boleto para você.'
+    });
+
+    setTimeout(() => {
+      setEtapaCompra(3);
+      setTempoRestante(3600);
+
+      setAlertInfo({
+        type: 'success',
+        title: 'Boleto reservado com sucesso!',
+        description: 'Você tem 60 minutos para efetuar o pagamento e enviar o Comprovante.'
+      });
+
+      setTimeout(() => setAlertInfo(null), 3000);
+
+      setBoletosDisponiveis(prevBoletos => 
+        prevBoletos.map(b => 
+          b.id === selectedBoleto.id ? { ...b, status: 'Reservado' } : b
+        )
+      );
+    }, 1500);
+  };
+
+  const handleCancelarCompra = () => {
+    setAlertInfo({
+      type: 'default',
+      title: 'Cancelando compra...',
+      description: 'Aguarde enquanto cancelamos sua compra.'
+    });
+
+    setTimeout(() => {
+      setShowModal(false);
+      setEtapaCompra(0);
+      setTempoRestante(null);
+      setSelectedBoleto(null);
+
+      setBoletosDisponiveis(prevBoletos => 
+        prevBoletos.map(b => 
+          b.id === selectedBoleto.id ? { ...b, status: 'Disponível' } : b
+        )
+      );
+
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Compra cancelada',
+        description: 'O boleto foi liberado para outros compradores.'
+      });
+
+      setTimeout(() => setAlertInfo(null), 3000);
+    }, 1000);
+  };
+
+  const handleEnviarComprovante = (e) => {
     e.preventDefault();
-    alert('Carteira conectada e boleto travado para pagamento!');
-    
-    // Aqui seria a integração com a carteira e o backend
-    console.log('Dados do formulário:', formData);
-    
-    // Adicionar o novo boleto à lista (simulação)
-    const novoBoleto = {
-      id: boletos.length + 1,
-      numeroBoleto: Math.floor(10000000 + Math.random() * 90000000).toString(),
-      codigoBarras: formData.codigoBarras,
-      beneficiario: formData.beneficiario || 'Beneficiário não informado',
-      cpfCnpj: formData.cpfCnpj,
-      dataVencimento: formData.dataVencimento,
-      dataPagamento: null,
-      valor: parseFloat(formData.valor),
-      valorTravado: parseFloat(formData.valorUsdt),
-      taxaServico: parseFloat(formData.valor) * taxaComissao,
-      status: 'Pendente',
-      comprovante: null
-    };
-    
-    setBoletos([novoBoleto, ...boletos]);
-    
-    // Limpar o formulário
-    setFormData({
-      beneficiario: '',
-      cpfCnpj: '',
-      codigoBarras: '',
-      valor: '',
-      valorUsdt: '',
-      dataVencimento: '',
-      travarParaPagamento: true
+    setAlertInfo({
+      type: 'default',
+      title: 'Enviando comprovante...',
+      description: 'Aguarde enquanto processamos seu comprovante.'
     });
+
+    setTimeout(() => {
+      setEtapaCompra(4);
+      setTempoRestante(null);
+
+      const taxaServico = selectedBoleto.valor <= 200 ? 5 : selectedBoleto.valor * 0.03;
+      const valorLiquidoRepassado = selectedBoleto.valor - taxaServico;
+      const valorUSDT = (valorLiquidoRepassado / taxaConversao).toFixed(2);
+      const taxaServicoUSDT = (taxaServico / taxaConversao).toFixed(2);
+      setMeusBoletos(prevBoletos => [
+  ...prevBoletos,
+  {
+    ...selectedBoleto,
+    dataCompra: new Date().toISOString(),
+    status: 'Pago',
+    valorUSDT,
+    taxaServico,
+    taxaServicoUSDT,
+    valorLiquidoRepassado,
+    comprovanteUrl: comprovante ? URL.createObjectURL(comprovante) : undefined // Simulação de URL local
+  }
+]);
+
+      setBoletosDisponiveis(prevBoletos => 
+        prevBoletos.filter(b => b.id !== selectedBoleto.id)
+      );
+
+      setAlertInfo({
+        type: 'success',
+        title: 'Pagamento confirmado!',
+        description: `Você receberá ${valorUSDT} USDT em sua carteira em breve.`
+      });
+
+      setTimeout(() => {
+        setAlertInfo(null);
+        setShowModal(false);
+        setActiveTab('meusBoletos');
+      }, 5000);
+    }, 2000);
   };
-  
-  // Função para cancelar um boleto
-  const handleCancelarBoleto = (id) => {
-    if (window.confirm('Tem certeza que deseja cancelar este boleto?')) {
-      setBoletos(boletos.map(boleto => 
-        boleto.id === id ? { ...boleto, status: 'Cancelado' } : boleto
-      ));
+
+  useEffect(() => {
+    let timer;
+    if (tempoRestante !== null && tempoRestante > 0) {
+      timer = setInterval(() => {
+        setTempoRestante(prev => prev - 1);
+      }, 1000);
+    } else if (tempoRestante === 0) {
+      handleCancelarCompra();
     }
-  };
-  
-  // Função para fazer upload de comprovante
-  const handleUploadComprovante = (id) => {
-    // Simulação de upload
-    const fileInput = document.createElement('input');
-    fileInput.type = 'file';
-    fileInput.accept = 'image/*';
-    fileInput.onchange = (e) => {
-      const file = e.target.files[0];
-      if (file) {
-        // Simulando URL do comprovante
-        const comprovante = URL.createObjectURL(file);
-        
-        setBoletos(boletos.map(boleto => 
-          boleto.id === id ? { ...boleto, comprovante, status: 'Pago' } : boleto
-        ));
-      }
+    return () => {
+      if (timer) clearInterval(timer);
     };
-    fileInput.click();
-  };
-  
-  // Função para visualizar comprovante
-  const handleVerComprovante = (url) => {
-    // Se a URL for externa (placeholder), usar uma imagem local em vez disso
-    if (url.includes('placeholder.com')) {
-      alert('Visualizando comprovante local');
-    } else {
-      window.open(url, '_blank');
-    }
-  };
-  
+  }, [tempoRestante]);
+
   return (
-    <div className="w-full py-6 px-4 bg-gray-50">
-      {/* Conteúdo principal */}
-      <div className="flex flex-col md:flex-row gap-6 max-w-[1200px] mx-auto">
-          {/* Coluna 1: Seção de Cadastro de Boleto */}
-          <div className="w-full md:w-2/5 bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800">Cadastrar Novo Boleto</h2>
-          </div>
-          <div className="p-6">
-            <p className="text-gray-600 mb-6">Confira os dados do boleto selecionado abaixo e conecte sua carteira para TRAVAR O BOLETO para pagamento.</p>
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Beneficiário */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="beneficiario">Beneficiário</label>
-                  <input
-                    type="text"
-                    id="beneficiario"
-                    name="beneficiario"
-                    value={formData.beneficiario}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="Nome do beneficiário"
-                  />
+    <div className="bg-lime-300 min-h-screen p-8">
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold mb-8 bg-green-800 text-white p-4 rounded-lg text-center">
+          Portal do Comprador
+        </h1>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
+          <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl">
+            <TabsTrigger value="comprar" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
+              <FaShoppingCart className="mr-2" /> Comprar USDT
+            </TabsTrigger>
+            <TabsTrigger value="meusBoletos" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
+              <FaList className="mr-2" /> Meus Boletos
+            </TabsTrigger>
+            <TabsTrigger value="historico" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
+              <FaHistory className="mr-2" /> Histórico
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value="comprar">
+            <Card>
+              <CardHeader className="bg-green-800 text-white">
+                <CardTitle className="text-xl">Livro de Ordens - Boletos Disponíveis</CardTitle>
+                <CardDescription className="text-white">Selecione um boleto disponível para comprar USDT</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                <p className="text-gray-700 mb-6">
+                  Nesta seção você pode visualizar todos os boletos disponíveis para compra de USDT. 
+                  Selecione um boleto e clique em "Selecionar" para prosseguir com a transação.
+                </p>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+                    <thead className="bg-lime-600 text-white">
+                      <tr>
+                        <th className="py-3 px-4 text-left">Nº Boleto</th>
+                        <th className="py-3 px-4 text-left">Valor (R$)</th>
+                        <th className="py-3 px-4 text-left">Data Venc/to</th>
+                        <th className="py-3 px-4 text-left">Beneficiário</th>
+                        <th className="py-3 px-4 text-left">Status</th>
+                        <th className="py-3 px-4 text-left">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {boletosDisponiveis.map((boleto) => (
+                        <tr 
+                          key={boleto.id} 
+                          className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-100' : ''}`}
+                        >
+                          <td className="py-3 px-4">{boleto.numeroBoleto}</td>
+                          <td className="py-3 px-4">R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                          <td className="py-3 px-4">{new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}</td>
+                          <td className="py-3 px-4">{boleto.beneficiario}</td>
+                          <td className="py-3 px-4">
+                            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                              {boleto.status}
+                            </span>
+                          </td>
+                          <td className="py-3 px-4">
+                            <button 
+                              onClick={() => handleSelecionarBoleto(boleto)} 
+                              className="bg-lime-600 hover:bg-lime-700 text-white text-sm py-1 px-2 rounded"
+                            >
+                              Selecionar
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                      {boletosDisponiveis.length === 0 && (
+                        <tr>
+                          <td colSpan="6" className="py-4 px-4 text-center text-gray-500">
+                            Não há boletos disponíveis para compra no momento.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-                
-                {/* CPF/CNPJ */}
-                <div className="mb-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="cpfCnpj">CPF/CNPJ</label>
-                  <input
-                    type="text"
-                    id="cpfCnpj"
-                    name="cpfCnpj"
-                    value={formData.cpfCnpj}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="000.000.000-00 ou 00.000.000/0001-00"
-                  />
-                </div>
-                
-                {/* Código de Barras */}
-                <div className="mb-4 md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="codigoBarras">Código de Barras</label>
-                  <input
-                    type="text"
-                    id="codigoBarras"
-                    name="codigoBarras"
-                    value={formData.codigoBarras}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    placeholder="00000.00000 00000.000000 00000.000000 0 00000000000000"
-                  />
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="valor">Valor (R$)</label>
-                    <input
-                      type="number"
-                      id="valor"
-                      name="valor"
-                      value={formData.valor}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                      placeholder="0,00"
-                      step="0.01"
-                    />
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="meusBoletos">
+            <Card>
+              <CardHeader className="bg-green-800 text-white">
+                <CardTitle className="text-xl">MEUS BOLETOS</CardTitle>
+                <CardDescription className="text-white">Boletos que você comprou e pagou</CardDescription>
+              </CardHeader>
+              <CardContent className="p-6">
+                {meusBoletos.length === 0 ? (
+                  <p className="text-center text-gray-500 py-8">
+                    Você ainda não comprou nenhum boleto.
+                  </p>
+                ) : (
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+                      <thead className="bg-lime-600 text-white">
+                        <tr>
+                          <th className="py-3 px-4 text-left">Nº Boleto</th>
+                          <th className="py-3 px-4 text-left">Valor (R$)</th>
+                          <th className="py-3 px-4 text-left">Valor Líquido (USDT)</th>
+                          <th className="py-3 px-4 text-left">Taxa Serviço</th>
+                          <th className="py-3 px-4 text-left">Data Compra</th>
+                          <th className="py-3 px-4 text-left">Status</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {meusBoletos.map((boleto) => (
+                          <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
+                            <td className="py-3 px-4">{boleto.numeroBoleto}</td>
+                            <td className="py-3 px-4">R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td className="py-3 px-4">{boleto.valorUSDT} USDT</td>
+                            <td className="py-3 px-4">R$ {boleto.taxaServico?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({boleto.taxaServicoUSDT} USDT)</td>
+                            <td className="py-3 px-4">{new Date(boleto.dataCompra).toLocaleDateString('pt-BR')} {new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}</td>
+                            <td className="py-3 px-4">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {boleto.status}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
                   </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="valorUsdt">Valor (USDT)</label>
-                    <div className="relative">
-                      <input
-                        type="number"
-                        id="valorUsdt"
-                        name="valorUsdt"
-                        value={formData.valorUsdt}
-                        onChange={handleChange}
-                        className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                        placeholder="0,00"
-                        step="0.01"
-                        readOnly
-                      />
-                      <FaBitcoin className="absolute left-2.5 top-2.5 text-primary" size={18} />
-                    </div>
-                  </div>
-                  
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1" htmlFor="dataVencimento">Data de Vencimento</label>
-                    <input
-                      type="date"
-                      id="dataVencimento"
-                      name="dataVencimento"
-                      value={formData.dataVencimento}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
-                    />
-                  </div>
-                </div>
-                
-                <div className="mb-4 md:col-span-2">
-                  <div className="flex items-center">
-                    <input
-                      type="checkbox"
-                      id="travarParaPagamento"
-                      name="travarParaPagamento"
-                      checked={formData.travarParaPagamento}
-                      onChange={handleChange}
-                      className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                    />
-                    <label className="ml-2 block text-sm text-gray-700" htmlFor="travarParaPagamento">
-                      Travar boleto para pagamento imediato
-                    </label>
-                  </div>
-                  
-                  {formData.travarParaPagamento && (
-                    <div className="mt-3 p-4 bg-primary-50 border border-primary-200 rounded-lg text-sm">
-                      <p className="font-medium text-primary-800 mb-1">Informação sobre travamento:</p>
-                      <p className="text-gray-700">Ao travar o boleto, você reserva o valor em USDT para garantir o pagamento. A taxa de serviço é de {taxaComissao * 100}% do valor do boleto.</p>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div className="flex justify-between items-center pt-5 border-t border-gray-200 mt-8">
-                <div className="bg-primary-50 p-4 rounded-lg border border-primary-200">
-                  <p className="text-sm font-medium text-gray-800">Taxa de serviço: <span className="text-primary-700 font-bold">{taxaComissao * 100}%</span></p>
-                  {formData.valor && (
-                    <p className="text-sm text-gray-700 mt-1">Taxa estimada: <span className="font-medium text-primary-700">R$ {(parseFloat(formData.valor) * taxaComissao).toFixed(2)}</span></p>
-                  )}
-                </div>
-                <Button
-                  type="submit"
-                  variant="primary"
-                  size="md"
-                  leftIcon={<FaWallet />}
-                >
-                  Conectar Carteira e Travar Boleto
-                </Button>
-              </div>
-            </form>
-          </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+          <TabsContent value="historico">
+  <Card>
+    <CardHeader className="bg-green-800 text-white">
+      <CardTitle className="text-xl">Histórico de Transações</CardTitle>
+      <CardDescription className="text-white">Registro de todas as suas transações</CardDescription>
+    </CardHeader>
+    <CardContent className="p-6">
+      {meusBoletos.length === 0 ? (
+        <p className="text-center text-gray-500 py-8">
+          Você ainda não realizou nenhuma transação.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+            <thead className="bg-lime-600 text-white">
+              <tr>
+                <th className="py-3 px-4 text-left">Data da Compra</th>
+                <th className="py-3 px-4 text-left">Valor (R$)</th>
+                <th className="py-3 px-4 text-left">Valor (USDT)</th>
+                <th className="py-3 px-4 text-left">Taxa Serviço</th>
+                <th className="py-3 px-4 text-left">Comprovante</th>
+              </tr>
+            </thead>
+            <tbody>
+              {meusBoletos.map((boleto) => (
+                <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
+                  <td className="py-3 px-4">{new Date(boleto.dataCompra).toLocaleDateString('pt-BR')}<br /><span className="text-xs text-gray-400">{new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}</span></td>
+                  <td className="py-3 px-4">R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                  <td className="py-3 px-4">{boleto.valorUSDT} USDT</td>
+                  <td className="py-3 px-4">R$ {boleto.taxaServico?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({boleto.taxaServicoUSDT} USDT)</td>
+                  <td className="py-3 px-4">
+                    {boleto.comprovanteUrl ? (
+                      <a
+                        href={boleto.comprovanteUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="bg-green-700 hover:bg-green-800 text-white py-1 px-3 rounded flex items-center justify-center gap-2 text-sm"
+                        title="Visualizar Comprovante"
+                      >
+                        <FaUpload /> VISUALIZAR COMPROVANTE
+                      </a>
+                    ) : (
+                      <span className="text-gray-400">Não enviado</span>
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
-        
-        {/* Coluna 2: Seção de Listagem de Boletos */}
-        <div className="w-full md:w-3/5 bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden">
-          <div className="bg-gray-50 px-6 py-4 border-b border-gray-200">
-            <h2 className="text-xl font-semibold text-gray-800">Meus Boletos</h2>
-          </div>
-          <div className="p-6">
-            <div className="overflow-hidden">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nº Boleto</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Beneficiário</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Vencimento</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Valor</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
-                  </tr>
-                </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {boletos.map((boleto, index) => (
-                    <tr key={boleto.id} className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{boleto.numeroBoleto}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div>{boleto.beneficiario}</div>
-                        <div className="text-xs text-gray-400">{boleto.cpfCnpj}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                        <div>R$ {boleto.valor.toFixed(2)}</div>
-                        <div className="text-xs text-gray-400">USDT {boleto.valorTravado.toFixed(2)}</div>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap">
-                        <span className={
-                          `px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                            boleto.status === 'Pago' ? 'bg-green-100 text-green-800' : 
-                            boleto.status === 'Pendente' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800'
-                          }`
-                        }>
-                          {boleto.status === 'Pago' ? <FaCheck className="mr-1" size={10} /> : 
-                           boleto.status === 'Pendente' ? <FaLock className="mr-1" size={10} /> : 
-                           <FaTimes className="mr-1" size={10} />}
-                          {boleto.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                        <div className="flex space-x-2">
-                          {boleto.status === 'Travado para Pagamento' && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              leftIcon={<FaUpload />}
-                              onClick={() => handleUploadComprovante(boleto.id)}
-                            >
-                              Comprovante
-                            </Button>
-                          )}
-                          
-                          {boleto.comprovante && (
-                            <Button
-                              variant="secondary"
-                              size="sm"
-                              leftIcon={<FaImage />}
-                              onClick={() => handleVerComprovante(boleto.comprovante)}
-                            >
-                              Ver
-                            </Button>
-                          )}
-                          
-                          {boleto.status !== 'Cancelado' && boleto.status !== 'Pago' && (
-                            <Button
-                              variant="danger"
-                              size="sm"
-                              leftIcon={<FaTrash />}
-                              onClick={() => handleCancelarBoleto(boleto.id)}
-                            >
-                              Cancelar
-                            </Button>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      )}
+    </CardContent>
+  </Card>
+</TabsContent>
+        </Tabs>
+        {alertInfo && (
+          <Alert variant={alertInfo.type} className="mb-6">
+            <div className="flex items-start">
+              {alertInfo.type === 'destructive' && <FaExclamationTriangle className="mr-2 h-4 w-4" />}
+              {alertInfo.type === 'success' && <FaCheck className="mr-2 h-4 w-4" />}
+              {alertInfo.type === 'default' && <FaInfoCircle className="mr-2 h-4 w-4" />}
+              <div>
+                <AlertTitle>{alertInfo.title}</AlertTitle>
+                {alertInfo.description && (
+                  <AlertDescription>{alertInfo.description}</AlertDescription>
+                )}
+              </div>
             </div>
-            
-            {/* Seção de Comprovantes */}
-            {boletos.some(boleto => boleto.comprovante) && (
-              <div className="mt-8">
-                <h3 className="text-lg font-semibold text-gray-800 mb-4">Comprovantes de Pagamento</h3>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {boletos.filter(boleto => boleto.comprovante).map(boleto => (
-                    <div key={`comprovante-${boleto.id}`} className="border border-gray-200 rounded-lg overflow-hidden shadow-sm">
-                      <div className="p-3 bg-gray-50 border-b border-gray-200">
-                        <h4 className="font-medium text-sm">Boleto #{boleto.numeroBoleto}</h4>
-                        <p className="text-xs text-gray-500">Pago em: {boleto.dataPagamento ? new Date(boleto.dataPagamento).toLocaleDateString('pt-BR') : 'N/A'}</p>
-                      </div>
-                      <div className="p-3">
-                        <div className="w-[300px] h-[400px] bg-gray-100 flex items-center justify-center border border-gray-200 rounded">
-                          <span className="text-gray-500 text-base">Comprovante de Pagamento</span>
-                        </div>
-                      </div>
+          </Alert>
+        )}
+      </div>
+      {showModal && selectedBoleto && createPortal(
+        <React.Fragment>
+          <div
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-[9998]"
+            onClick={() => {
+              setShowModal(false);
+              setEtapaCompra(0);
+              setSelectedBoleto(null);
+            }}
+          />
+          <div
+            className="fixed top-1/2 left-1/2 z-[9999] w-[96%] min-w-[350px] max-w-[650px] max-h-[95vh] overflow-y-auto text-gray-800 shadow-2xl rounded-2xl border border-green-700"
+            style={{
+              transform: 'translate(-50%, -50%)',
+              backgroundColor: '#bef264'
+            }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="px-6 pt-6 pb-2 border-b border-green-700 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-green-700 flex items-center gap-2">
+                <FaCreditCard className="text-green-700" /> Detalhes do Boleto
+              </h2>
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  setEtapaCompra(0);
+                  setSelectedBoleto(null);
+                }}
+                className="text-gray-400 hover:text-red-500 transition"
+                title="Fechar"
+              >
+                <FaTimesCircle size={22} />
+              </button>
+            </div>
+            <div className="px-6 py-4 space-y-3">
+              <div className="flex justify-between">
+                <span className="font-semibold">Nº Boleto:</span>
+                <span>{selectedBoleto.numeroBoleto}</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="font-semibold">Beneficiário CPF/CNPJ:</span>
+                <span>{selectedBoleto.cnpj}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="font-semibold">Código de Barras:</span>
+                <span className="font-mono text-xs bg-lime-200 p-2 rounded break-all border border-green-700 text-gray-800">{selectedBoleto.codigoBarras}</span>
+              </div>
+              {(() => {
+  const taxaServico = selectedBoleto.valor <= 200 ? 5 : selectedBoleto.valor * 0.03;
+  const valorLiquidoRepassado = selectedBoleto.valor - taxaServico;
+  const valorUSDT = (valorLiquidoRepassado / taxaConversao).toFixed(2);
+  const taxaServicoUSDT = (taxaServico / taxaConversao).toFixed(2);
+  return (
+    <>
+      <div className="flex justify-between">
+        <span className="font-semibold">Valor em Reais:</span>
+        <span className="text-green-700 font-bold">
+          R$ {selectedBoleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+        </span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-semibold">Taxa de Serviço:</span>
+        <span className="text-red-600 font-bold">
+          R$ {taxaServico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({taxaServicoUSDT} USDT)
+        </span>
+      </div>
+      <div className="flex justify-between">
+        <span className="font-semibold">Valor Líquido a Receber:</span>
+        <span className="text-green-700 font-bold">{valorUSDT} USDT</span>
+      </div>
+    </>
+  );
+})()}
+              <div className="flex justify-between">
+                <span className="font-semibold">Vencimento:</span>
+                <span>{new Date(selectedBoleto.dataVencimento).toLocaleDateString('pt-BR')}</span>
+              </div>
+              <div className="text-xs text-white font-extrabold mt-2 text-center">
+                Para travar o boleto para pagamento conecte sua carteira.
+              </div>
+            </div>
+            {etapaCompra === 1 && (
+              <div className="px-6 pb-6 flex flex-col gap-3">
+                <button
+                  onClick={handleConectarCarteira}
+                  className="bg-green-700 hover:bg-green-800 text-white text-xl font-semibold py-2 rounded shadow flex items-center justify-center gap-2"
+                >
+                  <FaWallet /> Conectar Carteira
+                </button>
+              </div>
+            )}
+            {etapaCompra === 2 && (
+              <div className="px-6 pb-6 w-full">
+                <div className="bg-green-100 p-3 rounded-lg mb-4 border border-green-700">
+                  <div className="flex items-center mb-2">
+                    <FaWallet className="text-green-700 mr-2" />
+                    <span className="font-medium text-green-800">Carteira Conectada</span>
+                  </div>
+                  <p className="text-sm text-green-700 break-all">Endereço: {enderecoCarteira}</p>
+                </div>
+                <button
+                  onClick={handleTravarBoleto}
+                  className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 rounded shadow flex items-center justify-center gap-2 ml-auto"
+                >
+                  <FaLock /> Reservar Boleto
+                </button>
+              </div>
+            )}
+{etapaCompra === 3 && (
+  <div className="px-6 pb-6 w-full">
+    <div className="bg-yellow-100 p-3 rounded-lg mb-4 border border-green-700">
+      <div className="flex items-center mb-2">
+        <FaClock className="text-green-700 mr-2" />
+        <span className="font-medium text-green-800">Tempo Restante para Pagamento</span>
+      </div>
+      <div className="flex flex-col items-center my-4">
+        <div className="rounded-xl bg-yellow-300 border-2 border-yellow-500 px-10 py-4 shadow-lg flex items-end gap-4">
+          <span
+            className="text-5xl font-extrabold text-yellow-900 tracking-widest"
+            style={{ fontVariantNumeric: 'tabular-nums' }}
+          >
+            {Math.floor(tempoRestante / 60)}:{(tempoRestante % 60).toString().padStart(2, '0')}
+          </span>
+          <span
+            className="text-xl font-bold text-yellow-900 mb-1"
+            style={{ letterSpacing: '2px' }}
+          >
+            minutos
+          </span>
+        </div>
+      </div>
+      <p className="text-sm text-green-800 mt-2">
+        Realize o pagamento do boleto e envie o comprovante antes que o tempo acabe.
+      </p>
+    </div>
+    <form onSubmit={handleEnviarComprovante} className="space-y-4">
+      <div>
+        <Label htmlFor="comprovante" className="text-green-800">Enviar Comprovante de Pagamento</Label>
+        <Input
+          id="comprovante"
+          type="file"
+          accept="image/*,.pdf"
+          required
+          onChange={(e) => setComprovante(e.target.files[0])}
+          className="mt-1"
+        />
+      </div>
+      <div className="flex justify-between">
+        <button
+          type="button"
+          onClick={() => {
+            if (window.confirm('Deseja realmente cancelar esta compra? O boleto será liberado para outros compradores.')) {
+              handleCancelarCompra();
+            }
+          }}
+          className="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded flex items-center"
+        >
+          <FaTimesCircle className="mr-2" /> Cancelar
+        </button>
+        <button
+          type="submit"
+          className="bg-green-700 hover:bg-green-800 text-white py-2 px-4 rounded flex items-center"
+        >
+          <FaUpload className="mr-2" /> Enviar Comprovante
+        </button>
+      </div>
+    </form>
+  </div>
+)}
+            {etapaCompra === 4 && (
+              <div className="px-6 pb-6 w-full">
+                <div className="bg-green-100 p-4 rounded-lg mb-4 border border-green-700 text-center">
+                  <div className="flex justify-center mb-4">
+                    <div className="w-16 h-16 rounded-full bg-green-200 flex items-center justify-center">
+                      <FaCheck className="text-green-700 text-3xl" />
                     </div>
-                  ))}
+                  </div>
+                  <h3 className="text-xl font-bold text-green-700 mb-2">Pagamento Confirmado!</h3>
+                  <p className="text-green-800 mb-4">
+                    Você receberá {(selectedBoleto.valor / taxaConversao).toFixed(2)} USDT em sua carteira em breve.
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowModal(false);
+                      setActiveTab('meusBoletos');
+                    }}
+                    className="bg-green-700 hover:bg-green-800 text-white text-lg py-2 px-4 rounded flex items-center mx-auto"
+                  >
+                    <FaList className="mr-2" /> Ver Meus Boletos
+                  </button>
                 </div>
               </div>
             )}
           </div>
-          </div>
-        </div>
+        </React.Fragment>,
+        document.body
+      )}
     </div>
   );
-}
+};
 
 export default CompradorPage;
