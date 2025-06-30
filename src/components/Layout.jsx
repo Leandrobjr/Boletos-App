@@ -24,7 +24,7 @@ function Layout() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col z-0">
       {/* Cabeçalho */}
       <header className="bxc-gradient-primary sticky top-0 z-50" style={{ color: colors.white, boxShadow: '0 2px 8px rgba(0,0,0,0.1)' }}>
         <div className="container mx-auto px-4 py-3 flex justify-between items-center">

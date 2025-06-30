@@ -1,0 +1,74 @@
+import { useState } from 'react';
+import {
+  FaTrash, FaWallet, FaFileInvoiceDollar,
+  FaList, FaCheck, FaHistory,
+  FaExclamationTriangle, FaInfoCircle
+} from 'react-icons/fa';
+import HistoricoTransacoes from '../components/HistoricoTransacoes';
+import {
+  Card, CardHeader, CardTitle,
+  CardDescription, CardContent
+} from '../components/ui/card';
+import { Input } from '../components/ui/input';
+import { Label } from '../components/ui/label';
+import {
+  Tabs, TabsList, TabsTrigger,
+  TabsContent
+} from '../components/ui/tabs';
+import {
+  Alert, AlertTitle, AlertDescription
+} from '../components/ui/alert';
+import { Button } from '../components/ui/button';
+
+function VendedorPage() {
+  const [activeTab, setActiveTab] = useState('cadastrar');
+  const [formData, setFormData] = useState({
+    beneficiario: '',
+    cpfCnpj: '',
+    codigoBarras: '',
+    valor: '',
+    dataVencimento: '',
+    instituicao: ''
+  });
+
+  const [boletos, setBoletos] = useState([]);
+  const [alertInfo, setAlertInfo] = useState(null);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    let errors = {};
+
+    if (formData.cpfCnpj.length < 11) errors.cpfCnpj = 'CPF/CNPJ inválido';
+    if (formData.codigoBarras.length < 30) errors.codigoBarras = 'Código de barras inválido';
+    if (!formData.valor || parseFloat(formData.valor) <= 0) errors.valor = 'Valor inválido';
+    if (!formData.dataVencimento || new Date(formData.dataVencimento) < new Date()) errors.dataVencimento = 'Data inválida';
+
+    if (Object.keys(errors).length) {
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Erro ao cadastrar boleto',
+        message: Object.values(errors).join('\n')
+      });
+      return;
+    }
+
+    const novoBoleto = {
+      id: boletos.length + 1,
+      numeroBoleto: Math.floor(10000000 + Math.random() * 90000000).toString(),
+      codigoBarras: formData.codigoBarras,
+      beneficiario: 'Não informado',
+      cpfCnpj: formData.cpfCnpj,
+      dataVencimento: formData.dataVencimento,
+      valor: parseFloat(formData.valor),
+      instituicao: formData.instituicao,
+      status: 'Pendente'
+    };
+
+    setBoletos([...boletos, novoBoleto]);
+    conectarCarteira(novoBoleto);
+  };

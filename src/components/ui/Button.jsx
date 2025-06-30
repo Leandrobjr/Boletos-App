@@ -34,30 +34,31 @@ const Button = ({
     display: 'inline-flex',
     alignItems: 'center',
     justifyContent: 'center',
-    fontWeight: 500,
-    borderRadius: '8px',
+    fontWeight: 600,
+    borderRadius: '16px',
     transition: 'all 0.2s ease-in-out',
     cursor: disabled ? 'not-allowed' : 'pointer',
     width: fullWidth ? '100%' : 'auto',
     opacity: disabled ? 0.7 : 1,
+    boxShadow: '0 2px 5px rgba(0, 0, 0, 0.1)',
   };
 
   // Estilos de tamanho
   const sizeStyles = {
     sm: {
-      padding: '6px 12px',
+      padding: '10px 18px',
       fontSize: '0.875rem',
-      gap: '4px',
-    },
-    md: {
-      padding: '8px 16px',
-      fontSize: '1rem',
       gap: '6px',
     },
-    lg: {
-      padding: '10px 20px',
-      fontSize: '1.125rem',
+    md: {
+      padding: '14px 24px',
+      fontSize: '1rem',
       gap: '8px',
+    },
+    lg: {
+      padding: '18px 28px',
+      fontSize: '1.125rem',
+      gap: '10px',
     }
   };
 

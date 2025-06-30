@@ -11,6 +11,8 @@ import {
   FaUserCheck, 
   FaIdCard 
 } from 'react-icons/fa';
+import HeaderBXC from '../components/HeaderBXC';
+import FooterBXC from '../components/FooterBXC';
 
 function DashboardGestaoPage() {
   // Estado para controle de abas
@@ -247,350 +249,357 @@ function DashboardGestaoPage() {
   };
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold text-greenDark bitcoin-font">Dashboard de Gestão</h1>
-      
-      {/* Sistema de abas */}
-      <div className="border-b border-gray-200">
-        <nav className="-mb-px flex space-x-8">
-          <button
-            onClick={() => setActiveTab('dashboard')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'dashboard' 
-              ? 'border-greenPrimary text-greenDark' 
-              : 'border-transparent text-grayMedium hover:text-grayDark hover:border-grayLight'}`}
-          >
-            <FaChartBar className="inline-block mr-2" /> Dashboard
-          </button>
+    <div className="min-h-screen bg-lime-100 flex flex-col">
+      <HeaderBXC />
+      <div style={{ height: '80px' }} />
+      <main className="flex-1 container mx-auto px-4 py-8">
+        <div className="space-y-6">
+          <h1 className="text-3xl font-bold text-greenDark bitcoin-font">Dashboard de Gestão</h1>
           
-          <button
-            onClick={() => setActiveTab('cadastros')}
-            className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'cadastros' 
-              ? 'border-greenPrimary text-greenDark' 
-              : 'border-transparent text-grayMedium hover:text-grayDark hover:border-grayLight'}`}
-          >
-            <FaUsers className="inline-block mr-2" /> Consulta de Cadastros
-          </button>
-        </nav>
-      </div>
-      
-      {/* Conteúdo da aba Dashboard */}
-      {activeTab === 'dashboard' && (
-        <div>
-          {/* Cards de estatísticas */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card bg-blue-50 border-l-4 border-primary">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-primary text-white mr-4">
-                  <FaFileInvoiceDollar className="text-xl" />
-                </div>
-                <div>
-                  <div className="text-sm text-gray-500">Total de Boletos</div>
-                  <div className="text-2xl font-bold">{totalBoletos}</div>
-                </div>
-              </div>
-            </div>
-            
-            <div className="card bg-green-50 border-l-4 border-green-500">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-green-500 text-white mr-4">
-                  <FaChartBar className="text-xl" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Boletos Pagos</p>
-                  <p className="text-xl font-bold">{totalPagos}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="card bg-yellow-50 border-l-4 border-yellow-500">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-yellow-500 text-white mr-4">
-                  <FaExchangeAlt className="text-xl" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Boletos Travados</p>
-                  <p className="text-xl font-bold">{totalTravados}</p>
-                </div>
-              </div>
-            </div>
-            
-            <div className="card bg-purple-50 border-l-4 border-purple-500">
-              <div className="flex items-center">
-                <div className="p-3 rounded-full bg-purple-500 text-white mr-4">
-                  <FaFileInvoiceDollar className="text-xl" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Valor Total</p>
-                  <p className="text-xl font-bold">
-                    {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Taxas: {valorTaxas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
-                  </p>
-                </div>
-              </div>
-            </div>
-      </div>
-      
-      {/* Filtros e pesquisa */}
-      <div className="card">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaSearch className="text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder="Buscar boleto..."
-                className="form-input pl-10"
-                value={pesquisa}
-                onChange={(e) => setPesquisa(e.target.value)}
-              />
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <FaFilter className="text-gray-400" />
-              <select
-                className="form-input"
-                value={filtroStatus}
-                onChange={(e) => setFiltroStatus(e.target.value)}
+          {/* Sistema de abas */}
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'dashboard' 
+                  ? 'border-greenPrimary text-greenDark' 
+                  : 'border-transparent text-grayMedium hover:text-grayDark hover:border-grayLight'}`}
               >
-                <option value="">Todos os status</option>
-                <option value="Pago">Pagos</option>
-                <option value="Travado">Travados</option>
-              </select>
-            </div>
-            
-            <div>
-              <select
-                className="form-input"
-                value={filtroPeriodo}
-                onChange={(e) => setFiltroPeriodo(e.target.value)}
-              >
-                <option value="">Todos os períodos</option>
-                <option value="hoje">Hoje</option>
-                <option value="semana">Última semana</option>
-                <option value="mes">Último mês</option>
-              </select>
-            </div>
-          </div>
-          
-          <button
-            onClick={handleExportarDados}
-            className="flex items-center justify-center px-4 py-2 bg-secondary text-white rounded-md hover:bg-secondary/90"
-          >
-            <FaDownload className="mr-2" /> Exportar Dados
-          </button>
-        </div>
-      </div>
-      
-      {/* Tabela de boletos */}
-      <div className="card">
-        <h2 className="text-xl font-semibold text-gray-800 mb-6">Gestão de Boletos</h2>
-        
-        <div className="table-container">
-          <table className="table">
-            <thead className="table-header">
-              <tr>
-                <th className="table-header-cell">Nº Boleto</th>
-                <th className="table-header-cell">Código de Barras</th>
-                <th className="table-header-cell">Beneficiário</th>
-                <th className="table-header-cell">Data Venc.</th>
-                <th className="table-header-cell">Data Pagto</th>
-                <th className="table-header-cell">Valor Pago (R$)</th>
-                <th className="table-header-cell">Comprovante</th>
-                <th className="table-header-cell">Valor Travado (USDT)</th>
-                <th className="table-header-cell">Taxa de Serviço</th>
-                <th className="table-header-cell">Valor Líq. Repasse</th>
-                <th className="table-header-cell">Status</th>
-              </tr>
-            </thead>
-            <tbody className="table-body">
-              {boletosFiltrados.map((boleto) => (
-                <tr key={boleto.id} className="table-row">
-                  <td className="table-cell font-medium">{boleto.numeroBoleto}</td>
-                  <td className="table-cell">
-                    <span className="text-xs">{boleto.codigoBarras.substring(0, 15)}...</span>
-                  </td>
-                  <td className="table-cell">
-                    <div>{boleto.beneficiario}</div>
-                    <div className="text-xs text-gray-400">{boleto.cpfCnpj}</div>
-                  </td>
-                  <td className="table-cell">
-                    {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
-                  </td>
-                  <td className="table-cell">
-                    {boleto.dataPagamento ? new Date(boleto.dataPagamento).toLocaleDateString('pt-BR') : '-'}
-                  </td>
-                  <td className="table-cell">
-                    {boleto.valorPago ? boleto.valorPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
-                  </td>
-                  <td className="table-cell">
-                    {boleto.comprovante ? (
-                      <button
-                        onClick={() => handleVerComprovante(boleto.comprovante)}
-                        className="text-blue-600 hover:text-blue-900"
-                        title="Ver Comprovante"
-                      >
-                        <FaImage />
-                      </button>
-                    ) : (
-                      '-'
-                    )}
-                  </td>
-                  <td className="table-cell">
-                    {boleto.valorTravado ? boleto.valorTravado.toFixed(2) : '-'}
-                  </td>
-                  <td className="table-cell">
-                    {boleto.taxaServico ? boleto.taxaServico.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
-                  </td>
-                  <td className="table-cell">
-                    {boleto.valorLiquidoRepasse ? boleto.valorLiquidoRepasse.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
-                  </td>
-                  <td className="table-cell">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                      boleto.status === 'Pago' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {boleto.status}
-                    </span>
-                  </td>
-                </tr>
-              ))}
+                <FaChartBar className="inline-block mr-2" /> Dashboard
+              </button>
               
-              {boletosFiltrados.length === 0 && (
-                <tr>
-                  <td colSpan="11" className="px-6 py-4 text-center text-gray-500">
-                    Nenhum boleto encontrado com os filtros aplicados
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+              <button
+                onClick={() => setActiveTab('cadastros')}
+                className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'cadastros' 
+                  ? 'border-greenPrimary text-greenDark' 
+                  : 'border-transparent text-grayMedium hover:text-grayDark hover:border-grayLight'}`}
+              >
+                <FaUsers className="inline-block mr-2" /> Consulta de Cadastros
+              </button>
+            </nav>
           </div>
-        </div>
-      )}
-      
-      {/* Conteúdo da aba Consulta de Cadastros */}
-      {activeTab === 'cadastros' && (
-        <div>
+          
+          {/* Conteúdo da aba Dashboard */}
+          {activeTab === 'dashboard' && (
+            <div>
+              {/* Cards de estatísticas */}
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="card bg-blue-50 border-l-4 border-primary">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-primary text-white mr-4">
+                      <FaFileInvoiceDollar className="text-xl" />
+                    </div>
+                    <div>
+                      <div className="text-sm text-gray-500">Total de Boletos</div>
+                      <div className="text-2xl font-bold">{totalBoletos}</div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="card bg-green-50 border-l-4 border-green-500">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-green-500 text-white mr-4">
+                      <FaChartBar className="text-xl" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Boletos Pagos</p>
+                      <p className="text-xl font-bold">{totalPagos}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="card bg-yellow-50 border-l-4 border-yellow-500">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-yellow-500 text-white mr-4">
+                      <FaExchangeAlt className="text-xl" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Boletos Travados</p>
+                      <p className="text-xl font-bold">{totalTravados}</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="card bg-purple-50 border-l-4 border-purple-500">
+                  <div className="flex items-center">
+                    <div className="p-3 rounded-full bg-purple-500 text-white mr-4">
+                      <FaFileInvoiceDollar className="text-xl" />
+                    </div>
+                    <div>
+                      <p className="text-sm text-gray-500">Valor Total</p>
+                      <p className="text-xl font-bold">
+                        {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        Taxas: {valorTaxas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+          </div>
+          
           {/* Filtros e pesquisa */}
-          <div className="bg-white shadow-md rounded-lg p-6 mb-6">
-            <h2 className="text-xl font-semibold text-greenDark mb-4">Consulta de Usuários Cadastrados</h2>
-            
-            <div className="flex flex-wrap gap-4 mb-6">
-              <div className="flex-1">
+          <div className="card">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0 md:space-x-4">
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <FaSearch className="text-gray-400" />
                   </div>
                   <input
                     type="text"
-                    value={pesquisaCadastro}
-                    onChange={(e) => setPesquisaCadastro(e.target.value)}
-                    className="form-input pl-10 w-full"
-                    placeholder="Buscar usuários..."
+                    placeholder="Buscar boleto..."
+                    className="form-input pl-10"
+                    value={pesquisa}
+                    onChange={(e) => setPesquisa(e.target.value)}
                   />
+                </div>
+                
+                <div className="flex items-center space-x-2">
+                  <FaFilter className="text-gray-400" />
+                  <select
+                    className="form-input"
+                    value={filtroStatus}
+                    onChange={(e) => setFiltroStatus(e.target.value)}
+                  >
+                    <option value="">Todos os status</option>
+                    <option value="Pago">Pagos</option>
+                    <option value="Travado">Travados</option>
+                  </select>
+                </div>
+                
+                <div>
+                  <select
+                    className="form-input"
+                    value={filtroPeriodo}
+                    onChange={(e) => setFiltroPeriodo(e.target.value)}
+                  >
+                    <option value="">Todos os períodos</option>
+                    <option value="hoje">Hoje</option>
+                    <option value="semana">Última semana</option>
+                    <option value="mes">Último mês</option>
+                  </select>
                 </div>
               </div>
               
-              <div className="w-full md:w-auto">
-                <select
-                  value={tipoPesquisa}
-                  onChange={(e) => setTipoPesquisa(e.target.value)}
-                  className="form-select w-full"
-                >
-                  <option value="nome">Nome</option>
-                  <option value="email">Email</option>
-                  <option value="cpfCnpj">CPF/CNPJ</option>
-                  <option value="carteira">Endereço da Carteira</option>
-                </select>
-              </div>
+              <button
+                onClick={handleExportarDados}
+                className="flex items-center justify-center px-4 py-2 bg-secondary text-white rounded-md hover:bg-secondary/90"
+              >
+                <FaDownload className="mr-2" /> Exportar Dados
+              </button>
             </div>
+          </div>
+          
+          {/* Tabela de boletos */}
+          <div className="card">
+            <h2 className="text-xl font-semibold text-gray-800 mb-6">Gestão de Boletos</h2>
             
-            <div className="overflow-x-auto">
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className="bg-gray-50">
+            <div className="table-container">
+              <table className="table">
+                <thead className="table-header">
                   <tr>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome/Empresa</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF/CNPJ</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acesso</th>
-                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                    <th className="table-header-cell">Nº Boleto</th>
+                    <th className="table-header-cell">Código de Barras</th>
+                    <th className="table-header-cell">Beneficiário</th>
+                    <th className="table-header-cell">Data Venc.</th>
+                    <th className="table-header-cell">Data Pagto</th>
+                    <th className="table-header-cell">Valor Pago (R$)</th>
+                    <th className="table-header-cell">Comprovante</th>
+                    <th className="table-header-cell">Valor Travado (USDT)</th>
+                    <th className="table-header-cell">Taxa de Serviço</th>
+                    <th className="table-header-cell">Valor Líq. Repasse</th>
+                    <th className="table-header-cell">Status</th>
                   </tr>
                 </thead>
-                <tbody className="bg-white divide-y divide-gray-200">
-                  {usuariosFiltrados.length > 0 ? (
-                    usuariosFiltrados.map(usuario => (
-                      <tr key={usuario.id} className="hover:bg-gray-50">
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <div className="flex items-center">
-                            <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
-                              <FaUserCheck className="text-gray-500" />
-                            </div>
-                            <div className="ml-4">
-                              <div className="text-sm font-medium text-gray-900">{usuario.nome}</div>
-                              <div className="text-sm text-gray-500">{usuario.telefone}</div>
-                            </div>
-                          </div>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{usuario.email}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{usuario.cpfCnpj}</td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${usuario.tipoUsuario === 'comprador' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
-                            {usuario.tipoUsuario === 'comprador' ? 'Comprador' : 'Vendedor'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap">
-                          <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${usuario.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
-                            {usuario.status}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{usuario.ultimoAcesso}</td>
-                        <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                          <button className="text-greenPrimary hover:text-greenDark mr-3">Detalhes</button>
-                          <button className="text-yellow-500 hover:text-yellow-700 mr-3">Editar</button>
-                          {usuario.status === 'Ativo' ? (
-                            <button className="text-red-500 hover:text-red-700">Desativar</button>
-                          ) : (
-                            <button className="text-green-500 hover:text-green-700">Ativar</button>
-                          )}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
+                <tbody className="table-body">
+                  {boletosFiltrados.map((boleto) => (
+                    <tr key={boleto.id} className="table-row">
+                      <td className="table-cell font-medium">{boleto.numeroBoleto}</td>
+                      <td className="table-cell">
+                        <span className="text-xs">{boleto.codigoBarras.substring(0, 15)}...</span>
+                      </td>
+                      <td className="table-cell">
+                        <div>{boleto.beneficiario}</div>
+                        <div className="text-xs text-gray-400">{boleto.cpfCnpj}</div>
+                      </td>
+                      <td className="table-cell">
+                        {new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}
+                      </td>
+                      <td className="table-cell">
+                        {boleto.dataPagamento ? new Date(boleto.dataPagamento).toLocaleDateString('pt-BR') : '-'}
+                      </td>
+                      <td className="table-cell">
+                        {boleto.valorPago ? boleto.valorPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                      </td>
+                      <td className="table-cell">
+                        {boleto.comprovante ? (
+                          <button
+                            onClick={() => handleVerComprovante(boleto.comprovante)}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Ver Comprovante"
+                          >
+                            <FaImage />
+                          </button>
+                        ) : (
+                          '-'
+                        )}
+                      </td>
+                      <td className="table-cell">
+                        {boleto.valorTravado ? boleto.valorTravado.toFixed(2) : '-'}
+                      </td>
+                      <td className="table-cell">
+                        {boleto.taxaServico ? boleto.taxaServico.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                      </td>
+                      <td className="table-cell">
+                        {boleto.valorLiquidoRepasse ? boleto.valorLiquidoRepasse.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                      </td>
+                      <td className="table-cell">
+                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                          boleto.status === 'Pago' 
+                            ? 'bg-green-100 text-green-800' 
+                            : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {boleto.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                  
+                  {boletosFiltrados.length === 0 && (
                     <tr>
-                      <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
-                        Nenhum usuário encontrado com os critérios de busca.
+                      <td colSpan="11" className="px-6 py-4 text-center text-gray-500">
+                        Nenhum boleto encontrado com os filtros aplicados
                       </td>
                     </tr>
                   )}
                 </tbody>
               </table>
             </div>
-            
-            <div className="mt-6 flex justify-between items-center">
-              <div className="text-sm text-gray-500">
-                Mostrando {usuariosFiltrados.length} de {usuarios.length} usuários
-              </div>
-              
-              <div>
-                <button 
-                  onClick={handleExportarDados}
-                  className="btn-secondary flex items-center"
-                >
-                  <FaDownload className="mr-2" /> Exportar Dados
-                </button>
               </div>
             </div>
-          </div>
+          )}
+          
+          {/* Conteúdo da aba Consulta de Cadastros */}
+          {activeTab === 'cadastros' && (
+            <div>
+              {/* Filtros e pesquisa */}
+              <div className="bg-white shadow-md rounded-lg p-6 mb-6">
+                <h2 className="text-xl font-semibold text-greenDark mb-4">Consulta de Usuários Cadastrados</h2>
+                
+                <div className="flex flex-wrap gap-4 mb-6">
+                  <div className="flex-1">
+                    <div className="relative">
+                      <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <FaSearch className="text-gray-400" />
+                      </div>
+                      <input
+                        type="text"
+                        value={pesquisaCadastro}
+                        onChange={(e) => setPesquisaCadastro(e.target.value)}
+                        className="form-input pl-10 w-full"
+                        placeholder="Buscar usuários..."
+                      />
+                    </div>
+                  </div>
+                  
+                  <div className="w-full md:w-auto">
+                    <select
+                      value={tipoPesquisa}
+                      onChange={(e) => setTipoPesquisa(e.target.value)}
+                      className="form-select w-full"
+                    >
+                      <option value="nome">Nome</option>
+                      <option value="email">Email</option>
+                      <option value="cpfCnpj">CPF/CNPJ</option>
+                      <option value="carteira">Endereço da Carteira</option>
+                    </select>
+                  </div>
+                </div>
+                
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nome/Empresa</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">CPF/CNPJ</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tipo</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Último Acesso</th>
+                        <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Ações</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {usuariosFiltrados.length > 0 ? (
+                        usuariosFiltrados.map(usuario => (
+                          <tr key={usuario.id} className="hover:bg-gray-50">
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <div className="flex items-center">
+                                <div className="flex-shrink-0 h-10 w-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                  <FaUserCheck className="text-gray-500" />
+                                </div>
+                                <div className="ml-4">
+                                  <div className="text-sm font-medium text-gray-900">{usuario.nome}</div>
+                                  <div className="text-sm text-gray-500">{usuario.telefone}</div>
+                                </div>
+                              </div>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{usuario.email}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{usuario.cpfCnpj}</td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${usuario.tipoUsuario === 'comprador' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>
+                                {usuario.tipoUsuario === 'comprador' ? 'Comprador' : 'Vendedor'}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap">
+                              <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${usuario.status === 'Ativo' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                                {usuario.status}
+                              </span>
+                            </td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{usuario.ultimoAcesso}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <button className="text-greenPrimary hover:text-greenDark mr-3">Detalhes</button>
+                              <button className="text-yellow-500 hover:text-yellow-700 mr-3">Editar</button>
+                              {usuario.status === 'Ativo' ? (
+                                <button className="text-red-500 hover:text-red-700">Desativar</button>
+                              ) : (
+                                <button className="text-green-500 hover:text-green-700">Ativar</button>
+                              )}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan="7" className="px-6 py-4 text-center text-gray-500">
+                            Nenhum usuário encontrado com os critérios de busca.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                
+                <div className="mt-6 flex justify-between items-center">
+                  <div className="text-sm text-gray-500">
+                    Mostrando {usuariosFiltrados.length} de {usuarios.length} usuários
+                  </div>
+                  
+                  <div>
+                    <button 
+                      onClick={handleExportarDados}
+                      className="btn-secondary flex items-center"
+                    >
+                      <FaDownload className="mr-2" /> Exportar Dados
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
-      )}
+      </main>
+      <FooterBXC />
     </div>
   );
 }

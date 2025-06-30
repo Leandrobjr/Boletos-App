@@ -1,0 +1,57 @@
+  const conectarCarteira = (boleto) => {
+    setAlertInfo({
+      type: 'success',
+      title: 'Carteira conectada',
+      message: `Conectando carteira para pagamento do boleto ${boleto.numeroBoleto}...`
+    });
+
+    setFormData({
+      beneficiario: '',
+      cpfCnpj: '',
+      codigoBarras: '',
+      valor: '',
+      dataVencimento: '',
+      instituicao: ''
+    });
+    setActiveTab('listar');
+  };
+
+  const handleDelete = (id) => {
+    setBoletos(boletos.filter((b) => b.id !== id));
+    setAlertInfo({
+      type: 'success',
+      title: 'Boleto excluído',
+      message: 'O boleto foi excluído com sucesso.'
+    });
+  };
+
+  const handlePay = (boleto) => {
+    const boletosAtualizados = boletos.map((b) =>
+      b.id === boleto.id ? { ...b, status: 'Pago' } : b
+    );
+    setBoletos(boletosAtualizados);
+    setAlertInfo({
+      type: 'success',
+      title: 'Pagamento realizado',
+      message: `O boleto ${boleto.numeroBoleto} foi pago com sucesso.`
+    });
+  };
+
+  return (
+    <div className="bg-lime-200 min-h-screen px-4 py-8">
+      <div className="container mx-auto">
+        <h1 className="text-3xl font-bold mb-8 bg-green-800 text-white p-4 rounded-lg text-center">Portal do Vendedor</h1>
+
+        {alertInfo && (
+          <Alert variant={alertInfo.type} className="mb-6" onClick={() => setAlertInfo(null)}>
+            <div className="flex items-start">
+              {alertInfo.type === 'destructive' && <FaExclamationTriangle className="mr-2 h-4 w-4" />}
+              {alertInfo.type === 'success' && <FaCheck className="mr-2 h-4 w-4" />}
+              {alertInfo.type === 'default' && <FaInfoCircle className="mr-2 h-4 w-4" />}
+              <div>
+                <AlertTitle>{alertInfo.title}</AlertTitle>
+                <AlertDescription className="whitespace-pre-line">{alertInfo.message}</AlertDescription>
+              </div>
+            </div>
+          </Alert>
+        )}

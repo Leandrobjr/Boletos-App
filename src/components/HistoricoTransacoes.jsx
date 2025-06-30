@@ -228,11 +228,11 @@ function HistoricoTransacoes({ tipoUsuario = 'comprador' }) {
       
       {/* Tabela de transações */}
       <div className="overflow-x-auto">
-        <table className="table">
-          <thead className="table-header">
-            <tr>
+        <table className="w-full border-collapse">
+          <thead className="bg-green-800 text-white">
+            <tr className="text-left">
               <th 
-                className="table-header-cell cursor-pointer"
+                className="p-4 cursor-pointer"
                 onClick={() => alternarOrdenacao('data')}
               >
                 <div className="flex items-center">
@@ -240,10 +240,10 @@ function HistoricoTransacoes({ tipoUsuario = 'comprador' }) {
                   {renderIconeOrdenacao('data')}
                 </div>
               </th>
-              <th className="table-header-cell">Tipo de Operação</th>
-              <th className="table-header-cell">Nº Boleto</th>
+              <th className="p-4">Tipo de Operação</th>
+              <th className="p-4">Nº Boleto</th>
               <th 
-                className="table-header-cell cursor-pointer"
+                className="p-4 cursor-pointer"
                 onClick={() => alternarOrdenacao('valor')}
               >
                 <div className="flex items-center">
@@ -251,27 +251,27 @@ function HistoricoTransacoes({ tipoUsuario = 'comprador' }) {
                   {renderIconeOrdenacao('valor')}
                 </div>
               </th>
-              <th className="table-header-cell">Taxas</th>
-              <th className="table-header-cell">Contraparte</th>
-              <th className="table-header-cell">Status</th>
+              <th className="p-4">Taxas</th>
+              <th className="p-4">Contraparte</th>
+              <th className="p-4">Status</th>
             </tr>
           </thead>
-          <tbody className="table-body">
+          <tbody>
             {transacoesFiltradas.length > 0 ? (
               transacoesFiltradas.map((tx) => (
-                <tr key={tx.id} className="table-row">
-                  <td className="table-cell">{formatarData(tx.data)}</td>
-                  <td className="table-cell">{tx.tipoOperacao}</td>
-                  <td className="table-cell">{tx.numeroBoleto}</td>
-                  <td className="table-cell">R$ {tx.valor.toFixed(2)}</td>
-                  <td className="table-cell">R$ {tx.taxas}</td>
-                  <td className="table-cell">{formatarEndereco(tx.contraparte)}</td>
-                  <td className="table-cell">{renderBadgeStatus(tx.status)}</td>
+                <tr key={tx.id} className="border-b border-gray-200 hover:bg-gray-50">
+                  <td className="p-4">{formatarData(tx.data)}</td>
+                  <td className="p-4">{tx.tipoOperacao}</td>
+                  <td className="p-4">{tx.numeroBoleto}</td>
+                  <td className="p-4">R$ {tx.valor.toFixed(2)}</td>
+                  <td className="p-4">R$ {tx.taxas}</td>
+                  <td className="p-4">{formatarEndereco(tx.contraparte)}</td>
+                  <td className="p-4">{renderBadgeStatus(tx.status)}</td>
                 </tr>
               ))
             ) : (
               <tr>
-                <td colSpan="7" className="table-cell text-center py-8">
+                <td colSpan="7" className="p-8 text-center">
                   <div className="text-gray-500">
                     <p>Nenhuma transação encontrada para os filtros selecionados.</p>
                     <p className="text-sm mt-1">Tente ajustar seus filtros ou período de busca.</p>
@@ -284,22 +284,31 @@ function HistoricoTransacoes({ tipoUsuario = 'comprador' }) {
       </div>
       
       {/* Resumo de transações */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-md">
-          <div className="text-sm text-blue-600">Total de Transações</div>
-          <div className="text-xl font-bold text-blue-900">{transacoesFiltradas.length}</div>
-        </div>
-        <div className="bg-green-50 border-l-4 border-green-500 p-4 rounded-r-md">
-          <div className="text-sm text-green-600">Valor Total</div>
-          <div className="text-xl font-bold text-green-900">
-            R$ {transacoesFiltradas.reduce((acc, tx) => acc + tx.valor, 0).toFixed(2)}
-          </div>
-        </div>
-        <div className="bg-purple-50 border-l-4 border-purple-500 p-4 rounded-r-md">
-          <div className="text-sm text-purple-600">Total de Taxas</div>
-          <div className="text-xl font-bold text-purple-900">
-            R$ {transacoesFiltradas.reduce((acc, tx) => acc + parseFloat(tx.taxas), 0).toFixed(2)}
-          </div>
+      <div className="mt-6">
+        <h3 className="text-lg font-semibold mb-2">Resumo</h3>
+        <div className="border rounded-md overflow-hidden">
+          <table className="w-full border-collapse">
+            <thead className="bg-green-800 text-white">
+              <tr>
+                <th className="p-3 text-left border-b border-r">Descrição</th>
+                <th className="p-3 text-left border-b">Valores</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-b">
+                <td className="p-3 font-medium border-r">Total de Transações</td>
+                <td className="p-3">{transacoesFiltradas.length}</td>
+              </tr>
+              <tr className="border-b">
+                <td className="p-3 font-medium border-r">Valor Total</td>
+                <td className="p-3">R$ {transacoesFiltradas.reduce((acc, tx) => acc + tx.valor, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+              <tr>
+                <td className="p-3 font-medium border-r">Total de Taxas</td>
+                <td className="p-3">R$ {transacoesFiltradas.reduce((acc, tx) => acc + parseFloat(tx.taxas), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
