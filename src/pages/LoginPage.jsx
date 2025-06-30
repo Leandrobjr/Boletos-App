@@ -1,8 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle, FaLock, FaEnvelope, FaExclamationTriangle, FaUser, FaIdCard, FaPhone } from 'react-icons/fa';
+import { useAuth } from '../components/auth/AuthProvider';
+import LoginButton from '../components/auth/LoginButton';
 
-function LoginPage({ onLogin }) {
+function LoginPage() {
+  const { login, isAuthenticated, loading } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showGoogleForm, setShowGoogleForm] = useState(false);
@@ -13,11 +17,30 @@ function LoginPage({ onLogin }) {
     endereco: ''
   });
   
-  const handleSubmit = (e) => {
+  // Redirecionar se já estiver autenticado
+  if (isAuthenticated) {
+    navigate('/app');
+    return null;
+  }
+  
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Simulação de login bem-sucedido
-    onLogin();
-    // Redirecionamento seria feito pelo Router
+    try {
+      // Aqui você implementaria a lógica de login com email/senha
+      console.log('Login com email/senha:', { email, password });
+      // Por enquanto, vamos usar o login do Google
+      await login();
+    } catch (error) {
+      console.error('Erro no login:', error);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    try {
+      await login();
+    } catch (error) {
+      console.error('Erro no login com Google:', error);
+    }
   };
 
   return (
@@ -93,8 +116,10 @@ function LoginPage({ onLogin }) {
             <button
               type="submit"
               className="btn-primary w-full flex justify-center"
+              disabled={loading}
             >
-              <FaLock className="mr-2" /> Acessar com senha
+              <FaLock className="mr-2" /> 
+              {loading ? 'Conectando...' : 'Acessar com senha'}
             </button>
           </div>
         </form>
@@ -110,13 +135,10 @@ function LoginPage({ onLogin }) {
           </div>
           
           <div className="mt-6">
-            <button
-              type="button"
-              onClick={() => setShowGoogleForm(true)}
-              className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-            >
-              <FaGoogle className="mr-2 text-red-500" /> Acessar com Google
-            </button>
+            <LoginButton 
+              fullWidth={true}
+              onClick={handleGoogleLogin}
+            />
           </div>
         </div>
         
@@ -151,8 +173,7 @@ function LoginPage({ onLogin }) {
             
             <form onSubmit={(e) => {
               e.preventDefault();
-              // Simular login bem-sucedido após preenchimento do formulário
-              onLogin();
+              handleGoogleLogin();
               setShowGoogleForm(false);
             }} className="space-y-4">
               {/* Nome completo */}
@@ -212,7 +233,7 @@ function LoginPage({ onLogin }) {
                     value={googleUserData.telefone}
                     onChange={(e) => setGoogleUserData({...googleUserData, telefone: e.target.value})}
                     className="form-input pl-10"
-                    placeholder="(00) 00000-0000"
+                    placeholder="(11) 99999-9999"
                     required
                   />
                 </div>
@@ -221,25 +242,33 @@ function LoginPage({ onLogin }) {
               {/* Endereço */}
               <div>
                 <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-1">
-                  Endereço
+                  Endereço completo
                 </label>
                 <textarea
                   id="endereco"
                   value={googleUserData.endereco}
                   onChange={(e) => setGoogleUserData({...googleUserData, endereco: e.target.value})}
                   className="form-input"
-                  placeholder="Seu endereço completo"
                   rows="3"
+                  placeholder="Rua, número, bairro, cidade, estado, CEP"
                   required
-                ></textarea>
+                />
               </div>
               
-              <div className="mt-6">
+              <div className="flex space-x-3">
+                <button
+                  type="button"
+                  onClick={() => setShowGoogleForm(false)}
+                  className="flex-1 btn-secondary"
+                >
+                  Cancelar
+                </button>
                 <button
                   type="submit"
-                  className="btn-primary w-full flex justify-center"
+                  className="flex-1 btn-primary"
+                  disabled={loading}
                 >
-                  Finalizar cadastro e acessar
+                  {loading ? 'Completando...' : 'Completar cadastro'}
                 </button>
               </div>
             </form>

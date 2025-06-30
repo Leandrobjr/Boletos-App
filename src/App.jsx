@@ -4,6 +4,9 @@ import { useState } from 'react';
 // Componentes de layout
 import Layout from './components/Layout';
 
+// Sistema de autenticação
+import { AuthProvider, useAuth } from './components/auth/AuthProvider';
+
 // Páginas
 import LoginPage from './pages/LoginPage';
 import CadastroPage from './pages/CadastroPage';
@@ -13,27 +16,60 @@ import CompradorPageSimples from './pages/CompradorPageSimples';
 import DashboardGestaoPage from './pages/DashboardGestaoPage';
 import UIShowcasePage from './pages/UIShowcasePage';
 import Landpage from './pages/Landpage';
+import HomePage from './pages/HomePage';
+import ConfirmacaoCompra from './pages/ConfirmacaoCompra';
 
-function App() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
+// Componente de rota protegida
+function ProtectedRoute({ children }) {
+  const { isAuthenticated, loading } = useAuth();
   
-  // Função simulada de autenticação
-  const handleLogin = () => {
-    setIsAuthenticated(true);
-  };
+  if (loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #22c55e',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return children;
+}
 
+function AppRoutes() {
   return (
     <Router>
       <Routes>
         <Route path="/" element={<Landpage />} />
-        <Route path="/login" element={
-          <LoginPage onLogin={handleLogin} />
-        } />
+        <Route path="/home" element={<HomePage />} />
+        <Route path="/login" element={<LoginPage />} />
         <Route path="/cadastro" element={<CadastroPage />} />
         
         {/* Rotas protegidas */}
         <Route path="/app" element={
-          <Layout />
+          <ProtectedRoute>
+            <Layout />
+          </ProtectedRoute>
         }>
           <Route index element={<Navigate to="/app/comprador" />} />
           <Route path="vendedor" element={<VendedorPage />} />
@@ -41,9 +77,18 @@ function App() {
           <Route path="comprador-original" element={<CompradorPage />} />
           <Route path="gestao" element={<DashboardGestaoPage />} />
           <Route path="ui" element={<UIShowcasePage />} />
+          <Route path="confirmacao/:id" element={<ConfirmacaoCompra />} />
         </Route>
       </Routes>
     </Router>
+  );
+}
+
+function App() {
+  return (
+    <AuthProvider>
+      <AppRoutes />
+    </AuthProvider>
   );
 }
 
