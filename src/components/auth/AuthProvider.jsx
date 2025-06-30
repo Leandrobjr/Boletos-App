@@ -5,8 +5,7 @@ import {
   subscribeToAuthChanges, 
   getCurrentUser, 
   signOutUser 
-} from '../services/tokenAuthManager';
-import { CircularProgress, Box } from '@mui/material';
+} from '../../services/tokenAuthManager';
 
 // Criar contexto de autenticação
 const AuthContext = createContext(null);
@@ -197,9 +196,27 @@ export const AuthProvider = ({ children }) => {
   // Se ainda estamos inicializando, mostrar indicador de carregamento
   if (!initialized) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <CircularProgress />
-      </Box>
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        height: '100vh'
+      }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '4px solid #f3f3f3',
+          borderTop: '4px solid #22c55e',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }}></div>
+        <style>{`
+          @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+          }
+        `}</style>
+      </div>
     );
   }
 

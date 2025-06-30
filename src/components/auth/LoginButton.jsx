@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Button, CircularProgress, Box, Typography, Alert, Collapse, Snackbar } from '@mui/material';
-import GoogleIcon from '@mui/icons-material/Google';
+import { FaGoogle } from 'react-icons/fa';
+import Button from '../ui/Button';
+import { Alert, AlertTitle, AlertDescription } from '../ui/alert';
 import { useAuth } from './AuthProvider';
-import TrackingPreventionHelp from './TrackingPreventionHelp';
 
 /**
  * Botão de login simplificado e robusto que funciona em todos os navegadores
@@ -135,57 +135,72 @@ const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false
   }, [localError, loginAttempts]);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2, width: fullWidth ? '100%' : 'auto' }}>
+    <div style={{ 
+      display: 'flex', 
+      flexDirection: 'column', 
+      alignItems: 'center', 
+      gap: '16px', 
+      width: fullWidth ? '100%' : 'auto' 
+    }}>
       {localError && (
-        <Alert severity="error" sx={{ width: '100%' }}>
-          {localError}
+        <Alert variant="destructive">
+          <AlertTitle>Erro</AlertTitle>
+          <AlertDescription>{localError}</AlertDescription>
         </Alert>
       )}
       
       {trackingProtectionActive && !localError && (
-        <Alert severity="warning" sx={{ width: '100%', mb: 2 }}>
-          Detectamos que seu navegador está com proteção contra rastreamento ativada. Isso pode causar problemas no login.
+        <Alert>
+          <AlertTitle>Aviso</AlertTitle>
+          <AlertDescription>
+            Detectamos que seu navegador está com proteção contra rastreamento ativada. Isso pode causar problemas no login.
+          </AlertDescription>
         </Alert>
       )}
       
       <Button
-        variant={variant}
-        color="primary"
-        startIcon={localLoading ? <CircularProgress size={20} color="inherit" /> : <GoogleIcon />}
-        onClick={handleLogin}
-        disabled={localLoading || loading}
+        variant="primary"
+        size="md"
         fullWidth={fullWidth}
-        sx={{
+        disabled={localLoading || loading}
+        onClick={handleLogin}
+        leftIcon={localLoading ? (
+          <div style={{
+            width: '20px',
+            height: '20px',
+            border: '2px solid #ffffff',
+            borderTop: '2px solid transparent',
+            borderRadius: '50%',
+            animation: 'spin 1s linear infinite'
+          }}></div>
+        ) : <FaGoogle />}
+        style={{
           position: 'relative',
           overflow: 'hidden',
-          '&::after': trackingProtectionActive ? {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            background: 'rgba(255,255,0,0.1)',
-            pointerEvents: 'none'
-          } : {}
+          ...(trackingProtectionActive && {
+            '&::after': {
+              content: '""',
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              background: 'rgba(255,255,0,0.1)',
+              pointerEvents: 'none'
+            }
+          })
         }}
       >
         {localLoading ? 'Conectando...' : 'Entrar com Google'}
       </Button>
       
-      {/* Exibir ajuda para proteção contra rastreamento quando relevante */}
-      <Collapse in={isTrackingPreventionError || trackingProtectionActive} sx={{ width: '100%' }}>
-        <TrackingPreventionHelp />
-      </Collapse>
-      
-      {/* Notificação para avisos de console */}
-      <Snackbar 
-        open={showConsoleWarning} 
-        autoHideDuration={6000} 
-        onClose={() => setShowConsoleWarning(false)}
-        message="Alguns avisos do navegador são normais durante o processo de login e não afetam o funcionamento."
-      />
-    </Box>
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
   );
 };
 
