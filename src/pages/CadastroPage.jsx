@@ -1,223 +1,194 @@
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { FaUser, FaEnvelope, FaPhone, FaLock, FaEye, FaEyeSlash } from 'react-icons/fa';
+console.log("CadastroPage ATIVO")
+import React, { useState } from 'react';
+import HeaderBXC from '../components/HeaderBXC';
+import FooterBXC from '../components/FooterBXC';
 
-function CadastroPage() {
-  const navigate = useNavigate();
-  const [formData, setFormData] = useState({
-    nome: '',
-    email: '',
-    telefone: '',
-    senha: '',
-    confirmarSenha: ''
-  });
+const CadastroPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-  
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    
-    // Validação simples
-    if (formData.senha !== formData.confirmarSenha) {
-      alert('As senhas não coincidem!');
-      return;
-    }
-    
-    // Simulação de cadastro bem-sucedido
-    console.log('Cadastro realizado com sucesso:', formData);
-    navigate('/login');
-  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-primary to-secondary flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-primary">Criar Conta</h1>
-          <p className="text-gray-600 mt-2">Preencha os dados para se cadastrar</p>
-        </div>
-        
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {/* Nome Completo */}
-          <div>
-            <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
-              Nome Completo
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaUser className="text-gray-400" />
+    <div className="min-h-screen bg-gradient-to-br from-lime-100 to-green-100 flex flex-col">
+      <HeaderBXC />
+      <div style={{ height: '80px' }} />
+      <main className="flex-1 flex items-center justify-center p-4">
+        <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-xl border border-green-200 overflow-hidden mx-auto flex flex-col" style={{margin: '0 auto'}}>
+          {/* Header */}
+          <div className="bg-gradient-to-r from-green-600 to-green-700 px-8 py-6 text-center">
+            <h1 className="text-2xl font-bold text-white mb-1">Criar Conta</h1>
+            <p className="text-green-100 text-sm">Preencha os dados para se cadastrar</p>
+          </div>
+
+          {/* Form */}
+          <div className="pt-6 pb-8 flex flex-col">
+            <form className="space-y-4 w-full px-8">
+              <div className="w-full flex flex-col gap-4">
+                {/* Nome Completo */}
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Nome Completo
+                  </label>
+                  <input
+                    type="text"
+                    className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    placeholder="Digite seu nome completo"
+                    required
+                  />
+                </div>
+
+                {/* Email */}
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    E-mail
+                  </label>
+                  <input
+                    type="email"
+                    className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    placeholder="seu@email.com"
+                    required
+                  />
+                </div>
+
+                {/* Telefone */}
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Telefone Celular
+                  </label>
+                  <input
+                    type="tel"
+                    className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    placeholder="(11) 99999-9999"
+                    required
+                  />
+                </div>
+
+                {/* Senha */}
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Senha
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type={showPassword ? 'text' : 'password'}
+                      className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors pr-12"
+                      placeholder="Mínimo 8 caracteres"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-transparent border-none p-0 m-0 focus:outline-none"
+                      style={{background: 'transparent', border: 'none', padding: 0, margin: 0}}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#222" strokeWidth="2" style={{display: 'block'}}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Confirmar Senha */}
+                <div className="w-full">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirmar Senha
+                  </label>
+                  <div className="relative w-full">
+                    <input
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors pr-12"
+                      placeholder="Confirme sua senha"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-transparent border-none p-0 m-0 focus:outline-none"
+                      style={{background: 'transparent', border: 'none', padding: 0, margin: 0}}
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#222" strokeWidth="2" style={{display: 'block'}}>
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Checkbox */}
+                <div className="flex items-start space-x-3 pt-2">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    required
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-600">
+                    Concordo com os{' '}
+                    <a href="#" className="text-green-600 hover:text-green-700 underline font-medium">
+                      Termos de Serviço
+                    </a>{' '}
+                    e{' '}
+                    <a href="#" className="text-green-600 hover:text-green-700 underline font-medium">
+                      Política de Privacidade
+                    </a>
+                  </label>
+                </div>
+
+                {/* Botão Criar Conta */}
+                <button
+                  type="submit"
+                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-700 hover:to-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] mt-2"
+                  style={{display: 'block', width: '100%'}}
+                >
+                  Criar Conta
+                </button>
               </div>
-              <input
-                id="nome"
-                name="nome"
-                type="text"
-                value={formData.nome}
-                onChange={handleChange}
-                className="form-input pl-10"
-                placeholder="Seu nome completo"
-                required
-              />
+            </form>
+
+            {/* Divisor */}
+            <div className="flex items-center my-4">
+              <div className="flex-1 border-t border-gray-300"></div>
+              <span className="px-4 text-sm text-gray-500 bg-white">ou</span>
+              <div className="flex-1 border-t border-gray-300"></div>
             </div>
-          </div>
-          
-          {/* E-mail */}
-          <div>
-            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-              E-mail
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaEnvelope className="text-gray-400" />
-              </div>
-              <input
-                id="email"
-                name="email"
-                type="email"
-                value={formData.email}
-                onChange={handleChange}
-                className="form-input pl-10"
-                placeholder="seu@email.com"
-                required
-              />
-            </div>
-          </div>
-          
-          {/* Telefone Celular */}
-          <div>
-            <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-1">
-              Telefone Celular
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaPhone className="text-gray-400" />
-              </div>
-              <input
-                id="telefone"
-                name="telefone"
-                type="tel"
-                value={formData.telefone}
-                onChange={handleChange}
-                className="form-input pl-10"
-                placeholder="(00) 00000-0000"
-                required
-              />
-            </div>
-          </div>
-          
-          {/* Senha */}
-          <div>
-            <label htmlFor="senha" className="block text-sm font-medium text-gray-700 mb-1">
-              Senha
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="text-gray-400" />
-              </div>
-              <input
-                id="senha"
-                name="senha"
-                type={showPassword ? "text" : "password"}
-                value={formData.senha}
-                onChange={handleChange}
-                className="form-input pl-10 pr-10"
-                placeholder="********"
-                minLength="6"
-                required
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowPassword(!showPassword)}
-              >
-                {showPassword ? (
-                  <FaEyeSlash className="text-gray-400" />
-                ) : (
-                  <FaEye className="text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
-          
-          {/* Confirmar Senha */}
-          <div>
-            <label htmlFor="confirmarSenha" className="block text-sm font-medium text-gray-700 mb-1">
-              Confirmar Senha
-            </label>
-            <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                <FaLock className="text-gray-400" />
-              </div>
-              <input
-                id="confirmarSenha"
-                name="confirmarSenha"
-                type={showConfirmPassword ? "text" : "password"}
-                value={formData.confirmarSenha}
-                onChange={handleChange}
-                className="form-input pl-10 pr-10"
-                placeholder="********"
-                minLength="6"
-                required
-              />
-              <button
-                type="button"
-                className="absolute inset-y-0 right-0 pr-3 flex items-center"
-                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-              >
-                {showConfirmPassword ? (
-                  <FaEyeSlash className="text-gray-400" />
-                ) : (
-                  <FaEye className="text-gray-400" />
-                )}
-              </button>
-            </div>
-          </div>
-          
-          {/* Termos e Condições */}
-          <div className="flex items-start">
-            <div className="flex items-center h-5">
-              <input
-                id="termos"
-                name="termos"
-                type="checkbox"
-                className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
-                required
-              />
-            </div>
-            <div className="ml-3 text-sm">
-              <label htmlFor="termos" className="text-gray-700">
-                Concordo com os <a href="#" className="text-primary hover:underline">Termos de Serviço</a> e <a href="#" className="text-primary hover:underline">Política de Privacidade</a>
-              </label>
-            </div>
-          </div>
-          
-          <div>
+
+            {/* Botão Google padrão Landpage */}
             <button
-              type="submit"
-              className="btn-primary w-full flex justify-center"
+              type="button"
+              className="w-full max-w-[400px] flex items-center justify-center gap-3 border border-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 mx-auto mb-2"
+              style={{height: '48px', background: '#fff'}}
             >
-              Criar Conta
+              <svg width="20" height="20" viewBox="0 0 20 20" className="w-5 h-5" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <g clipPath="url(#clip0_993_771)">
+                  <path d="M19.805 10.23c0-.68-.06-1.36-.18-2.02H10v3.82h5.58c-.24 1.28-.97 2.36-2.07 3.08v2.56h3.34c1.96-1.81 3.09-4.48 3.09-7.44z" fill="#4285F4"/>
+                  <path d="M10 20c2.7 0 4.97-.89 6.63-2.41l-3.34-2.56c-.93.62-2.12.99-3.29.99-2.53 0-4.68-1.71-5.44-4.01H1.09v2.62C2.82 17.98 6.13 20 10 20z" fill="#34A853"/>
+                  <path d="M4.56 11.99A5.98 5.98 0 014.22 10c0-.69.12-1.36.34-1.99V5.39H1.09A9.98 9.98 0 000 10c0 1.64.39 3.19 1.09 4.61l3.47-2.62z" fill="#FBBC05"/>
+                  <path d="M10 3.96c1.48 0 2.8.51 3.85 1.51l2.89-2.89C15.01.98 12.74 0 10 0 6.13 0 2.82 2.02 1.09 5.39l3.47 2.62C5.32 5.67 7.47 3.96 10 3.96z" fill="#EA4335"/>
+                </g>
+                <defs>
+                  <clipPath id="clip0_993_771">
+                    <rect width="20" height="20" fill="white"/>
+                  </clipPath>
+                </defs>
+              </svg>
+              <span style={{color: '#444', fontWeight: 500}}>Entrar com Google</span>
             </button>
+
+            {/* Link Login */}
+            <div className="text-center mt-4">
+              <p className="text-sm text-gray-600">
+                Já tem uma conta?{' '}
+                <a href="#" className="text-green-600 hover:text-green-700 font-medium underline">
+                  Faça login
+                </a>
+              </p>
+            </div>
           </div>
-        </form>
-        
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-600">
-            Já tem uma conta?{' '}
-            <Link to="/login" className="text-primary font-medium hover:underline">
-              Faça login
-            </Link>
-          </p>
         </div>
-      </div>
+      </main>
+      <FooterBXC />
     </div>
   );
-}
+};
 
 export default CadastroPage;
