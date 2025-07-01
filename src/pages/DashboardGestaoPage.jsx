@@ -11,8 +11,6 @@ import {
   FaUserCheck, 
   FaIdCard 
 } from 'react-icons/fa';
-import HeaderBXC from '../components/HeaderBXC';
-import FooterBXC from '../components/FooterBXC';
 
 function DashboardGestaoPage() {
   // Estado para controle de abas
@@ -250,11 +248,9 @@ function DashboardGestaoPage() {
 
   return (
     <div className="min-h-screen bg-lime-100 flex flex-col">
-      <HeaderBXC />
-      <div style={{ height: '80px' }} />
-      <main className="flex-1 container mx-auto px-4 py-8">
+      <main className="flex-1 container mx-auto px-4 py-1">
         <div className="space-y-6">
-          <h1 className="text-3xl font-bold text-greenDark bitcoin-font">Dashboard de Gestão</h1>
+          <h1 className="text-3xl font-bold mb-2 text-greenDark bitcoin-font">Dashboard de Gestão</h1>
           
           {/* Sistema de abas */}
           <div className="border-b border-gray-200">
@@ -599,7 +595,6 @@ function DashboardGestaoPage() {
           )}
         </div>
       </main>
-      <FooterBXC />
     </div>
   );
 }

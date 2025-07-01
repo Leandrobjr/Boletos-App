@@ -19,8 +19,6 @@ import {
   Alert, AlertTitle, AlertDescription
 } from '../components/ui/alert';
 import Button from '../components/ui/button';
-import HeaderBXC from '../components/HeaderBXC';
-import FooterBXC from '../components/FooterBXC';
 
 function VendedorPage() {
   const [activeTab, setActiveTab] = useState('cadastrar');
@@ -113,10 +111,8 @@ function VendedorPage() {
 
   return (
     <div className="min-h-screen bg-lime-300 flex flex-col">
-      <HeaderBXC />
-      <div style={{ height: '80px' }} />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 bg-green-800 text-white p-4 rounded-lg text-center">Portal do Vendedor</h1>
+      <main className="flex-1 container mx-auto px-4 py-1">
+        <h1 className="text-3xl font-bold mb-2 bg-green-800 text-white p-2 rounded-lg text-center">Portal do Vendedor</h1>
 
         {alertInfo && (
           <Alert variant={alertInfo.type} className="mb-6" onClick={() => setAlertInfo(null)}>
@@ -319,7 +315,6 @@ function VendedorPage() {
           </TabsContent>
         </Tabs>
       </main>
-      <FooterBXC />
     </div>
   );
 }

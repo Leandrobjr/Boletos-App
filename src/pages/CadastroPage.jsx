@@ -1,17 +1,32 @@
 console.log("CadastroPage ATIVO")
 import React, { useState } from 'react';
-import HeaderBXC from '../components/HeaderBXC';
-import FooterBXC from '../components/FooterBXC';
+// import FooterBXC from '../components/FooterBXC';
+import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { useNavigate, Link } from 'react-router-dom';
 
 const CadastroPage = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [googleError, setGoogleError] = useState(null);
+  const navigate = useNavigate();
+
+  const handleGoogleLogin = async () => {
+    setGoogleError(null);
+    try {
+      const auth = getAuth();
+      const provider = new GoogleAuthProvider();
+      const result = await signInWithPopup(auth, provider);
+      if (result && result.user) {
+        navigate('/');
+      }
+    } catch (error) {
+      setGoogleError('Erro ao fazer login com Google.');
+    }
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-lime-100 to-green-100 flex flex-col">
-      <HeaderBXC />
-      <div style={{ height: '80px' }} />
-      <main className="flex-1 flex items-center justify-center p-4">
+    <>
+      <main className="flex-1 flex items-center justify-center p-2 mt-2">
         <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-xl border border-green-200 overflow-hidden mx-auto flex flex-col" style={{margin: '0 auto'}}>
           {/* Header */}
           <div className="bg-gradient-to-r from-green-600 to-green-700 px-8 py-6 text-center">
@@ -153,10 +168,14 @@ const CadastroPage = () => {
             </div>
 
             {/* Botão Google padrão Landpage */}
+            {googleError && (
+              <div className="text-red-600 text-sm text-center mb-2">{googleError}</div>
+            )}
             <button
               type="button"
               className="w-full max-w-[400px] flex items-center justify-center gap-3 border border-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 mx-auto mb-2"
               style={{height: '48px', background: '#fff'}}
+              onClick={handleGoogleLogin}
             >
               <svg width="20" height="20" viewBox="0 0 20 20" className="w-5 h-5" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_993_771)">
@@ -176,18 +195,19 @@ const CadastroPage = () => {
 
             {/* Link Login */}
             <div className="text-center mt-4">
-              <p className="text-sm text-gray-600">
-                Já tem uma conta?{' '}
-                <a href="#" className="text-green-600 hover:text-green-700 font-medium underline">
-                  Faça login
-                </a>
-              </p>
+              <span className="text-gray-600">Já tem cadastro?</span>{' '}
+              <Link
+                to="/login"
+                className="text-green-700 hover:text-green-900 font-semibold underline cursor-pointer"
+              >
+                Entrar
+              </Link>
             </div>
           </div>
         </div>
       </main>
-      <FooterBXC />
-    </div>
+      <div style={{background:'#0ff',padding:4,textAlign:'center',fontWeight:900}}>RODAPÉ ATIVO</div>
+    </>
   );
 };
 

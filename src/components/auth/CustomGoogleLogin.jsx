@@ -1,7 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { Button, CircularProgress, Typography, Box, Alert } from '@mui/material';
+import React, { useState } from 'react';
 import { getAuth, GoogleAuthProvider, signInWithPopup, setPersistence, browserSessionPersistence } from 'firebase/auth';
-import GoogleIcon from '@mui/icons-material/Google';
+import { FaGoogle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 
 const CustomGoogleLogin = () => {
@@ -11,6 +10,7 @@ const CustomGoogleLogin = () => {
 
   // Login com Google
   const handleGoogleLogin = async () => {
+    console.log('Botão CustomGoogleLogin clicado');
     try {
       setLoading(true);
       setError(null);
@@ -53,7 +53,7 @@ const CustomGoogleLogin = () => {
   };
 
   // Verificar se o usuário já está logado ao carregar
-  useEffect(() => {
+  React.useEffect(() => {
     const auth = getAuth();
     const unsubscribe = auth.onAuthStateChanged(user => {
       if (user) {
@@ -68,38 +68,18 @@ const CustomGoogleLogin = () => {
   }, [navigate]);
 
   return (
-    <Box sx={{ mt: 2 }}>
-      {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
-          {error}
-        </Alert>
-      )}
-      
-      <Button 
-        id="google-login-button"
-        variant="contained"
-        color="primary"
-        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <GoogleIcon />}
+    <div className="flex flex-col items-center gap-4 w-full">
+      <button
         onClick={handleGoogleLogin}
+        className="flex items-center justify-center gap-2 w-full max-w-xs bg-white border border-gray-300 text-gray-700 font-semibold py-2 px-4 rounded-lg shadow hover:bg-gray-100 transition"
         disabled={loading}
-        fullWidth
-        sx={{
-          backgroundColor: '#4285F4',
-          '&:hover': {
-            backgroundColor: '#357ae8',
-          },
-          py: 1.2
-        }}
+        type="button"
       >
-        Entrar com Google
-      </Button>
-      
-      {error && (
-        <Alert severity="error" sx={{ mt: 2 }}>
-          {error}
-        </Alert>
-      )}
-    </Box>
+        <FaGoogle className="text-lg" />
+        {loading ? 'Entrando...' : 'Entrar com Google'}
+      </button>
+      {error && <div className="text-red-600 text-sm text-center">{error}</div>}
+    </div>
   );
 };
 

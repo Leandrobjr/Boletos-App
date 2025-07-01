@@ -1,5 +1,4 @@
 import React from "react";
-import { Box } from '@mui/material';
 import LoginButton from './LoginButton';
 
 function LoginGoogle() {
@@ -7,13 +6,9 @@ function LoginGoogle() {
   // que já contém toda a lógica de autenticação
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2 }}>
-      <LoginButton 
-        variant="contained" 
-        size="medium" 
-        fullWidth={false} 
-      />
-    </Box>
+    <div className="flex flex-col items-center gap-4 w-full">
+      <LoginButton variant="primary" size="md" fullWidth={false} />
+    </div>
   );
 }
 

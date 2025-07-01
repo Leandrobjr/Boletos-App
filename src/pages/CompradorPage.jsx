@@ -10,8 +10,6 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '../components/ui/alert';
-import HeaderBXC from '../components/HeaderBXC';
-import FooterBXC from '../components/FooterBXC';
 
 const CompradorPage = () => {
   const [activeTab, setActiveTab] = useState('comprar');
@@ -210,10 +208,8 @@ const CompradorPage = () => {
 
   return (
     <div className="min-h-screen bg-lime-300 flex flex-col">
-      <HeaderBXC />
-      <div style={{ height: '80px' }} />
-      <main className="flex-1 container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 bg-green-800 text-white p-4 rounded-lg text-center">
+      <main className="flex-1 container mx-auto px-4 py-1">
+        <h1 className="text-3xl font-bold mb-2 bg-green-800 text-white p-2 rounded-lg text-center">
           Portal do Comprador
         </h1>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
@@ -406,7 +402,6 @@ const CompradorPage = () => {
           </Alert>
         )}
       </main>
-      <FooterBXC />
       {showModal && selectedBoleto && createPortal(
         <React.Fragment>
           <div

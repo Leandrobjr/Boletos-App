@@ -1,7 +1,7 @@
 import React from 'react';
-import { Container, Typography, Box, Paper, Grid, Button } from '@mui/material';
+import { FaUser, FaFileInvoiceDollar } from 'react-icons/fa';
 import { Link as RouterLink } from 'react-router-dom';
-import { useAuth } from '../components/AuthProvider';
+import { useAuth } from '../components/auth/AuthProvider';
 
 /**
  * Página inicial da aplicação
@@ -10,81 +10,42 @@ const HomePage = () => {
   const { isAuthenticated } = useAuth();
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h3" component="h1" gutterBottom align="center">
-          Bem-vindo à Plataforma BXC
-        </Typography>
-        
-        <Typography variant="h5" component="h2" gutterBottom align="center" color="text.secondary">
-          Sua solução completa para transações seguras
-        </Typography>
-        
-        <Box sx={{ mt: 6, mb: 4 }}>
-          <Grid container spacing={4}>
-            <Grid item xs={12} md={4}>
-              <Paper elevation={3} sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h5" component="h3" gutterBottom>
-                  Para Compradores
-                </Typography>
-                <Typography variant="body1" paragraph>
-                  Acesse uma plataforma segura para realizar suas compras com total proteção e garantia.
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  component={RouterLink} 
-                  to={isAuthenticated ? "/comprador" : "/login"}
-                  fullWidth
-                >
-                  Área do Comprador
-                </Button>
-              </Paper>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Paper elevation={3} sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h5" component="h3" gutterBottom>
-                  Para Vendedores
-                </Typography>
-                <Typography variant="body1" paragraph>
-                  Gerencie suas vendas, acompanhe pagamentos e organize seus produtos em um só lugar.
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  component={RouterLink} 
-                  to={isAuthenticated ? "/vendedor" : "/login"}
-                  fullWidth
-                >
-                  Área do Vendedor
-                </Button>
-              </Paper>
-            </Grid>
-            
-            <Grid item xs={12} md={4}>
-              <Paper elevation={3} sx={{ p: 3, height: '100%' }}>
-                <Typography variant="h5" component="h3" gutterBottom>
-                  Sua Conta
-                </Typography>
-                <Typography variant="body1" paragraph>
-                  Acesse seu perfil, gerencie seus dados e acompanhe seu histórico de transações.
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  color="primary" 
-                  component={RouterLink} 
-                  to={isAuthenticated ? "/perfil" : "/login"}
-                  fullWidth
-                >
-                  {isAuthenticated ? "Meu Perfil" : "Entrar"}
-                </Button>
-              </Paper>
-            </Grid>
-          </Grid>
-        </Box>
-      </Box>
-    </Container>
+    <div className="max-w-5xl mx-auto py-8 px-4">
+      <h1 className="text-3xl font-bold text-center mb-4">Bem-vindo à Plataforma BXC</h1>
+      <h2 className="text-xl text-center text-gray-600 mb-8">Sua solução completa para transações seguras</h2>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center">
+          <FaUser className="text-green-600 text-3xl mb-2" />
+          <h3 className="text-lg font-semibold mb-2">Para Compradores</h3>
+          <p className="text-gray-600 text-center mb-4">Acesse uma plataforma segura para realizar suas compras com total proteção e garantia.</p>
+          <RouterLink to={isAuthenticated ? "/app/comprador" : "/login"} className="w-full">
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">Área do Comprador</button>
+          </RouterLink>
+          <RouterLink to={isAuthenticated ? "/app/vendedor" : "/login"} className="w-full mt-2">
+            <button className="w-full bg-lime-500 hover:bg-lime-600 text-green-900 font-semibold py-2 px-4 rounded-lg transition border border-lime-600">QUERO PAGAR BOLETO COM USDT</button>
+          </RouterLink>
+          <RouterLink to={isAuthenticated ? "/app/comprador" : "/login"} className="w-full mt-2">
+            <button className="w-full bg-lime-500 hover:bg-lime-600 text-green-900 font-semibold py-2 px-4 rounded-lg transition border border-lime-600">QUERO COMPRAR USDT</button>
+          </RouterLink>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center">
+          <FaFileInvoiceDollar className="text-green-600 text-3xl mb-2" />
+          <h3 className="text-lg font-semibold mb-2">Para Vendedores</h3>
+          <p className="text-gray-600 text-center mb-4">Cadastre seus boletos e venda com segurança, transparência e agilidade.</p>
+          <RouterLink to={isAuthenticated ? "/app/vendedor" : "/login"} className="w-full">
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">Área do Vendedor</button>
+          </RouterLink>
+        </div>
+        <div className="bg-white rounded-xl shadow-md p-6 flex flex-col items-center">
+          <FaUser className="text-green-600 text-3xl mb-2" />
+          <h3 className="text-lg font-semibold mb-2">Gestão</h3>
+          <p className="text-gray-600 text-center mb-4">Acompanhe o histórico de transações, relatórios e gestão de usuários.</p>
+          <RouterLink to={isAuthenticated ? "/app/gestao" : "/login"} className="w-full">
+            <button className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-4 rounded-lg transition">Dashboard Gestão</button>
+          </RouterLink>
+        </div>
+      </div>
+    </div>
   );
 };
 

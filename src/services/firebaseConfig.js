@@ -5,13 +5,13 @@ import { getStorage, connectStorageEmulator } from "firebase/storage";
 
 // Usar variáveis de ambiente para configuração do Firebase
 const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
-  appId: import.meta.env.VITE_FIREBASE_APP_ID,
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
+  apiKey: "AIzaSyBT4Z_9uvPghikTG0-CSHpF76tYYV_ip-k",
+  authDomain: "projeto-bxc.firebaseapp.com",
+  projectId: "projeto-bxc",
+  storageBucket: "projeto-bxc.firebasestorage.app",
+  messagingSenderId: "1026899015425",
+  appId: "1:1026899015425:web:2c4dad1279094298ce8d00",
+  measurementId: "G-J785DX6VGX"
 };
 
 // Verificar se todas as variáveis de ambiente estão definidas

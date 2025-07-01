@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Container, Typography, Box, Paper, Grid, Tabs, Tab, Button, Divider, Dialog, DialogTitle, DialogContent, DialogActions, List, ListItem, ListItemText, ListItemIcon } from '@mui/material';
-import { useAuth } from '../components/AuthProvider';
+import { useAuth } from '../components/auth/AuthProvider';
 import BoletoForm from '../components/BoletoForm';
 import MeusBoletos from '../components/MeusBoletos';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';

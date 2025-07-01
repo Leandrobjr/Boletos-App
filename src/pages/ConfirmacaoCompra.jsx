@@ -3,8 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { db } from "../services/firebaseConfig";
 import { doc, getDoc, updateDoc } from "firebase/firestore";
 import { ethers } from "ethers";
-import { Container, Typography, Box, Paper, Button, Alert, CircularProgress, Table, TableBody, TableCell, TableContainer, TableRow } from '@mui/material';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
+import { FaWallet } from 'react-icons/fa';
 
 export default function ConfirmacaoCompra() {
   const { id } = useParams();
@@ -46,76 +45,63 @@ export default function ConfirmacaoCompra() {
   }
 
   if (loading) return (
-    <Container maxWidth="md" sx={{ mt: 6, display: 'flex', justifyContent: 'center' }}>
-      <CircularProgress />
-    </Container>
+    <div className="flex items-center justify-center h-screen">
+      <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-primary"></div>
+    </div>
   );
   
   if (!boleto) return (
-    <Container maxWidth="md" sx={{ mt: 6 }}>
-      <Alert severity="error">Boleto não encontrado.</Alert>
-    </Container>
+    <div className="flex items-center justify-center h-screen">
+      <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+        <strong className="font-bold">Erro!</strong>
+        <span className="block sm:inline">Boleto não encontrado.</span>
+      </div>
+    </div>
   );
 
   return (
-    <Container maxWidth="md">
-      <Box sx={{ my: 4 }}>
-        <Typography variant="h4" component="h1" gutterBottom align="center">
-          Confirmação de Compra
-        </Typography>
+    <div className="container mx-auto p-4">
+      <div className="max-w-md mx-auto">
+        <h1 className="text-2xl font-bold mb-4 text-center">Confirmação de Compra</h1>
         
-        <Paper elevation={3} sx={{ p: 3, mt: 4 }}>
-          <Typography variant="h6" gutterBottom sx={{ mb: 3 }}>
-            Detalhes do Boleto
-          </Typography>
+        <div className="bg-white p-4 rounded-lg shadow-md">
+          <h2 className="text-lg font-bold mb-4">Detalhes do Boleto</h2>
           
-          <TableContainer component={Paper} variant="outlined" sx={{ mb: 4 }}>
-            <Table>
-              <TableBody>
-                <TableRow>
-                  <TableCell component="th" sx={{ fontWeight: 'bold', width: '30%' }}>BENEFICIÁRIO - CPF/CNPJ:</TableCell>
-                  <TableCell>{boleto.cpfCnpj}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th" sx={{ fontWeight: 'bold' }}>CÓDIGO DE BARRAS:</TableCell>
-                  <TableCell>{boleto.codigoBarras}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th" sx={{ fontWeight: 'bold' }}>VALOR:</TableCell>
-                  <TableCell>R$ {boleto.valor && boleto.valor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</TableCell>
-                </TableRow>
-                <TableRow>
-                  <TableCell component="th" sx={{ fontWeight: 'bold' }}>DATA VENCIMENTO:</TableCell>
-                  <TableCell>{boleto.vencimento && (boleto.vencimento.toDate ? boleto.vencimento.toDate().toLocaleDateString() : new Date(boleto.vencimento).toLocaleDateString())}</TableCell>
-                </TableRow>
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">BENEFICIÁRIO - CPF/CNPJ:</label>
+            <span className="ml-2 text-gray-500">{boleto.cpfCnpj}</span>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">CÓDIGO DE BARRAS:</label>
+            <span className="ml-2 text-gray-500">{boleto.codigoBarras}</span>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">VALOR:</label>
+            <span className="ml-2 text-gray-500">R$ {boleto.valor && boleto.valor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
+          </div>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700">DATA VENCIMENTO:</label>
+            <span className="ml-2 text-gray-500">{boleto.vencimento && (boleto.vencimento.toDate ? boleto.vencimento.toDate().toLocaleDateString() : new Date(boleto.vencimento).toLocaleDateString())}</span>
+          </div>
           
-          <Typography variant="subtitle1" color="primary" sx={{ fontWeight: 'bold', mb: 3, textAlign: 'center' }}>
-            Quero travar este boleto para pagamento imediato
-          </Typography>
-          
-          <Box sx={{ display: 'flex', justifyContent: 'center', mb: 3 }}>
-            <Button 
-              variant="contained" 
-              color="primary" 
-              size="large"
-              startIcon={<AccountBalanceWalletIcon />}
+          <div className="mt-4 text-center">
+            <button 
+              className="bg-primary text-white px-4 py-2 rounded-md"
               onClick={conectarCarteira}
               disabled={loading}
             >
+              <FaWallet className="inline-block mr-2" size={20} />
               Conectar Carteira
-            </Button>
-          </Box>
+            </button>
+          </div>
           
           {feedback && (
-            <Alert severity={feedback.includes('travado') || feedback.includes('reservado') ? 'success' : 'error'} sx={{ mt: 2 }}>
+            <div className={`mt-2 p-2 rounded-md ${feedback.includes('travado') || feedback.includes('reservado') ? 'bg-green-100 border border-green-400 text-green-700' : 'bg-red-100 border border-red-400 text-red-700'}`}>
               {feedback}
-            </Alert>
+            </div>
           )}
-        </Paper>
-      </Box>
-    </Container>
+        </div>
+      </div>
+    </div>
   );
 }

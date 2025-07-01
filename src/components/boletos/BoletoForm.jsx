@@ -3,17 +3,7 @@ import { collection, addDoc, Timestamp, doc, updateDoc } from 'firebase/firestor
 import { db } from '../services/firebaseConfig';
 import { ethers } from 'ethers';
 import { approveUSDT, lockUSDT } from '../services/escrowService';
-import {
-  Box, Button, Card, CardContent, CardHeader, TextField, Typography,
-  Grid, Divider, InputAdornment, Alert, CircularProgress
-} from '@mui/material';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import CreditCardIcon from '@mui/icons-material/CreditCard';
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
-import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
-import LockIcon from '@mui/icons-material/Lock';
-import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { FaMoneyBillWave, FaCreditCard, FaCalendarAlt, FaUniversity, FaLock, FaWallet, FaCheckCircle } from 'react-icons/fa';
 import { useAccount } from 'wagmi';
 
 function formatarMoeda(valor) {
@@ -263,186 +253,164 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
   }
 
   return (
-    <Card sx={{ maxWidth: 500, mx: 'auto', mt: 6, boxShadow: 6, borderRadius: 4, bgcolor: 'background.paper' }}>
-      <CardHeader
-        avatar={<LockIcon sx={{ color: 'primary.main', fontSize: 36 }} />}
-        title={<Typography variant="h5" fontWeight={700} color="primary.main">Cadastrar novo boleto</Typography>}
-        subheader={<Typography variant="subtitle1" color="text.secondary">Preencha os dados do boleto para vender e travar o valor em USDT</Typography>}
-        sx={{ pb: 0, pt: 3 }}
-      />
-      <Divider sx={{ mb: 2 }} />
-      <CardContent>
-        <Box component="form" onSubmit={handleSubmit} autoComplete="off" noValidate>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <TextField
-                label="CPF/CNPJ"
+    <div className="max-w-500 mx-auto mt-6 box-shadow-6 border-radius-4 bg-background-paper">
+      <div className="flex items-center pb-0 pt-3">
+        <FaLock className="text-primary-main" size={36} />
+        <h2 className="text-2xl font-bold text-primary-main">Cadastrar novo boleto</h2>
+        <p className="text-sm text-text-secondary">Preencha os dados do boleto para vender e travar o valor em USDT</p>
+      </div>
+      <div className="border-b border-b-2 mb-2"></div>
+      <div className="p-4">
+        <form onSubmit={handleSubmit} autoComplete="off" noValidate>
+          <div className="grid grid-cols-12 gap-4">
+            <div className="col-span-12">
+              <input
+                type="text"
+                name="cpfCnpj"
                 value={cpfCnpj}
                 onChange={e => setCpfCnpj(e.target.value.replace(/\D/g, ""))}
-                inputProps={{ maxLength: 18, inputMode: 'numeric', pattern: '[0-9]*' }}
-                error={!!cpfCnpjError}
-                helperText={cpfCnpjError}
-                fullWidth
-                margin="normal"
-                sx={{ fontSize: '1.3rem', height: 56, mb: 2 }}
+                maxLength={18}
+                inputMode="numeric"
+                pattern="[0-9]*"
+                className={`w-full h-14 font-size-1-3rem mb-2 ${cpfCnpjError ? 'border-red-500' : ''}`}
+                placeholder="CPF/CNPJ"
               />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Código de barras"
+              {cpfCnpjError && <p className="text-red-500">{cpfCnpjError}</p>}
+            </div>
+            <div className="col-span-12">
+              <input
+                type="text"
+                name="codigoBarras"
                 value={codigoBarras}
                 onChange={e => setCodigoBarras(e.target.value.replace(/\D/g, ""))}
-                inputProps={{
-                  maxLength: 48,
-                  inputMode: 'numeric',
-                  style: { 
-                    fontFamily: 'monospace', 
-                    letterSpacing: 0.8, 
-                    fontSize: 16
-                  },
+                maxLength={48}
+                inputMode="numeric"
+                style={{
+                  fontFamily: 'monospace',
+                  letterSpacing: 0.8,
+                  fontSize: 16
                 }}
                 required
-                fullWidth
-                error={!!codigoBarrasError}
-                helperText={codigoBarrasError || 'Somente números'}
-                sx={{ 
-                  fontSize: '1.1rem', 
-                  mb: 2, 
-                  '& .MuiInputBase-root': {
-                    width: '100%',
-                  },
-                  '& .MuiInputBase-input': {
-                    width: '100%',
-                    overflow: 'visible'
+                className={`w-full ${codigoBarrasError ? 'border-red-500' : ''}`}
+                placeholder="Código de barras"
+              />
+              {codigoBarrasError && <p className="text-red-500">{codigoBarrasError || 'Somente números'}</p>}
+            </div>
+            <div className="col-span-12 sm:col-span-6">
+              <input
+                type="text"
+                name="valor"
+                value={formatarMoeda(valor)}
+                onChange={e => setValor(e.target.value.replace(/\D/g, ""))}
+                required
+                className="w-full h-14 font-size-1-3rem mb-2"
+                placeholder="Valor em reais"
+                inputProps={{
+                  min: 0,
+                  step: 0.01,
+                  style: { textAlign: 'right' }
+                }}
+              />
+            </div>
+            <div className="col-span-12 sm:col-span-6">
+              <input
+                type="text"
+                name="usdt"
+                value={usdt}
+                className="w-full font-bold font-size-1-3rem letter-spacing-1 text-right bg-f5f5f5 border-radius-4 mb-2"
+                placeholder="Valor em USDT"
+                inputProps={{
+                  readOnly: true,
+                  style: {
+                    fontWeight: 'bold',
+                    fontSize: '1.3rem',
+                    letterSpacing: 1,
+                    textAlign: 'right',
+                    background: '#f5f5f5',
+                    borderRadius: 4,
+                    height: 56
                   }
                 }}
               />
-            </Grid>
-            <Grid container spacing={2} sx={{ mb: 2 }}>
-              <Grid item xs={12}>
-                <TextField
-                  label="Valor em reais"
-                  value={formatarMoeda(valor)}
-                  onChange={e => setValor(e.target.value.replace(/\D/g, ""))}
-                  required
-                  fullWidth
-                  margin="normal"
-                  InputProps={{
-                    inputProps: { min: 0, step: 0.01, style: { textAlign: 'right' } },
-                    startAdornment: <InputAdornment position="start">R$</InputAdornment>,
-                    style: { fontSize: '1.3rem', textAlign: 'right', height: 56 }
-                  }}
-                  sx={{ 
-                    mb: 2,
-                    '& .MuiInputBase-root': { height: 56 },
-                    '& .MuiInputBase-input': { height: 24 }
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12}>
-                <TextField
-                  label="Valor em USDT"
-                  value={usdt}
-                  InputProps={{
-                    readOnly: true,
-                    startAdornment: <InputAdornment position="start">USDT</InputAdornment>,
-                    style: { fontWeight: 'bold', fontSize: '1.3rem', letterSpacing: 1, textAlign: 'right', background: '#f5f5f5', borderRadius: 4, height: 56 }
-                  }}
-                  fullWidth
-                  margin="normal"
-                  sx={{ 
-                    mb: 2,
-                    '& .MuiInputBase-root': { height: 56 },
-                    '& .MuiInputBase-input': { height: 24 }
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={12} sx={{ display: 'flex', alignItems: 'center', mt: 1 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mr: 2 }}>
-                  Cotação USDT/BRL: <b>{cotLoading ? <CircularProgress size={14} /> : cotacao ? `R$ ${cotacao}` : '--'}</b>
-                </Typography>
-                <Button size="small" variant="outlined" color="primary" onClick={buscarCotacao} sx={{ ml: 1 }}>
-                  Atualizar cotação
-                </Button>
-              </Grid>
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Data de vencimento"
+            </div>
+            <div className="col-span-12 sm:col-span-12 flex items-center mt-1">
+              <p className="text-sm text-text-secondary mr-2">
+                Cotação USDT/BRL: <b>{cotLoading ? <div className="animate-spin h-4 w-4 mx-1" /> : cotacao ? `R$ ${cotacao}` : '--'}</b>
+              </p>
+              <button type="button" onClick={buscarCotacao} className="ml-1 text-primary-main text-sm">
+                Atualizar cotação
+              </button>
+            </div>
+            <div className="col-span-12">
+              <input
                 type="date"
+                name="vencimento"
                 value={vencimento}
                 onChange={e => setVencimento(e.target.value)}
                 required
-                fullWidth
+                className="w-full h-14"
                 InputLabelProps={{ shrink: true }}
-                InputProps={{ startAdornment: <CalendarMonthIcon sx={{ mr: 1, color: 'primary.main' }} /> }}
+                InputProps={{
+                  startAdornment: <FaCalendarAlt className="text-primary-main mr-2" size={20} />
+                }}
               />
-            </Grid>
-            <Grid item xs={12}>
-              <TextField
-                label="Instituição emissora"
+            </div>
+            <div className="col-span-12">
+              <input
+                type="text"
+                name="instituicao"
                 value={instituicao}
                 onChange={e => setInstituicao(e.target.value)}
                 required
-                fullWidth
-                InputProps={{ startAdornment: <AccountBalanceIcon sx={{ mr: 1, color: 'primary.main' }} /> }}
+                className="w-full"
+                InputProps={{
+                  startAdornment: <FaUniversity className="text-primary-main mr-2" size={20} />
+                }}
               />
-            </Grid>
+            </div>
             {feedback && (
-              <Grid item xs={12}>
-                <Alert severity={escrowOk ? 'success' : 'error'} sx={{ mb: 2 }}>{feedback}</Alert>
-              </Grid>
+              <div className="col-span-12">
+                <p className={`mb-2 ${escrowOk ? 'text-green-500' : 'text-red-500'}`}>{feedback}</p>
+              </div>
             )}
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-              <Button
+            <div className="col-span-12 sm:col-span-6">
+              <button
                 type="button"
-                variant={isConnected ? "outlined" : "contained"}
-                color={isConnected ? "success" : "primary"}
-                size="large"
-                startIcon={<AccountBalanceWalletIcon />}
+                className={`w-full h-14 ${isConnected ? 'bg-success text-white' : 'bg-primary text-white'}`}
                 onClick={handleWalletConnection}
-                sx={{ mb: 1 }}
                 disabled={carregando}
-                fullWidth
               >
                 {isConnected && address ? 
                   `Conectado: ${address.slice(0, 6)}...${address.slice(-4)}` : 
                   "Conectar Carteira"}
-              </Button>
-            </Grid>
+              </button>
+            </div>
             {isConnected && (
-              <Grid item xs={12} sx={{ mt: 1 }}>
-                <Button
+              <div className="col-span-12 sm:col-span-6 mt-1">
+                <button
                   type="button"
-                  variant="contained"
-                  color="primary"
-                  size="large"
-                  startIcon={<LockIcon />}
+                  className="w-full h-14 bg-primary text-white"
                   onClick={conectarETravar}
-                  sx={{ mb: 1 }}
                   disabled={carregando || !usdt || usdt === "0"}
-                  fullWidth
                 >
                   {carregando ? "Processando..." : "Finalizar e Travar USDT"}
-                </Button>
-              </Grid>
+                </button>
+              </div>
             )}
-            <Grid item xs={12} sx={{ display: 'flex', justifyContent: 'flex-end', mt: 1 }}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                size="large"
-                sx={{ mb: 1 }}
+            <div className="col-span-12 flex justify-end mt-1">
+              <button
+                type="button"
+                className="text-sm text-secondary"
                 onClick={() => window.location.href = '/'}
                 disabled={carregando}
               >
                 Fechar
-              </Button>
-            </Grid>
-          </Grid>
-        </Box>
-      </CardContent>
-    </Card>
+              </button>
+            </div>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 }
 

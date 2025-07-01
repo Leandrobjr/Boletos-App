@@ -6,6 +6,7 @@ import {
   getCurrentUser, 
   signOutUser 
 } from '../../services/tokenAuthManager';
+import { useNavigate } from 'react-router-dom';
 
 // Criar contexto de autenticação
 const AuthContext = createContext(null);
@@ -20,6 +21,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState(null);
   const [initialized, setInitialized] = useState(false);
   const [trackingPreventionDetected, setTrackingPreventionDetected] = useState(false);
+  const navigate = useNavigate();
 
   // Inicialização da autenticação
   const initAuth = useCallback(async () => {
@@ -112,6 +114,12 @@ export const AuthProvider = ({ children }) => {
       }
     };
   }, [initialized, initAuth]);
+
+  useEffect(() => {
+    if (user && (!user.displayName || !user.phoneNumber)) {
+      navigate('/alterar-cadastro');
+    }
+  }, [user, navigate]);
 
   // Função para login
   const login = async () => {

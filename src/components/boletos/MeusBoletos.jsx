@@ -29,7 +29,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import VisibilityIcon from '@mui/icons-material/Visibility';
-import { useAuth } from '../components/AuthProvider';
+import { useAuth } from '../components/auth/AuthProvider';
 
 /**
  * Componente que exibe a lista de boletos cadastrados pelo vendedor

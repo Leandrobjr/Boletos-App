@@ -1,20 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import HeaderBXC from '../components/HeaderBXC';
-import FooterBXC from '../components/FooterBXC';
 
 const infoText = `* Transações seguras com contratos inteligentes na blockchain.\n**Pagar Boleto com USDT: vc cadastra o boleto e trava o valor equivalente em USDT em uma conta segura na blockchain. O COMPRADOR de USDT seleciona o seu boleto, paga em reais e assim que confirmada a baixa do pagamento, recebe os fundos travados. Segurança garantida, sem riscos e sem intermediários.`;
 
 const Landpage = () => {
   return (
-    <div className="bxc-page-container min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #d9f99d 0%, #bef264 100%)', fontFamily: 'Inter, Arial, Helvetica, sans-serif' }}>
-      <HeaderBXC />
-
-      {/* Espaço para o topo fixo */}
-      <div style={{ height: '80px' }} />
-
+    <div className="bxc-page-container min-h-screen flex flex-col" style={{ background: 'linear-gradient(135deg, #d9f99d 0%, #bef264 100%)', fontFamily: 'Inter, Arial, Helvetica, sans-serif', marginTop: 16 }}>
       {/* Seção principal */}
-      <main className="flex-1 flex flex-col items-center justify-start px-4" style={{ marginTop: '0px' }}>
+      <main className="flex-1 flex flex-col items-center justify-start px-4" style={{ marginTop: 0 }}>
         <h1 className="bxc-page-title text-center mb-1 mt-2" style={{ fontSize: '2.3rem', color: '#365314', fontWeight: 900, letterSpacing: '-1px', marginTop: 0 }}>Privacidade total para trocar REAL por CRYPTO</h1>
         <p className="bxc-page-subtitle text-center mb-8 max-w-2xl mx-auto" style={{ fontSize: '1.18rem', color: '#525252', fontWeight: 500, marginTop: 0 }}>A solução mais moderna, segura e privada para pagar boletos com USDT ou comprar USDT com reais, sem burocracia e com taxas baixíssimas.</p>
         <div className="bxc-cards-row" style={{ display: 'flex', flexDirection: 'row', gap: 48, width: '100%', maxWidth: 1100, justifyContent: 'center', alignItems: 'stretch', flexWrap: 'wrap', marginBottom: 24 }}>
@@ -36,8 +29,6 @@ const Landpage = () => {
           {infoText}
         </div>
       </main>
-
-      <FooterBXC />
     </div>
   );
 };

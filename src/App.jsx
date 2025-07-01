@@ -18,6 +18,8 @@ import UIShowcasePage from './pages/UIShowcasePage';
 import Landpage from './pages/Landpage';
 import HomePage from './pages/HomePage';
 import ConfirmacaoCompra from './pages/ConfirmacaoCompra';
+import TestePage from './pages/TestePage';
+import AlterarCadastroPage from './pages/AlterarCadastroPage';
 
 // Componente de rota protegida
 function ProtectedRoute({ children }) {
@@ -58,29 +60,36 @@ function ProtectedRoute({ children }) {
 
 function AppRoutes() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<Landpage />} />
-        <Route path="/home" element={<HomePage />} />
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/cadastro" element={<CadastroPage />} />
-        
-        {/* Rotas protegidas */}
-        <Route path="/app" element={
-          <ProtectedRoute>
-            <Layout />
-          </ProtectedRoute>
-        }>
-          <Route index element={<Navigate to="/app/comprador" />} />
-          <Route path="vendedor" element={<VendedorPage />} />
-          <Route path="comprador" element={<CompradorPage />} />
-          <Route path="comprador-original" element={<CompradorPage />} />
-          <Route path="gestao" element={<DashboardGestaoPage />} />
-          <Route path="ui" element={<UIShowcasePage />} />
-          <Route path="confirmacao/:id" element={<ConfirmacaoCompra />} />
-        </Route>
-      </Routes>
-    </Router>
+    <Routes>
+      <Route path="/" element={<Layout />}>
+        <Route index element={<Landpage />} />
+      </Route>
+      <Route path="/home" element={<HomePage />} />
+      <Route path="/login" element={<LoginPage />} />
+      <Route path="/teste" element={<Layout />}>
+        <Route index element={<TestePage />} />
+      </Route>
+      <Route path="/cadastro" element={<Layout />}>
+        <Route index element={<CadastroPage />} />
+      </Route>
+      <Route path="/alterar-cadastro" element={<Layout />}>
+        <Route index element={<AlterarCadastroPage />} />
+      </Route>
+      {/* Rotas protegidas */}
+      <Route path="/app" element={
+        <ProtectedRoute>
+          <Layout />
+        </ProtectedRoute>
+      }>
+        <Route index element={<Navigate to="/app/comprador" />} />
+        <Route path="vendedor" element={<VendedorPage />} />
+        <Route path="comprador" element={<CompradorPage />} />
+        <Route path="comprador-original" element={<CompradorPage />} />
+        <Route path="gestao" element={<DashboardGestaoPage />} />
+        <Route path="ui" element={<UIShowcasePage />} />
+        <Route path="confirmacao/:id" element={<ConfirmacaoCompra />} />
+      </Route>
+    </Routes>
   );
 }
 

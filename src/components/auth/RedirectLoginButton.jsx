@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { Button, CircularProgress, Typography, Box, Alert } from '@mui/material';
 import { getAuth, GoogleAuthProvider, signInWithRedirect, getRedirectResult, setPersistence, browserSessionPersistence } from 'firebase/auth';
 import GoogleIcon from '@mui/icons-material/Google';
 import { useNavigate } from 'react-router-dom';
@@ -102,55 +101,45 @@ const RedirectLoginButton = () => {
 
   if (checkingRedirect) {
     return (
-      <Box sx={{ display: 'flex', justifyContent: 'center', my: 2 }}>
-        <CircularProgress size={24} />
-      </Box>
+      <div className="flex justify-center my-2">
+        <div className="animate-spin rounded-full h-6 w-6 border-t-4 border-b-4 border-primary"></div>
+      </div>
     );
   }
 
   return (
-    <Box sx={{ mt: 2 }}>
+    <div className="mt-2">
       {error && (
-        <Alert severity="error" sx={{ mb: 2 }}>
+        <div className="mb-2 p-2 bg-red-100 border border-red-400 text-red-700 rounded">
           {error}
-        </Alert>
+        </div>
       )}
       
-      <Button
-        variant="contained"
-        color="primary"
-        startIcon={loading ? <CircularProgress size={20} color="inherit" /> : <GoogleIcon />}
+      <button
+        className="bg-primary text-white font-bold py-2 px-4 rounded w-full"
         onClick={handleGoogleLogin}
         disabled={loading}
-        fullWidth
-        sx={{
-          backgroundColor: '#4285F4',
-          '&:hover': {
-            backgroundColor: '#357ae8',
-          },
-          py: 1.2
-        }}
       >
         {loading ? 'Redirecionando...' : 'Entrar com Google (Redirecionamento)'}
-      </Button>
+      </button>
       
-      <Typography variant="caption" color="textSecondary" sx={{ mt: 1, display: 'block', textAlign: 'center' }}>
+      <p className="text-sm text-gray-500 mt-1 text-center">
         Método alternativo sem popup
-      </Typography>
+      </p>
       
       {error && (
-        <Alert severity="info" sx={{ mt: 2, fontSize: '0.8rem' }}>
-          <Typography variant="caption">
+        <div className="mt-2 p-2 bg-info text-sm">
+          <p className="text-sm">
             Dica: Se estiver usando Safari ou navegador com proteção contra rastreamento ativada, tente:
-            <ul style={{ margin: '5px 0', paddingLeft: '15px' }}>
+            <ul className="list-disc pl-5">
               <li>Desativar temporariamente a proteção contra rastreamento</li>
               <li>Permitir cookies de terceiros para este site</li>
               <li>Usar o Chrome ou Edge para fazer login</li>
             </ul>
-          </Typography>
-        </Alert>
+          </p>
+        </div>
       )}
-    </Box>
+    </div>
   );
 };
 
