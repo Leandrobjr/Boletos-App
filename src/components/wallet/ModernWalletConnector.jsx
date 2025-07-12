@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useAccount, useConnect, useDisconnect, useNetwork, useSwitchNetwork } from "wagmi";
+import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { Wallet, ChevronRight, Copy, ExternalLink, RefreshCw, AlertTriangle, Check } from "lucide-react";
 
 import { Button } from "./ui/button";
@@ -13,11 +13,10 @@ import { Alert, AlertTitle, AlertDescription } from "./ui/alert";
  */
 const ModernWalletConnector = () => {
   // Estados do Wagmi
-  const { address, isConnected, connector: activeConnector } = useAccount();
+  const { address, isConnected, connector: activeConnector, chain } = useAccount();
   const { connect, connectors, error: connectError, isLoading } = useConnect();
   const { disconnect } = useDisconnect();
-  const { chain } = useNetwork();
-  const { switchNetwork, isLoading: isSwitchingNetwork } = useSwitchNetwork();
+  const { chains, switchChain, isPending: isSwitchingNetwork } = useSwitchChain();
 
   // Estados locais para controlar a interface
   const [currentScreen, setCurrentScreen] = useState("initial");
@@ -62,8 +61,8 @@ const ModernWalletConnector = () => {
 
   // Função para trocar para a rede Polygon Amoy
   const switchToPolygonAmoy = () => {
-    if (switchNetwork) {
-      switchNetwork(80002); // ID da rede Polygon Amoy
+    if (switchChain) {
+      switchChain({ chainId: 80002 }); // ID da rede Polygon Amoy
     }
   };
 
