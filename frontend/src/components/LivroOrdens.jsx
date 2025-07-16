@@ -122,7 +122,7 @@ function LivroOrdens() {
               >
                 <td className="table-cell font-medium">{ordem.numeroBoleto}</td>
                 <td className="table-cell">
-                  {ordem.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                  {ordem.valor !== undefined && ordem.valor !== null ? ordem.valor.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '--'}
                 </td>
                 <td className="table-cell">
                   {new Date(ordem.dataVencimento).toLocaleDateString('pt-BR')}

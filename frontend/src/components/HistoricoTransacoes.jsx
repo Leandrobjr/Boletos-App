@@ -281,11 +281,11 @@ function HistoricoTransacoes({ tipoUsuario = 'comprador', user }) {
               </tr>
               <tr className="border-b">
                 <td className="p-3 font-medium border-r">Valor Total</td>
-                <td className="p-3">R$ {transacoesFiltradas.reduce((acc, tx) => acc + tx.valor, 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td className="p-3">R$ {transacoesFiltradas.reduce((acc, tx) => acc + (tx.valor || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
               <tr>
                 <td className="p-3 font-medium border-r">Total de Taxas</td>
-                <td className="p-3">R$ {transacoesFiltradas.reduce((acc, tx) => acc + parseFloat(tx.taxas), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
+                <td className="p-3">R$ {transacoesFiltradas.reduce((acc, tx) => acc + parseFloat(tx.taxas || 0), 0).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</td>
               </tr>
             </tbody>
           </table>

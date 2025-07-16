@@ -1,21 +1,23 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
-// Hook para conversão BRL <-> USDT
+// Hook para conversão BRL <-> USDT com cotação online Coingecko
 export function useUSDTConversion() {
-  const [taxaConversao, setTaxaConversao] = useState(5.0); // valor fixo, substituir por API futuramente
+  const [taxaConversao, setTaxaConversao] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Placeholder para buscar taxa em API externa
+  // Busca cotação online na Coingecko
   const fetchTaxaConversao = async () => {
     setLoading(true);
     setError(null);
     try {
-      // Exemplo: buscar na Binance/Coingecko
-      // const response = await fetch('API_URL');
-      // const data = await response.json();
-      // setTaxaConversao(data.valor);
-      setTaxaConversao(5.0); // valor fixo por enquanto
+      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=brl');
+      const data = await resp.json();
+      if (data && data.tether && data.tether.brl) {
+        setTaxaConversao(data.tether.brl);
+      } else {
+        setError('Cotação não encontrada');
+      }
     } catch (err) {
       setError('Erro ao buscar taxa de conversão');
     } finally {
@@ -23,16 +25,20 @@ export function useUSDTConversion() {
     }
   };
 
+  useEffect(() => {
+    fetchTaxaConversao();
+  }, []);
+
   // Conversão BRL -> USDT
   const brlToUsdt = (valorBrl) => {
     if (!taxaConversao) return 0;
-    return (parseFloat(valorBrl) / taxaConversao).toFixed(2);
+    return (Number(valorBrl) / taxaConversao).toFixed(2);
   };
 
   // Conversão USDT -> BRL
   const usdtToBrl = (valorUsdt) => {
     if (!taxaConversao) return 0;
-    return (parseFloat(valorUsdt) * taxaConversao).toFixed(2);
+    return (Number(valorUsdt) * taxaConversao).toFixed(2);
   };
 
   return { taxaConversao, brlToUsdt, usdtToBrl, fetchTaxaConversao, loading, error };

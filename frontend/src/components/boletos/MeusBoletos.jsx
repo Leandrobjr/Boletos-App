@@ -104,7 +104,7 @@ function MeusBoletos() {
   // Função para formatar valor em reais
   const formatarMoeda = (valor) => {
     if (valor === undefined || valor === null) return "R$ 0,00";
-    return `R$ ${valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
+    return `R$ ${(typeof valor === 'number' ? valor : 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`;
   };
 
   // Renderização

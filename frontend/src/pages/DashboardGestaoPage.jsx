@@ -251,7 +251,6 @@ function DashboardGestaoPage() {
       <main className="flex-1 container mx-auto px-4 py-1">
         <div className="space-y-6">
           <h1 className="text-3xl font-bold mb-2 text-greenDark bitcoin-font">Dashboard de Gestão</h1>
-          
           {/* Sistema de abas */}
           <div className="border-b border-gray-200">
             <nav className="-mb-px flex space-x-8">
@@ -263,7 +262,6 @@ function DashboardGestaoPage() {
               >
                 <FaChartBar className="inline-block mr-2" /> Dashboard
               </button>
-              
               <button
                 onClick={() => setActiveTab('cadastros')}
                 className={`py-4 px-1 border-b-2 font-medium text-sm ${activeTab === 'cadastros' 
@@ -324,10 +322,10 @@ function DashboardGestaoPage() {
                     <div>
                       <p className="text-sm text-gray-500">Valor Total</p>
                       <p className="text-xl font-bold">
-                        {valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        {(valorTotal !== undefined && valorTotal !== null) ? valorTotal.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '--'}
                       </p>
                       <p className="text-xs text-gray-500">
-                        Taxas: {valorTaxas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}
+                        Taxas: {(valorTaxas !== undefined && valorTaxas !== null) ? valorTaxas.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '--'}
                       </p>
                     </div>
                   </div>
@@ -426,7 +424,7 @@ function DashboardGestaoPage() {
                         {boleto.dataPagamento ? new Date(boleto.dataPagamento).toLocaleDateString('pt-BR') : '-'}
                       </td>
                       <td className="table-cell">
-                        {boleto.valorPago ? boleto.valorPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                        {boleto.valorPago !== undefined && boleto.valorPago !== null ? boleto.valorPago.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
                       </td>
                       <td className="table-cell">
                         {boleto.comprovante ? (
@@ -445,10 +443,10 @@ function DashboardGestaoPage() {
                         {boleto.valorTravado ? boleto.valorTravado.toFixed(2) : '-'}
                       </td>
                       <td className="table-cell">
-                        {boleto.taxaServico ? boleto.taxaServico.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                        {boleto.taxaServico !== undefined && boleto.taxaServico !== null ? boleto.taxaServico.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
                       </td>
                       <td className="table-cell">
-                        {boleto.valorLiquidoRepasse ? boleto.valorLiquidoRepasse.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
+                        {boleto.valorLiquidoRepasse !== undefined && boleto.valorLiquidoRepasse !== null ? boleto.valorLiquidoRepasse.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
                       </td>
                       <td className="table-cell">
                         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${

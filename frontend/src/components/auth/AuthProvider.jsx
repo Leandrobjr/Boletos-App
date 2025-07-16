@@ -32,7 +32,6 @@ export const AuthProvider = ({ children }) => {
   const initAuth = useCallback(async () => {
     try {
       console.log('Inicializando autenticação...');
-      
       // Detectar se estamos em um navegador com proteção contra rastreamento
       let trackingProtectionActive = false;
       try {
@@ -43,7 +42,6 @@ export const AuthProvider = ({ children }) => {
         trackingProtectionActive = true;
         setTrackingPreventionDetected(true);
       }
-      
       // Verificar se já temos um usuário autenticado
       const currentUser = getCurrentUser();
       if (currentUser && !currentUser.isTokenOnly) {
@@ -51,13 +49,11 @@ export const AuthProvider = ({ children }) => {
         setUser(currentUser);
         setLoading(false);
       }
-      
       // Verificar se estamos retornando de um redirecionamento
       console.log('Verificando resultado do redirecionamento...');
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Tempo esgotado ao verificar redirecionamento')), 8000);
       });
-      
       const redirectResult = await Promise.race([
         checkRedirectResult(),
         timeoutPromise
@@ -71,7 +67,6 @@ export const AuthProvider = ({ children }) => {
         }
         return { success: false, error };
       });
-      
       if (redirectResult.error) {
         console.error('Erro no resultado do redirecionamento:', redirectResult.error);
         setError(redirectResult.error);
@@ -82,14 +77,12 @@ export const AuthProvider = ({ children }) => {
         console.log('Usuário autenticado após redirecionamento:', redirectResult.user.displayName);
         setUser(redirectResult.user);
       }
-      
       // Configurar listener para mudanças no estado de autenticação
       const unsubscribe = subscribeToAuthChanges((authUser) => {
         console.log('Estado de autenticação alterado:', authUser ? `Usuário ${authUser.displayName}` : 'Deslogado');
         setUser(authUser);
         setLoading(false);
       });
-      
       return unsubscribe;
     } catch (error) {
       console.error('Erro ao inicializar autenticação:', error);
@@ -109,10 +102,8 @@ export const AuthProvider = ({ children }) => {
   // Executar inicialização
   useEffect(() => {
     if (initialized) return;
-    
     const unsubscribe = initAuth();
     setInitialized(true);
-    
     return () => {
       if (unsubscribe && typeof unsubscribe === 'function') {
         unsubscribe();
@@ -131,13 +122,11 @@ export const AuthProvider = ({ children }) => {
       isChecking.current = true;
       setPerfilCheckLoading(true);
       // Adiciona log para depuração
-      console.log('[AuthProvider] Checando perfil do usuário:', user.uid);
-      console.log('[DEBUG] Buscando perfil do backend para UID:', user.uid);
-      fetch(`http://localhost:3001/perfil/${user.uid}`)
+      const firebaseUid = user.uid;
+      fetch(`http://localhost:3001/perfil/${firebaseUid}`)
         .then(res => res.json())
         .then(data => {
-          console.log('[DEBUG] Perfil retornado do backend:', JSON.stringify(data, null, 2));
-          const nomeValido = data && (data.nome_completo || data.nome);
+          const nomeValido = data && (data.nome || data.nome_completo);
           const telefoneValido = data && data.telefone;
           const emailValido = data && data.email;
           if (!nomeValido || !telefoneValido || !emailValido) {
@@ -150,10 +139,12 @@ export const AuthProvider = ({ children }) => {
             }, 2000);
           } else {
             setPerfilVerificado(true);
+            if (location.pathname === '/alterar-cadastro') {
+              navigate('/');
+            }
           }
         })
-        .catch((err) => {
-          console.error('[DEBUG] Erro ao buscar perfil do backend:', err);
+        .catch(() => {
           setPerfilCheckMessage('Erro ao buscar seu perfil. Tente novamente.');
           setTimeout(() => {
             setPerfilCheckMessage('');
@@ -164,13 +155,11 @@ export const AuthProvider = ({ children }) => {
         })
         .finally(() => {
           setPerfilCheckLoading(false);
-          // Só libera nova checagem se o usuário mudar
-          // isChecking.current = false;
+          isChecking.current = false;
         });
     }
     // Resetar verificação apenas se o usuário realmente mudou
     if (!user && perfilVerificado) setPerfilVerificado(false);
-    // Resetar flag de checagem apenas se o usuário mudou
     if (!user) isChecking.current = false;
   }, [user, location.pathname, navigate, perfilVerificado]);
 
@@ -237,36 +226,22 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const value = {
-    user,
-    isAuthenticated: !!user,
-    loading,
-    error,
-    login,
-    logout,
-    trackingPreventionDetected,
-    perfilVerificado,
-  };
-
   return (
-    <AuthContext.Provider value={value}>
-      {perfilCheckLoading && (
-        <div style={{position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(255,255,255,0.7)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column'}}>
-          <div className="loader" style={{marginBottom: 16}}></div>
-          <span style={{color: '#166534', fontWeight: 'bold'}}>Verificando seu cadastro...</span>
-        </div>
-      )}
-      {perfilCheckMessage && (
-        <div style={{position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(255,255,255,0.8)', zIndex: 10000, display: 'flex', alignItems: 'center', justifyContent: 'center'}}>
-          <div style={{background: '#fff', padding: 32, borderRadius: 12, boxShadow: '0 2px 16px #0002', color: '#166534', fontWeight: 'bold', fontSize: 18}}>{perfilCheckMessage}</div>
-        </div>
-      )}
-      {!loading && children}
+    <AuthContext.Provider value={{
+      user,
+      isAuthenticated: !!user,
+      loading,
+      error,
+      perfilVerificado,
+      perfilCheckLoading,
+      perfilCheckMessage,
+      trackingPreventionDetected,
+      login: signInWithGoogle,
+      logout: logout
+    }}>
+      {children}
     </AuthContext.Provider>
   );
 };
 
-// Hook para usar o contexto de autenticação
-export const useAuth = () => {
-  return useContext(AuthContext);
-};
+export const useAuth = () => useContext(AuthContext);

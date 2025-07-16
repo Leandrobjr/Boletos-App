@@ -1,8 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { FaMoneyBillWave, FaCreditCard, FaCalendarAlt, FaUniversity, FaLock, FaWallet, FaCheckCircle } from 'react-icons/fa';
+<<<<<<< HEAD
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+=======
+import { useAccount, useConnect, useDisconnect, useNetwork, useSwitchNetwork } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
 
 function formatarMoeda(valor) {
   try {
@@ -50,8 +55,12 @@ function formatarMoedaFinal(valor) {
   return parseInt(int, 10).toLocaleString("pt-BR") + "," + (dec ? dec.padEnd(2, "0").slice(0,2) : "00");
 }
 
+<<<<<<< HEAD
 function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address: propAddress }) {
   console.log('[BoletoForm] Renderizou. user:', user);
+=======
+function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, address }) {
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
   const [valor, setValor] = useState("0,00");
   const [cotacao, setCotacao] = useState(null);
   const [usdt, setUsdt] = useState("");
@@ -71,12 +80,17 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
   const [debugResposta, setDebugResposta] = useState(null);
   const [debugErro, setDebugErro] = useState(null);
 
+<<<<<<< HEAD
   const { openConnectModal } = useConnectModal();
   const { isConnected, address } = useAccount();
 
   useEffect(() => {
     console.log('[BoletoForm] isConnected mudou:', isConnected, 'address:', address);
   }, [isConnected, address]);
+=======
+  // Usamos o isConnected passado como prop em vez do hook useAccount
+  // const { isConnected } = useAccount();
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
 
   async function buscarCotacao() {
     setCotLoading(true);
@@ -259,7 +273,10 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
   };
 
   async function conectarETravar() {
+<<<<<<< HEAD
     console.log('[BoletoForm] conectarETravar chamado. Estado:', { isConnected, address, usdt, carregando });
+=======
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
     if (carregando) {
       setFeedback("Aguarde, processando...");
       return;
@@ -270,9 +287,16 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
     try {
       // Verificamos se a carteira está conectada usando a prop isConnected
       if (!isConnected || !address) {
+<<<<<<< HEAD
         setFeedback("Conecte sua carteira antes de finalizar a operação.");
         setCarregando(false);
         console.log('[DEBUG] Tentativa de travar USDT sem carteira conectada');
+=======
+        // Se não estiver conectada, usamos a função handleWalletConnection passada como prop
+        setFeedback("Conecte sua carteira antes de finalizar a operação.");
+        handleWalletConnection(); // Chamamos a função de conexão passada pelo componente pai
+        setCarregando(false);
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
         return;
       }
       
@@ -320,6 +344,7 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
 
   return (
     <div className="max-w-500 mx-auto mt-6 box-shadow-6 border-radius-4 bg-background-paper">
+<<<<<<< HEAD
       <div style={{ background: '#ffe', color: '#b8860b', padding: 8, marginBottom: 8, borderRadius: 4 }}>
         <b>[DEBUG] Painel de debug do BoletoForm</b><br/>
         isConnected: {String(isConnected)}<br/>
@@ -327,6 +352,8 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
         carregando: {String(carregando)}<br/>
         usdt: {usdt}<br/>
       </div>
+=======
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
       <div className="flex items-center pb-0 pt-3">
         <FaLock className="text-primary-main" size={36} />
         <h2 className="text-2xl font-bold text-primary-main">Cadastrar novo boleto</h2>
@@ -366,7 +393,11 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
               />
               {codigoBarrasError && <p className="text-red-500">{codigoBarrasError || 'Somente números'}</p>}
             </div>
+<<<<<<< HEAD
             <div className="col-span-12">
+=======
+            <div className="col-span-12 sm:col-span-6">
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
               <input
                 className="flex h-11 rounded-3xl border-2 border-input bg-background px-4 py-2.5 text-sm shadow-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 w-48"
                 id="valor"
@@ -446,7 +477,18 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
             )}
             {!isConnected && (
             <div className="col-span-12 sm:col-span-6">
+<<<<<<< HEAD
               <ConnectButton label="Conectar Carteira" />
+=======
+              <button
+                type="button"
+                  className="w-full h-14 bg-primary text-white"
+                onClick={handleWalletConnection}
+                disabled={carregando}
+              >
+                  Conectar Carteira
+              </button>
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
             </div>
             )}
             {isConnected && (
@@ -456,7 +498,10 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
                     type="button"
                     className="w-full h-14 bg-success text-white"
                     disabled
+<<<<<<< HEAD
                     onClick={() => console.log('[BoletoForm] Botão de carteira conectada clicado')}
+=======
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
                   >
                     {address ? `Conectado: ${address.slice(0, 6)}...${address.slice(-4)}` : 'Carteira conectada'}
                   </button>
@@ -465,7 +510,11 @@ function BoletoForm({ user, onBoletoAdded, isConnected: propIsConnected, address
                 <button
                   type="button"
                   className="w-full h-14 bg-primary text-white"
+<<<<<<< HEAD
                   onClick={() => { console.log('[BoletoForm] Clique manual em Finalizar e Travar USDT'); conectarETravar(); }}
+=======
+                  onClick={conectarETravar}
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
                   disabled={carregando || !usdt || usdt === "0"}
                 >
                   {carregando ? "Processando..." : "Finalizar e Travar USDT"}

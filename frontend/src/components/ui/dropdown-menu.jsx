@@ -58,7 +58,7 @@ export function DropdownMenuContent({ children }) {
   return (
     <div
       ref={contentRef}
-      className="absolute z-[9999] mt-2 min-w-[7rem] max-w-[7.5rem] rounded-xl border border-gray-200 bg-white shadow-2xl focus:outline-none p-1.5 right-0"
+      className="absolute z-50 mt-2 min-w-[10rem] rounded-md border bg-white shadow-lg focus:outline-none"
       role="menu"
     >
       {children}
@@ -70,13 +70,12 @@ export function DropdownMenuItem({ children, onClick, disabled = false }) {
   return (
     <button
       type="button"
-      className={`w-full text-center px-2 text-[0.85rem] font-medium border border-gray-200 bg-lime-600 text-white whitespace-normal break-words leading-tight flex items-center justify-center hover:bg-lime-700 focus:bg-lime-700 transition-colors duration-150 rounded-lg focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       role="menuitem"
-      style={{ height: '2.1rem', minHeight: '2.1rem', maxHeight: '2.1rem', maxWidth: '7.5rem', whiteSpace: 'normal', textAlign: 'center', overflow: 'hidden' }}
     >
-      <span className="block w-full text-center leading-tight break-words whitespace-normal" style={{ fontSize: '0.85rem', lineHeight: '1.1' }}>{children}</span>
+      {children}
     </button>
   );
 } 

@@ -1,7 +1,7 @@
 import { getDefaultWallets } from '@rainbow-me/rainbowkit';
 import { createConfig, http } from 'wagmi';
 import { polygon, polygonAmoy } from 'wagmi/chains';
-import { walletConnect, injected, coinbaseWallet } from 'wagmi/connectors';
+import { injected } from 'wagmi/connectors';
 
 // Configuração das chains suportadas - Wagmi v2
 const chains = [polygonAmoy, polygon];
@@ -14,11 +14,12 @@ const wagmiConfig = createConfig({
     [polygon.id]: http(),
   },
   connectors: [
-    injected({ shimDisconnect: true }),
-    walletConnect({ projectId: '9e1c87982132536c5e4ad04fd66d81d8', showQrModal: true }),
-    coinbaseWallet({ appName: 'BXC Boletos' })
+    injected({
+      // Desativando a conexão automática
+      shimDisconnect: true
+    })
   ],
-autoConnect: false
+  autoConnect: false
 });
 
 export { wagmiConfig, chains };

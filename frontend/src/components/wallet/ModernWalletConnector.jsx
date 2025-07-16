@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
 import { Wallet, ChevronRight, Copy, ExternalLink, RefreshCw, AlertTriangle, Check } from "lucide-react";
-
 import Button from "../ui/Button";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "../ui/card";
 import { Avatar, AvatarImage, AvatarFallback } from "../ui/avatar";
@@ -11,13 +10,11 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
  * ModernWalletConnector - Componente de conexão de carteiras com Shadcn UI
  * Integra o design moderno do Shadcn UI com a funcionalidade do Wagmi/RainbowKit
  */
-const ModernWalletConnector = () => {
+const ModernWalletConnector = ({ minimal }) => {
   // Estados do Wagmi
-  // useAccount agora retorna chain (rede conectada)
   const { address, isConnected, connector: activeConnector, chain } = useAccount();
   const { connect, connectors, error: connectError, isLoading } = useConnect();
   const { disconnect } = useDisconnect();
-  // useSwitchChain retorna chains (todas as redes suportadas), switchChain (função para trocar), isPending (status)
   const { chains, switchChain, isPending: isSwitchingNetwork } = useSwitchChain();
 
   // Estados locais para controlar a interface
@@ -306,6 +303,18 @@ const ModernWalletConnector = () => {
     }
   };
 
+  if (minimal) {
+    if (isConnected) {
+      return (
+        <Button onClick={handleDisconnect} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Desconectar</Button>
+      );
+    } else {
+      return (
+        <Button onClick={() => setCurrentScreen('select-wallet')} className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-4 rounded-lg">Conectar Carteira</Button>
+      );
+    }
+  }
+
   return (
     <div className="p-4 max-w-md mx-auto">
       {renderScreen()}
@@ -318,4 +327,4 @@ const ModernWalletConnector = () => {
   );
 };
 
-export default ModernWalletConnector; 
+export default ModernWalletConnector;

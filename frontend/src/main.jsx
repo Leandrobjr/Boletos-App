@@ -11,6 +11,8 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig, chains } from './config/rainbowConfig';
 import '@rainbow-me/rainbowkit/styles.css';
 
+console.log('main.jsx carregado');
+
 const queryClient = new QueryClient();
 
 // Limpa o localStorage das chaves de conexão da carteira ao recarregar/sair do app

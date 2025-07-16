@@ -206,7 +206,6 @@ const CadastroPage = () => {
           </div>
         </div>
       </main>
-      <div style={{background:'#0ff',padding:4,textAlign:'center',fontWeight:900}}>RODAPÉ ATIVO</div>
     </>
   );
 };

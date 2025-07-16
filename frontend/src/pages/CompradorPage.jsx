@@ -11,9 +11,12 @@ import { Label } from '../components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '../components/ui/alert';
 import WalletConnector from '../components/wallet/WalletConnector';
+import { useParams, useNavigate } from 'react-router-dom';
 
 const CompradorPage = () => {
-  const [activeTab, setActiveTab] = useState('comprar');
+  const { tab } = useParams();
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState(tab || 'comprar');
   const [selectedBoleto, setSelectedBoleto] = useState(null);
   const [showModal, setShowModal] = useState(false);
   const [etapaCompra, setEtapaCompra] = useState(0);
@@ -187,6 +190,16 @@ const CompradorPage = () => {
       .catch(() => setBoletosDisponiveis([]));
   }, []);
 
+  useEffect(() => {
+    if (tab && tab !== activeTab) setActiveTab(tab);
+    // eslint-disable-next-line
+  }, [tab]);
+
+  const handleTabChange = (tab) => {
+    setActiveTab(tab);
+    navigate(`/app/comprador/${tab}`);
+  };
+
   return (
     <div className="min-h-screen bg-lime-300 flex flex-col">
       <main className="flex-1 container mx-auto px-4 py-1">
@@ -195,7 +208,7 @@ const CompradorPage = () => {
             Portal do Comprador
           </h1>
           <WalletConnector />
-          <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full mb-6">
+          <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
             <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl">
               <TabsTrigger value="comprar" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
                 <FaShoppingCart className="mr-2" /> Comprar USDT
@@ -237,7 +250,7 @@ const CompradorPage = () => {
                             className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-100' : ''}`}
                           >
                             <td className="py-3 px-4">{boleto.numeroBoleto}</td>
-                            <td className="py-3 px-4">R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                            <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                             <td className="py-3 px-4">{new Date(boleto.dataVencimento).toLocaleDateString('pt-BR')}</td>
                             <td className="py-3 px-4">{boleto.beneficiario}</td>
                             <td className="py-3 px-4">
@@ -296,9 +309,9 @@ const CompradorPage = () => {
                           {meusBoletos.map((boleto) => (
                             <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
                               <td className="py-3 px-4">{boleto.numeroBoleto}</td>
-                              <td className="py-3 px-4">R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                               <td className="py-3 px-4">{boleto.valorUSDT} USDT</td>
-                              <td className="py-3 px-4">R$ {boleto.taxaServico?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({boleto.taxaServicoUSDT} USDT)</td>
+                              <td className="py-3 px-4">R$ {(boleto.taxaServico !== undefined && boleto.taxaServico !== null) ? boleto.taxaServico.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'} ({boleto.taxaServicoUSDT} USDT)</td>
                               <td className="py-3 px-4">{new Date(boleto.dataCompra).toLocaleDateString('pt-BR')} {new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}</td>
                               <td className="py-3 px-4">
                                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
@@ -341,9 +354,9 @@ const CompradorPage = () => {
                           {meusBoletos.map((boleto) => (
                             <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
                               <td className="py-3 px-4">{new Date(boleto.dataCompra).toLocaleDateString('pt-BR')}<br /><span className="text-xs text-gray-400">{new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}</span></td>
-                              <td className="py-3 px-4">R$ {boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</td>
+                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                               <td className="py-3 px-4">{boleto.valorUSDT} USDT</td>
-                              <td className="py-3 px-4">R$ {boleto.taxaServico?.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({boleto.taxaServicoUSDT} USDT)</td>
+                              <td className="py-3 px-4">R$ {(boleto.taxaServico !== undefined && boleto.taxaServico !== null) ? boleto.taxaServico.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'} ({boleto.taxaServicoUSDT} USDT)</td>
                               <td className="py-3 px-4">
                                 {boleto.comprovanteUrl ? (
                                   <a
@@ -443,13 +456,13 @@ const CompradorPage = () => {
       <div className="flex justify-between">
         <span className="font-semibold">Valor em Reais:</span>
         <span className="text-green-700 font-bold">
-          R$ {selectedBoleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+          R$ {(selectedBoleto.valor !== undefined && selectedBoleto.valor !== null) ? selectedBoleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}
         </span>
       </div>
       <div className="flex justify-between">
         <span className="font-semibold">Taxa de Serviço:</span>
         <span className="text-red-600 font-bold">
-          R$ {taxaServico.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} ({taxaServicoUSDT} USDT)
+          R$ {(taxaServico !== undefined && taxaServico !== null) ? taxaServico.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'} ({taxaServicoUSDT} USDT)
         </span>
       </div>
       <div className="flex justify-between">

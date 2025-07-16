@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 
 const infoText = `* Transações seguras com contratos inteligentes na blockchain.\n**Pagar Boleto com USDT: vc cadastra o boleto e trava o valor equivalente em USDT em uma conta segura na blockchain. O COMPRADOR de USDT seleciona o seu boleto, paga em reais e assim que confirmada a baixa do pagamento, recebe os fundos travados. Segurança garantida, sem riscos e sem intermediários.`;

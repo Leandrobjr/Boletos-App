@@ -15,14 +15,29 @@ const AlterarCadastroPage = () => {
   const [erro, setErro] = useState('');
   const navigate = useNavigate();
 
+  // Buscar dados do backend ao carregar a página
   useEffect(() => {
     if (user) {
-      setNome(user.displayName || '');
       setEmail(user.email || '');
-      setTelefone(user.phoneNumber || '');
-      if (user.displayName && user.phoneNumber) {
-        navigate('/landpage');
-      }
+      fetch(`http://localhost:3001/perfil/${user.uid}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data) {
+            setNome(data.nome || user.displayName || '');
+            setTelefone(data.telefone || user.phoneNumber || '');
+            // Redireciona se nome, telefone e email já estiverem preenchidos
+            if ((data.nome || user.displayName) && (data.telefone || user.phoneNumber) && (data.email || user.email)) {
+              navigate('/');
+            }
+          } else {
+            setNome(user.displayName || '');
+            setTelefone(user.phoneNumber || '');
+          }
+        })
+        .catch(() => {
+          setNome(user.displayName || '');
+          setTelefone(user.phoneNumber || '');
+        });
     }
   }, [user, navigate]);
 
@@ -34,32 +49,32 @@ const AlterarCadastroPage = () => {
       return;
     }
     try {
-      // Atualizar perfil do usuário no Firebase
-      if (auth.currentUser) {
-        await updateProfile(auth.currentUser, {
-          displayName: nome
-        });
-        await auth.currentUser.reload();
+      // Atualizar nome completo no Firebase Auth
+      if (auth.currentUser && nome) {
+        await updateProfile(auth.currentUser, { displayName: nome });
       }
-      // Salvar/atualizar perfil no backend
-      await fetch('http://localhost:3001/perfil', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          uid: auth.currentUser?.uid,
-          nome_completo: nome,
-          email: email,
-          telefone: telefone
-        })
-      });
-      // Aqui você pode implementar a lógica de atualização de senha se necessário
+      // Salvar dados no backend
+      if (user) {
+        await fetch('http://localhost:3001/perfil', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firebase_uid: user.uid,
+            nome,
+            email,
+            telefone
+          })
+        });
+      }
       setMensagem('Dados atualizados com sucesso!');
-      setTimeout(() => setMensagem(''), 3000);
+      setTimeout(() => {
+        setMensagem('');
+        navigate('/');
+      }, 1200);
       setSenha('');
       setConfirmarSenha('');
-      setTimeout(() => navigate('/'), 1500);
     } catch (error) {
-      setErro('Erro ao atualizar perfil: ' + (error.message || error.code));
+      setErro('Erro ao atualizar dados: ' + (error.message || error));
     }
   };
 

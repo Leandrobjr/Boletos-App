@@ -206,7 +206,7 @@ export const signInWithGoogle = async () => {
     // Verificar se a URL tem a porta correta (3002 para desenvolvimento local)
     if (currentUrl.includes('localhost') || currentUrl.includes('127.0.0.1')) {
       const urlObj = new URL(currentUrl);
-      if (urlObj.port !== '3002') {
+      if (urlObj.port !== '5173') {
         console.warn(`AVISO: Porta atual (${urlObj.port}) pode não corresponder à porta configurada no Firebase (3002)`);
         // Não modificamos a URL aqui, apenas alertamos
       }

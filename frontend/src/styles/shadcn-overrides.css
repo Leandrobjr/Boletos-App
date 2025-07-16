@@ -42,3 +42,7 @@ input[name="cpfCnpj"] {
   max-width: 300px !important;
   width: 100% !important;
 }
+
+.dropdown-red {
+  color: #dc2626 !important;
+}

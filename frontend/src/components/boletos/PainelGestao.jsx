@@ -18,13 +18,13 @@ function formatDate(timestamp) {
 // Função para formatar valores monetários
 function formatCurrency(value) {
   if (value === undefined || value === null) return "—";
-  return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  return (typeof value === 'number' ? value : 0).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 }
 
 // Função para formatar valores em USDT
 function formatUSDT(value) {
   if (value === undefined || value === null) return "—";
-  return value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USDT";
+  return (typeof value === 'number' ? value : 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + " USDT";
 }
 
 function PainelGestao() {

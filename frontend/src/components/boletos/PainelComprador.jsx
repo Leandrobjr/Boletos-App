@@ -9,7 +9,11 @@ import {
 } from '@mui/material';
 import AccountBalanceWalletIcon from '@mui/icons-material/AccountBalanceWallet';
 import AccountBalanceIcon from '@mui/icons-material/AccountBalance';
+<<<<<<< HEAD
 import { useAccount, useConnect, useDisconnect } from 'wagmi';
+=======
+import { useAccount, useConnect, useDisconnect, useNetwork, useSwitchNetwork } from 'wagmi';
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 
 
@@ -430,7 +434,7 @@ function PainelComprador() {
                 {boletos.map(b => (
                   <TableRow key={b.id} hover>
                     <TableCell>{b.numeroControle ? b.numeroControle.toString().padStart(3, '0') : '---'}</TableCell>
-                    <TableCell>R$ {b.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</TableCell>
+                    <TableCell>R$ {(b.valor !== undefined && b.valor !== null) ? b.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</TableCell>
                     <TableCell>{formatDate(b.vencimento)}</TableCell>
                     <TableCell>{b.instituicao}</TableCell>
                     <TableCell align="center">

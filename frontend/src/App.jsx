@@ -13,8 +13,11 @@ import CadastroPage from './pages/CadastroPage';
 import VendedorPage from './pages/VendedorPage';
 import CompradorPage from './pages/CompradorPage';
 import DashboardGestaoPage from './pages/DashboardGestaoPage';
+import UIShowcasePage from './pages/UIShowcasePage';
 import Landpage from './pages/Landpage';
+import HomePage from './pages/HomePage';
 import ConfirmacaoCompra from './pages/ConfirmacaoCompra';
+import TestePage from './pages/TestePage';
 import AlterarCadastroPage from './pages/AlterarCadastroPage';
 
 // Componente de rota protegida
@@ -53,7 +56,7 @@ function ProtectedRoute({ children }) {
   }
 
   // Bloquear acesso a rotas protegidas se cadastro incompleto (agora usando perfilVerificado)
-  if (!perfilVerificado) {
+  if (typeof perfilVerificado !== 'undefined' && !perfilVerificado) {
     return <Navigate to="/alterar-cadastro" replace />;
   }
 
@@ -66,7 +69,11 @@ function AppRoutes() {
       <Route path="/" element={<Layout />}>
         <Route index element={<Landpage />} />
       </Route>
+      <Route path="/home" element={<HomePage />} />
       <Route path="/login" element={<LoginPage />} />
+      <Route path="/teste" element={<Layout />}>
+        <Route index element={<TestePage />} />
+      </Route>
       <Route path="/cadastro" element={<Layout />}>
         <Route index element={<CadastroPage />} />
       </Route>
@@ -80,10 +87,16 @@ function AppRoutes() {
         </ProtectedRoute>
       }>
         <Route index element={<Navigate to="/app/comprador" />} />
-        <Route path="vendedor" element={<VendedorPage />} />
-        <Route path="comprador" element={<CompradorPage />} />
-        <Route path="comprador-original" element={<CompradorPage />} />
+        <Route path="vendedor">
+          <Route index element={<Navigate to="/app/vendedor/cadastrar" />} />
+          <Route path=":tab" element={<VendedorPage />} />
+        </Route>
+        <Route path="comprador">
+          <Route index element={<Navigate to="/app/comprador/comprar" />} />
+          <Route path=":tab" element={<CompradorPage />} />
+        </Route>
         <Route path="gestao" element={<DashboardGestaoPage />} />
+        <Route path="ui" element={<UIShowcasePage />} />
         <Route path="confirmacao/:id" element={<ConfirmacaoCompra />} />
       </Route>
     </Routes>
@@ -91,6 +104,7 @@ function AppRoutes() {
 }
 
 function App() {
+  console.log('App.jsx carregado');
   return (
     <AuthProvider>
       <AppRoutes />

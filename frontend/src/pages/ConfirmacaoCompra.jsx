@@ -70,7 +70,7 @@ export default function ConfirmacaoCompra() {
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">VALOR:</label>
-            <span className="ml-2 text-gray-500">R$ {boleto.valor && boleto.valor.toLocaleString('pt-BR', {minimumFractionDigits:2})}</span>
+            <span className="ml-2 text-gray-500">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', {minimumFractionDigits:2}) : '--'}</span>
           </div>
           <div className="mb-4">
             <label className="block text-sm font-medium text-gray-700">DATA VENCIMENTO:</label>

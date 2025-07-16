@@ -1,11 +1,15 @@
 [
   {
     "inputs": [
+<<<<<<< HEAD
       {
         "internalType": "address",
         "name": "_usdt",
         "type": "address"
       }
+=======
+      { "internalType": "address", "name": "_usdt", "type": "address" }
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
     ],
     "stateMutability": "nonpayable",
     "type": "constructor"
@@ -99,6 +103,7 @@
   },
   {
     "inputs": [
+<<<<<<< HEAD
       {
         "internalType": "uint256",
         "name": "_boletoId",
@@ -122,6 +127,15 @@
         "name": "",
         "type": "bytes32"
       }
+=======
+      { "internalType": "uint256", "name": "_boletoId", "type": "uint256" },
+      { "internalType": "uint256", "name": "_amount", "type": "uint256" },
+      { "internalType": "address", "name": "_buyer", "type": "address" }
+    ],
+    "name": "createEscrow",
+    "outputs": [
+      { "internalType": "bytes32", "name": "", "type": "bytes32" }
+>>>>>>> 713c63f07ad7641d5d75b9280eae8ac9c7c52de0
     ],
     "stateMutability": "nonpayable",
     "type": "function"

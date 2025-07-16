@@ -1,5 +1,37 @@
 # Documentação da Página de Cadastro - Boleto Crypto
 
+## Autenticação e Perfil de Usuário (Fluxo Completo)
+
+### Fluxo de Autenticação
+- O sistema permite login via Google OAuth e por e-mail/senha.
+- O AuthProvider gerencia o estado global de autenticação e fornece hooks para acesso ao usuário logado, status e funções de login/logout.
+- As rotas protegidas só podem ser acessadas por usuários autenticados.
+
+### Estrutura do AuthProvider
+- O AuthProvider envolve toda a aplicação (dentro do <Router>), garantindo que todos os hooks do React Router funcionem corretamente.
+- O contexto fornece: user, isAuthenticated, loading, login, logout.
+
+### Redirecionamento para Completar Perfil
+- Após o login, se o usuário não tiver nome completo (displayName) ou telefone (phoneNumber), é redirecionado automaticamente para a página de alteração de cadastro (`/alterar-cadastro`).
+- Isso garante que todos os usuários tenham perfil completo, mesmo quem entra pelo Google.
+
+### Menu de Perfil
+- No header, ao logar, aparece o botão "Bem-vindo, Nome!".
+- Ao clicar, abre um menu mostrando:
+  - Nome completo (se disponível)
+  - E-mail
+  - Telefone (se disponível)
+  - Opções: Alterar cadastro, Sair
+
+### Página de Alteração de Cadastro
+- Permite editar nome completo, telefone e senha.
+- Se o usuário veio do Google e não tem esses dados, é obrigado a preencher.
+- O campo de senha é opcional (só altera se preencher).
+
+### O que ainda falta implementar (TODO)
+- Persistência real do telefone: o Firebase Auth não permite atualizar o telefone via updateProfile. É necessário salvar esse dado em um banco (ex: Firestore) e buscar ao carregar o perfil.
+- Garantir que, ao salvar o perfil, os dados fiquem disponíveis mesmo após logout/login.
+
 ## Resumo das Alterações
 
 A página de cadastro foi implementada com sucesso, seguindo o padrão visual das páginas existentes (Comprador.jsx e Vendedor.jsx) e incorporando melhorias significativas no layout e usabilidade.

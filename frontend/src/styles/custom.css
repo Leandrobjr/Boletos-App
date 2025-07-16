@@ -245,3 +245,20 @@ table {
   color: #6b7280 !important; /* gray-500 */
   box-shadow: none !important;
 }
+
+/* Remove setas de todos os inputs numéricos */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none;
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Força o campo de valor a ser texto */
+#valor[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  -webkit-appearance: none;
+}
