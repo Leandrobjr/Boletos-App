@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import {
   FaTrash, FaWallet, FaFileInvoiceDollar,
   FaList, FaCheck, FaHistory,
-  FaExclamationTriangle, FaInfoCircle, FaTimes
+  FaExclamationTriangle, FaInfoCircle, FaTimes, FaHandPointer
 } from 'react-icons/fa';
 import HistoricoTransacoes from '../components/HistoricoTransacoes';
 import {
@@ -55,6 +55,7 @@ function VendedorPage() {
   const [buttonMessage, setButtonMessage] = useState('Cadastrar e Travar USDT');
   const [buttonError, setButtonError] = useState(false);
   const [showCotacao, setShowCotacao] = useState(false);
+  const [dropdownSide, setDropdownSide] = useState({});
 
   // Função para abrir o modal de conexão da carteira
   const handleWalletConnection = () => {
@@ -483,38 +484,83 @@ function VendedorPage() {
                           <th className="py-3 px-4 text-left">Nº Controle</th>
                           <th className="py-3 px-4 text-left">Código de Barras</th>
                           <th className="py-3 px-4 text-left">Valor (R$)</th>
-                          <th className="py-3 px-4 text-left">Valor (USDT)</th>
+                          <th className="py-3 px-2 text-left w-32">Valor (USDT)</th>
                           <th className="py-3 px-4 text-left">Vencimento</th>
+                          <th className="py-3 px-4 text-left">Pago em:</th>
                           <th className="py-3 px-4 text-left">Status</th>
-                          <th className="py-3 px-4 text-left">Ações</th>
+                          <th className="py-3 px-6 text-left w-44">Ações</th>
                         </tr>
                       </thead>
                       <tbody>
                         {boletos.length === 0 ? (
                           <tr>
-                            <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                            <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
                               Nenhum boleto cadastrado.
                             </td>
                           </tr>
                         ) : (
-                          boletos.map((boleto) => (
-                            <tr key={boleto.numeroControle} className="border-b border-gray-200 hover:bg-lime-50">
-                              <td className="py-3 px-4">{boleto.numeroControle}</td>
-                              <td className="py-3 px-4">{boleto.codigoBarras}</td>
-                              <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? boleto.valor_brl.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                              <td className="py-3 px-4">{boleto.valor_usdt} USDT</td>
-                              <td className="py-3 px-4">{formatarData(boleto.vencimento)}</td>
-                              <td className="py-3 px-4">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  {boleto.status}
-                                </span>
-                              </td>
-                              <td className="py-3 px-4 flex gap-2">
-                                <button onClick={() => handleDelete(boleto.id)} className="bg-red-600 hover:bg-red-700 text-white py-1 px-2 rounded text-xs flex items-center gap-1"><FaTrash /> Excluir</button>
-                                <button onClick={() => handlePay(boleto)} className="bg-green-600 hover:bg-green-700 text-white py-1 px-2 rounded text-xs flex items-center gap-1"><FaCheck /> Baixar</button>
-                              </td>
-                            </tr>
-                          ))
+                          boletos.map((boleto, idx) => {
+                            // Verifica se está nas últimas 3 linhas
+                            const isLastRows = idx >= boletos.length - 3;
+                            const side = isLastRows ? 'top' : 'bottom';
+                            return (
+                              <tr key={boleto.numeroControle} className="border-b border-gray-200 hover:bg-lime-50">
+                                <td className="py-3 px-4">{boleto.numeroControle}</td>
+                                <td className="py-3 px-4">
+                                  {boleto.codigoBarras
+                                    ? <span title={boleto.codigoBarras} style={{cursor:'pointer'}}>
+                                        {boleto.codigoBarras.slice(0,10)}...{boleto.codigoBarras.slice(-3)}
+                                      </span>
+                                    : '--'}
+                                </td>
+                                <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? boleto.valor_brl.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                                <td className="py-3 px-2 w-32">{boleto.valor_usdt !== undefined && boleto.valor_usdt !== null ? Number(boleto.valor_usdt).toFixed(2) + ' USDT' : '--'}</td>
+                                <td className="py-3 px-4">{formatarData(boleto.vencimento)}</td>
+                                <td className="py-3 px-4">{boleto.data_pagamento ? formatarData(boleto.data_pagamento) : '--'}</td>
+                                <td className="py-3 px-4">
+                                  <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                    {boleto.status}
+                                  </span>
+                                </td>
+                                <td className="py-3 px-6 w-44 flex gap-2">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button
+                                        className="px-2 py-1 min-h-[28px] min-w-[120px] bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center justify-center cursor-pointer"
+                                        aria-label="Opções"
+                                        style={{ width: 'max-content' }}
+                                        onClick={() => setDropdownSide(s => ({ ...s, [boleto.numeroControle]: side }))}
+                                      >
+                                        <FaHandPointer size={18} />
+                                      </button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" side={dropdownSide[boleto.numeroControle] || 'bottom'} sideOffset={4} className="z-[9999]">
+                                      {/* Baixar pagamento: só se DISPONIVEL */}
+                                      {boleto.status === "DISPONIVEL" && (
+                                        <DropdownMenuItem onClick={() => handlePay(boleto)}>
+                                          Baixar pagamento
+                                        </DropdownMenuItem>
+                                      )}
+
+                                      {/* Cancelar: só se DISPONIVEL */}
+                                      {boleto.status === "DISPONIVEL" && (
+                                        <DropdownMenuItem onClick={() => handleCancelar(boleto.id)}>
+                                          Cancelar
+                                        </DropdownMenuItem>
+                                      )}
+
+                                      {/* Excluir: se BAIXADO, EXCLUIDO ou VENCIDO */}
+                                      {(boleto.status === "BAIXADO" || boleto.status === "EXCLUIDO" || boleto.status === "VENCIDO") && (
+                                        <DropdownMenuItem onClick={() => handleDelete(boleto.id)}>
+                                          Excluir
+                                        </DropdownMenuItem>
+                                      )}
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </td>
+                              </tr>
+                            );
+                          })
                         )}
                       </tbody>
                     </table>

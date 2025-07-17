@@ -1,4 +1,5 @@
 import * as React from "react";
+import ReactDOM from "react-dom";
 
 const DropdownMenuContext = React.createContext();
 
@@ -35,6 +36,7 @@ export function DropdownMenuTrigger({ asChild = false, children }) {
 
 export function DropdownMenuContent({ children }) {
   const { open, setOpen, triggerRef, contentRef } = React.useContext(DropdownMenuContext);
+
   React.useEffect(() => {
     function handleClickOutside(event) {
       if (
@@ -54,14 +56,24 @@ export function DropdownMenuContent({ children }) {
     };
   }, [open, setOpen, contentRef, triggerRef]);
 
-  if (!open) return null;
   return (
     <div
       ref={contentRef}
-      className="absolute z-50 mt-2 min-w-[10rem] rounded-md border bg-white shadow-lg focus:outline-none"
+      className={`mt-1 min-w-[5rem] w-max flex flex-col focus:outline-none transition-all duration-200 ease-out ${open ? 'dropdown-expand' : 'dropdown-collapse'}`}
       role="menu"
+      style={{
+        position: 'static',
+        opacity: open ? 1 : 0,
+        height: open ? 'auto' : 0,
+        overflow: 'hidden',
+        pointerEvents: open ? 'auto' : 'none',
+        border: 'none',
+        boxShadow: 'none',
+        padding: 0,
+        background: 'none',
+      }}
     >
-      {children}
+      {open && children}
     </div>
   );
 }
@@ -70,10 +82,11 @@ export function DropdownMenuItem({ children, onClick, disabled = false }) {
   return (
     <button
       type="button"
-      className={`w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
+      className={`w-full h-5 text-center px-2 py-0 text-[9px] text-red-600 hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}
       onClick={disabled ? undefined : onClick}
       disabled={disabled}
       role="menuitem"
+      style={{ lineHeight: 1 }}
     >
       {children}
     </button>
