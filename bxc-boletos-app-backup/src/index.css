@@ -1,0 +1,5 @@
+/* index.css 100% Tailwind-friendly */
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

@@ -141,25 +141,25 @@ const Button = ({
 
   // Eventos de hover e active
   const handleMouseOver = (e) => {
-    if (!disabled && variantStyles[variant][':hover']) {
+    if (!disabled && variantStyles[variant] && variantStyles[variant][':hover']) {
       e.currentTarget.style.backgroundColor = variantStyles[variant][':hover'].backgroundColor;
     }
   };
 
   const handleMouseOut = (e) => {
-    if (!disabled) {
+    if (!disabled && variantStyles[variant]) {
       e.currentTarget.style.backgroundColor = variantStyles[variant].backgroundColor;
     }
   };
 
   const handleMouseDown = (e) => {
-    if (!disabled && variantStyles[variant][':active']) {
+    if (!disabled && variantStyles[variant] && variantStyles[variant][':active']) {
       e.currentTarget.style.backgroundColor = variantStyles[variant][':active'].backgroundColor;
     }
   };
 
   const handleMouseUp = (e) => {
-    if (!disabled && variantStyles[variant][':hover']) {
+    if (!disabled && variantStyles[variant] && variantStyles[variant][':hover']) {
       e.currentTarget.style.backgroundColor = variantStyles[variant][':hover'].backgroundColor;
     }
   };

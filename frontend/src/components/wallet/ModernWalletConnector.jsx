@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useAccount, useConnect, useDisconnect, useSwitchChain } from "wagmi";
+import { useAccount, useDisconnect, useSwitchChain } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { Wallet, ChevronRight, Copy, ExternalLink, RefreshCw, AlertTriangle, Check } from "lucide-react";
 import Button from "../ui/Button";
 import { Card, CardHeader, CardContent, CardFooter, CardTitle, CardDescription } from "../ui/card";
@@ -13,23 +14,22 @@ import { Alert, AlertTitle, AlertDescription } from "../ui/alert";
 const ModernWalletConnector = ({ minimal }) => {
   // Estados do Wagmi
   const { address, isConnected, connector: activeConnector, chain } = useAccount();
-  const { connect, connectors, error: connectError, isLoading } = useConnect();
   const { disconnect } = useDisconnect();
   const { chains, switchChain, isPending: isSwitchingNetwork } = useSwitchChain();
+  const { openConnectModal } = useConnectModal();
 
   // Estados locais para controlar a interface
   const [currentScreen, setCurrentScreen] = useState("initial");
-  const [selectedConnector, setSelectedConnector] = useState(null);
   const [addressCopied, setAddressCopied] = useState(false);
 
   // Efeito para atualizar a tela com base no estado da conexão
   useEffect(() => {
     if (isConnected && address) {
       setCurrentScreen("connected");
-    } else if (currentScreen === "connected") {
+    } else if (currentScreen === "connected" && (!isConnected || !address)) {
       setCurrentScreen("disconnected");
     }
-  }, [isConnected, address]);
+  }, [isConnected, address, currentScreen]);
 
   // Função para copiar o endereço para a área de transferência
   const copyAddressToClipboard = () => {
@@ -66,9 +66,10 @@ const ModernWalletConnector = ({ minimal }) => {
   };
 
   // Função para lidar com a conexão de carteira
-  const handleConnectWallet = (connector) => {
-    setSelectedConnector(connector);
-    connect({ connector });
+  const handleConnectWallet = () => {
+    if (openConnectModal) {
+      openConnectModal();
+    }
   };
 
   // Função para lidar com a desconexão
@@ -79,6 +80,12 @@ const ModernWalletConnector = ({ minimal }) => {
 
   // Renderização condicional baseada no estado atual
   const renderScreen = () => {
+    // Verificação de segurança: se não estiver conectado, não mostrar tela connected
+    if (currentScreen === "connected" && (!isConnected || !address)) {
+      setCurrentScreen("disconnected");
+      return null;
+    }
+    
     switch (currentScreen) {
       case "initial":
         return (
@@ -107,52 +114,33 @@ const ModernWalletConnector = ({ minimal }) => {
         return (
           <Card className="w-full max-w-md mx-auto transition-all duration-300 hover:shadow-lg">
             <CardHeader>
-              <CardTitle>Selecione sua Carteira</CardTitle>
+              <CardTitle>Conectar Carteira</CardTitle>
               <CardDescription>
-                Escolha uma das carteiras disponíveis para conectar
+                Clique no botão abaixo para abrir o seletor de carteiras
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-2">
-              {connectors
-                .filter((connector) => connector.ready)
-                .map((connector) => (
-                  <div
-                    key={connector.id}
-                    className="flex items-center justify-between p-3 border rounded-md cursor-pointer hover:bg-primary-bg hover:border-primary transition-colors"
-                    onClick={() => handleConnectWallet(connector)}
-                    disabled={!connector.ready || isLoading}
-                  >
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback>
-                          {connector.name.substring(0, 2)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{connector.name}</span>
-                    </div>
-                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                  </div>
-                ))}
+            <CardContent className="space-y-4">
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground mb-4">
+                  O RainbowKit irá mostrar todas as carteiras disponíveis para conexão
+                </p>
+              </div>
             </CardContent>
-            <CardFooter>
+            <CardFooter className="flex gap-2">
               <Button 
                 variant="outline" 
-                className="w-full" 
+                className="flex-1" 
                 onClick={() => setCurrentScreen("initial")}
               >
                 Voltar
               </Button>
+              <Button 
+                className="flex-1" 
+                onClick={handleConnectWallet}
+              >
+                Abrir Seletor
+              </Button>
             </CardFooter>
-            {connectError && (
-              <div className="px-6 pb-4">
-                <Alert variant="destructive">
-                  <AlertTriangle className="h-4 w-4" />
-                  <AlertDescription>
-                    {connectError.message || "Erro ao conectar carteira. Tente novamente."}
-                  </AlertDescription>
-                </Alert>
-              </div>
-            )}
           </Card>
         );
 

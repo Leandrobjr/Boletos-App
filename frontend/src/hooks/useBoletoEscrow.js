@@ -10,9 +10,18 @@ export function useBoletoEscrow() {
   };
 
   // Liberar valor do boleto (chamada ao contrato)
-  const liberarBoleto = async ({ boletoId }) => {
+  const liberarBoleto = async ({ boletoId, enderecoComprador, enderecoVendedor }) => {
     // TODO: integrar com contrato inteligente
-    return { success: true, txHash: '0x456...' };
+    // Por enquanto, simula a liberação
+    console.log('Liberando boleto:', { boletoId, enderecoComprador, enderecoVendedor });
+    
+    // Simula delay de transação
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    
+    return { 
+      success: true, 
+      txHash: '0x' + Math.random().toString(16).substring(2, 10) + '...' 
+    };
   };
 
   // Consultar status do boleto (on-chain)

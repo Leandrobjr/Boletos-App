@@ -1,0 +1,147 @@
+/* Tema personalizado para o BoletoXCrypto */
+
+/* Variáveis de cores */
+:root {
+  /* Cores principais */
+  --color-green-600: #16a34a;
+  --color-lime-500: #84cc16;
+  --color-lime-200: #ecfccb;
+  --color-neutral-600: #525252;
+  --color-red-600: #dc2626;
+  
+  /* Fundo da página */
+  --page-background: var(--color-lime-200);
+  
+  /* Cores dos componentes */
+  --card-header-bg: var(--color-lime-500);
+  --card-header-text: white;
+  --card-content-bg: white;
+  --button-bg: var(--color-green-600);
+  --button-text: white;
+  --input-border: var(--color-lime-500);
+  --text-color: var(--color-neutral-600);
+  --error-color: var(--color-red-600);
+}
+
+/* Estilos globais */
+html, body, #root {
+  background-color: var(--page-background);
+}
+
+/* Estilos para os componentes */
+.card {
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background-color: white;
+}
+
+.card-header {
+  background-color: var(--card-header-bg);
+  color: var(--card-header-text);
+  padding: 16px 24px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.card-header h1,
+.card-header h2,
+.card-header h3,
+.card-header h4,
+.card-header h5,
+.card-header h6,
+.card-header p {
+  color: var(--card-header-text);
+}
+
+.card-content {
+  background-color: var(--card-content-bg);
+  padding: 24px;
+}
+
+.card-footer {
+  background-color: var(--card-header-bg);
+  color: var(--card-header-text);
+  padding: 16px 24px;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+/* Botões */
+button,
+.btn,
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  background-color: var(--button-bg);
+  color: var(--button-text);
+  font-weight: 600;
+  border-radius: 12px;
+  padding: 12px 20px;
+  transition: all 0.2s ease;
+}
+
+button:hover,
+.btn:hover,
+[type="button"]:hover,
+[type="submit"]:hover,
+[type="reset"]:hover {
+  filter: brightness(110%);
+  transform: translateY(-2px);
+}
+
+/* Campos de formulário */
+input,
+textarea,
+select {
+  border-color: var(--input-border);
+  border-radius: 8px;
+  padding: 10px 16px;
+}
+
+/* Campo CPF/CNPJ */
+#cpfCnpj,
+input[name="cpfCnpj"] {
+  width: 280px;
+  max-width: 280px;
+}
+
+/* Campo Código de Barras */
+#codigoBarras,
+input[name="codigoBarras"] {
+  width: 480px;
+  max-width: 100%;
+}
+
+/* Textos */
+h1, h2, h3, h4, h5, h6, p, span, label {
+  color: var(--text-color);
+}
+
+/* Mensagens de erro */
+.text-destructive,
+.text-red-500 {
+  color: var(--error-color);
+}
+
+/* Classes Tailwind personalizadas */
+.bg-lime-200 {
+  background-color: var(--color-lime-200);
+}
+
+.bg-lime-500 {
+  background-color: var(--color-lime-500);
+}
+
+.bg-green-600 {
+  background-color: var(--color-green-600);
+}
+
+.text-neutral-600 {
+  color: var(--color-neutral-600);
+}
+
+/* Sobrescrever classes do Shadcn UI */
+[data-theme="default"] {
+  --background: var(--page-background);
+  --card-header: var(--card-header-bg);
+  --card-footer: var(--card-header-bg);
+}

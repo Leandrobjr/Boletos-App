@@ -1,0 +1,32 @@
+/* Importação de fontes para o BoletoXCrypto */
+
+@font-face {
+  font-family: 'Bitcoin';
+  src: url('../fonts/bitcoin.woff2') format('woff2'),
+       url('../fonts/bitcoin.woff') format('woff');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Bitcoin';
+  src: url('../fonts/bitcoin-bold.woff2') format('woff2'),
+       url('../fonts/bitcoin-bold.woff') format('woff');
+  font-weight: bold;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* Importação da fonte Inter para o texto geral */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+/* Classes utilitárias para uso da fonte Bitcoin */
+.bitcoin-font {
+  font-family: 'Bitcoin', sans-serif;
+}
+
+.bitcoin-logo {
+  font-family: 'Bitcoin', sans-serif;
+  font-weight: bold;
+}
