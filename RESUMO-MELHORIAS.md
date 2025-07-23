@@ -2,7 +2,17 @@
 
 ## Melhorias Implementadas
 
-### 1. Correção de Erros
+### 1. Modal de Visualização do Comprovante (Julho 2025)
+- **Otimização da área de visualização**: Maximizada a área para exibição do comprovante
+- **Interface limpa**: Removido cabeçalho interno desnecessário "COMPROVANTE DE PAGAMENTO"
+- **Cabeçalho melhorado**: Atualizado para "Comprovante de Pagamento do Boleto (número)"
+- **Botões fixos**: Posicionados no rodapé fixo para sempre ficarem visíveis
+- **Scroll otimizado**: Apenas a área do documento rola, sem scroll externo
+- **Layout responsivo**: Altura dinâmica `calc(100vh - 450px)` com altura mínima de 350px
+- **Sem barra horizontal**: Removida barra de rolagem horizontal desnecessária
+- **Aplicado em**: VendedorPage.jsx e CompradorPage.jsx
+
+### 2. Correção de Erros
 - Corrigimos erros de sintaxe no componente `DashboardGestaoPage.jsx`
 - Adicionamos variáveis de estatísticas que estavam faltando (totalBoletos, totalPagos, totalTravados, valorTotal, valorTaxas)
 
@@ -42,7 +52,12 @@
 
 ## Próximos Passos
 
-1. **Implementação de Componentes Adicionais**
+1. **Melhorias no Modal de Comprovante**
+   - Implementar zoom e navegação em PDFs
+   - Adicionar suporte para múltiplos formatos de arquivo
+   - Implementar preview em miniatura para múltiplos comprovantes
+
+2. **Implementação de Componentes Adicionais**
    - Criar componentes para formulários (Input, Select, Checkbox)
    - Desenvolver componentes de feedback (Toast, Alert)
    - Implementar componentes de navegação (Tabs, Pagination)
