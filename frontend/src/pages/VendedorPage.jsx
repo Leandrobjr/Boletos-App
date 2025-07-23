@@ -441,6 +441,46 @@ function VendedorPage() {
     await processarBaixaBoleto(boleto);
   };
 
+  // Função para abrir disputa
+  const handleDisputa = async (boleto) => {
+    if (window.confirm('Deseja realmente abrir uma disputa para este boleto? Esta ação iniciará um processo de resolução.')) {
+      try {
+        // Aqui você pode implementar a lógica de disputa
+        // Por exemplo, atualizar o status do boleto para "EM DISPUTA"
+        const response = await fetch(`http://localhost:3001/boletos/${boleto.id}/disputa`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'EM DISPUTA',
+            data_disputa: new Date().toISOString()
+          })
+        });
+
+        if (response.ok) {
+          setAlertInfo({
+            type: 'success',
+            title: 'Disputa aberta',
+            description: 'A disputa foi aberta com sucesso. O suporte entrará em contato.'
+          });
+          // Recarregar os boletos para atualizar o status
+          fetchBoletos();
+        } else {
+          throw new Error('Erro ao abrir disputa');
+        }
+      } catch (error) {
+        console.error('Erro ao abrir disputa:', error);
+        setAlertInfo({
+          type: 'destructive',
+          title: 'Erro ao abrir disputa',
+          description: 'Ocorreu um erro ao abrir a disputa. Tente novamente.'
+        });
+      }
+      setTimeout(() => setAlertInfo(null), 5000);
+    }
+  };
+
   const handleVisualizarBoleto = (boleto) => {
     
           if (boleto.comprovante_url) {
@@ -847,6 +887,20 @@ function VendedorPage() {
                                           className="text-red-600 hover:text-red-700"
                                         >
                                           Cancelar Boleto
+                                        </DropdownMenuItem>
+                                      )}
+                                      
+                                      {/* Opção para disputa - apenas quando há comprovante */}
+                                      {boleto.comprovante_url && (
+                                        <DropdownMenuItem 
+                                          onClick={() => {
+                                            handleDisputa(boleto);
+                                            setDropdownOpen(prev => ({ ...prev, [boleto.numeroControle]: false }));
+                                          }}
+                                          className="text-orange-600 hover:text-orange-700"
+                                        >
+                                          <FaExclamationTriangle className="mr-2 text-sm" />
+                                          Disputa
                                         </DropdownMenuItem>
                                       )}
                                     </DropdownMenuContent>
