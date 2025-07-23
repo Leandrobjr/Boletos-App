@@ -1,61 +1,43 @@
-import React, { useEffect, useState } from "react";
-import { useAuth } from '../components/auth/AuthProvider';
-import { Card, CardHeader, CardContent } from "../components/ui/card";
-import { Button } from "../components/ui/Button";
-import { Alert } from "../components/ui/alert";
-import { useAccount, usePublicClient } from "wagmi";
-import { releaseEscrow } from "../services/escrowService";
+import React, { useState, useEffect } from 'react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { Alert } from '@/components/ui/alert';
+import { useAuth } from '@/components/auth/AuthProvider';
 
 function MeusBoletos() {
   const { user } = useAuth();
   const [boletos, setBoletos] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const [debugUrl, setDebugUrl] = useState("");
-  const [lastStatus, setLastStatus] = useState("");
+  const [error, setError] = useState(null);
+  const [lastStatus, setLastStatus] = useState('');
 
-  // Função robusta para formatar datas
+  // Função para formatar data
   const formatarData = (data) => {
-    if (!data) return "N/A";
+    if (!data) return '-';
     try {
-      if (data instanceof Date && !isNaN(data.getTime())) {
-      return data.toLocaleDateString('pt-BR');
-      }
-      if (typeof data === "string") {
-        const d = new Date(data);
-        if (!isNaN(d.getTime())) return d.toLocaleDateString('pt-BR');
-        const partes = data.split("-");
-        if (partes.length === 3) return `${partes[2]}/${partes[1]}/${partes[0]}`;
-      }
-      return "Data inválida";
-    } catch {
-      return "Data inválida";
+      return new Date(data).toLocaleDateString('pt-BR');
+    } catch (e) {
+      return '-';
     }
   };
 
-  // Busca automática e reativa
+  // Buscar boletos do usuário
   useEffect(() => {
-    if (!user?.uid) {
-      setBoletos([]);
-      setDebugUrl("");
-      setLastStatus("Usuário não autenticado");
-      setError("");
-      return;
-    }
+    if (!user?.uid) return;
+    
     setLoading(true);
-    setError("");
+    setError(null);
+    
     const url = `http://localhost:3001/boletos/usuario/${user.uid}`;
-    setDebugUrl(url);
-    setLastStatus("Buscando boletos...");
+    
     fetch(url)
       .then(res => {
-        setLastStatus(`Status HTTP: ${res.status}`);
-        if (!res.ok) throw new Error(`Erro HTTP ${res.status}`);
+        if (!res.ok) throw new Error(`Erro ${res.status}: ${res.statusText}`);
         return res.json();
       })
       .then(data => {
-        const boletosCorrigidos = (data || []).map(boleto => ({
+        const boletosCorrigidos = data.map(boleto => ({
           ...boleto,
+          valor: boleto.valor_brl || boleto.valor || 0,
           cpfCnpj: boleto.cpf_cnpj,
           codigoBarras: boleto.codigo_barras,
           numeroControle: boleto.numero_controle,
@@ -72,35 +54,6 @@ function MeusBoletos() {
       .finally(() => setLoading(false));
   }, [user]);
 
-  useEffect(() => {
-    if (boletos && boletos.length > 0) {
-      console.log('[DEBUG] Boleto bruto recebido:', boletos[0]);
-    }
-  }, [boletos]);
-
-  // Interceptor global para fetch (apenas em dev)
-  if (typeof window !== 'undefined' && window.fetch && !window._fetchIntercepted) {
-    const originalFetch = window.fetch;
-    window.fetch = function(...args) {
-      if (typeof args[0] === 'string' && args[0].includes('/boletos/')) {
-        console.log('[FETCH DEBUG] Chamada para:', args[0]);
-      }
-      return originalFetch.apply(this, args);
-    };
-    window._fetchIntercepted = true;
-  }
-
-  // Painel de debug sempre visível
-  const PainelDebug = () => (
-    <div className="bg-black text-white p-3 mb-4 rounded shadow text-sm">
-      <div><b>DEBUG UID autenticado:</b> {user?.uid || 'N/A'}</div>
-      <div><b>Endpoint usado na busca:</b> <span className="text-green-400">{debugUrl || 'NÃO CHAMADO'}</span></div>
-      <div><b>Status da requisição:</b> {loading ? 'CARREGANDO...' : error ? `ERRO: ${error}` : lastStatus || 'OK'}</div>
-      <div><b>Exemplo de vencimento recebido:</b> {boletos[0]?.vencimento ? String(boletos[0].vencimento) : 'N/A'}</div>
-      <div><b>Exemplo de boleto bruto:</b> {boletos[0] ? JSON.stringify(boletos[0]) : 'N/A'}</div>
-    </div>
-  );
-
   // Função para formatar valor em reais
   const formatarMoeda = (valor) => {
     if (valor === undefined || valor === null) return "R$ 0,00";
@@ -110,7 +63,6 @@ function MeusBoletos() {
   // Renderização
   return (
     <div className="max-w-5xl mx-auto px-2">
-      <PainelDebug />
       <Card className="w-full shadow-lg rounded-lg overflow-hidden">
         <CardHeader>
           <h2 className="text-lg font-bold text-gray-800">MEUS BOLETOS</h2>

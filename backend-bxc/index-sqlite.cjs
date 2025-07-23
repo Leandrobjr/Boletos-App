@@ -224,10 +224,21 @@ app.get('/boletos/comprados/:uid', async (req, res) => {
   const { uid } = req.params;
   console.log('DEBUG: Buscando boletos comprados para usuário:', uid);
   try {
+    // Primeiro, buscar todos os boletos do usuário para debug
+    const todosBoletos = await allQuery(
+      `SELECT id, numero_controle, status, user_id, wallet_address FROM boletos WHERE user_id = ?`,
+      [uid]
+    );
+    console.log('DEBUG: Todos os boletos do usuário:', todosBoletos);
+    
     const result = await allQuery(
       `SELECT * FROM boletos 
        WHERE user_id = ? 
-       AND status NOT IN ('pendente', 'disponivel', 'DISPONIVEL') 
+       AND status IN ('reservado', 'aguardando_baixa', 'pago', 'baixado', 'BAIXADO', 'AGUARDANDO BAIXA')
+       AND wallet_address IS NOT NULL
+       AND status != 'cancelado'
+       AND status != 'disponivel'
+       AND status != 'DISPONIVEL'
        ORDER BY criado_em DESC`,
       [uid]
     );
@@ -261,12 +272,12 @@ app.get('/boletos/comprados/:uid', async (req, res) => {
 // Atualizar status do boleto para 'reservado'
 app.patch('/boletos/:numero_controle/reservar', async (req, res) => {
   const { numero_controle } = req.params;
-  const { user_id, wallet_address } = req.body;
-  console.log('DEBUG: Reservando boleto:', { numero_controle, user_id, wallet_address });
+  const { user_id, wallet_address, tx_hash } = req.body;
+  console.log('DEBUG: Reservando boleto:', { numero_controle, user_id, wallet_address, tx_hash });
   try {
     const result = await runQuery(
-      `UPDATE boletos SET status = 'reservado', user_id = ?, wallet_address = ? WHERE numero_controle = ?`,
-      [user_id, wallet_address, numero_controle]
+      `UPDATE boletos SET status = 'reservado', user_id = ?, wallet_address = ?, tx_hash = ? WHERE numero_controle = ?`,
+      [user_id, wallet_address, tx_hash, numero_controle]
     );
     
     if (result.changes === 0) {
@@ -275,6 +286,14 @@ app.patch('/boletos/:numero_controle/reservar', async (req, res) => {
     }
     
     const boletoAtualizado = await getQuery('SELECT * FROM boletos WHERE numero_controle = ?', [numero_controle]);
+    console.log('DEBUG: Boleto atualizado após reserva:', {
+      id: boletoAtualizado.id,
+      numero_controle: boletoAtualizado.numero_controle,
+      user_id: boletoAtualizado.user_id,
+      status: boletoAtualizado.status,
+      wallet_address: boletoAtualizado.wallet_address
+    });
+    
     const boletoMapeado = {
       ...boletoAtualizado,
       status: mapStatus(boletoAtualizado.status)
@@ -344,12 +363,42 @@ app.patch('/boletos/limpar-exemplos', async (req, res) => {
   }
 });
 
+// Liberar boleto (para cancelamento de compra)
+app.patch('/boletos/:numero_controle/liberar', async (req, res) => {
+  const { numero_controle } = req.params;
+  const { user_id } = req.body;
+  console.log('DEBUG: Liberando boleto:', { numero_controle, user_id });
+  try {
+    const result = await runQuery(
+      `UPDATE boletos SET status = 'disponivel', user_id = NULL, wallet_address = NULL WHERE numero_controle = ?`,
+      [numero_controle]
+    );
+    
+    if (result.changes === 0) {
+      console.log('DEBUG: Boleto não encontrado para liberação');
+      return res.status(404).json({ error: 'Boleto não encontrado' });
+    }
+    
+    const boletoAtualizado = await getQuery('SELECT * FROM boletos WHERE numero_controle = ?', [numero_controle]);
+    const boletoMapeado = {
+      ...boletoAtualizado,
+      status: mapStatus(boletoAtualizado.status)
+    };
+    
+    res.json(boletoMapeado);
+  } catch (error) {
+    console.error('Erro ao liberar boleto:', error);
+    res.status(500).json({ error: 'Erro ao liberar boleto' });
+  }
+});
+
 // Cancelar boleto
 app.patch('/boletos/:id/cancelar', async (req, res) => {
   const { id } = req.params;
+  console.log('DEBUG: Cancelando boleto ID:', id);
   try {
     const result = await runQuery(
-      `UPDATE boletos SET status = 'cancelado' WHERE id = ?`,
+      `UPDATE boletos SET status = 'cancelado', user_id = NULL, wallet_address = NULL, tx_hash = NULL WHERE id = ?`,
       [id]
     );
     
@@ -358,6 +407,14 @@ app.patch('/boletos/:id/cancelar', async (req, res) => {
     }
     
     const boletoAtualizado = await getQuery('SELECT * FROM boletos WHERE id = ?', [id]);
+    console.log('DEBUG: Boleto cancelado:', {
+      id: boletoAtualizado.id,
+      numero_controle: boletoAtualizado.numero_controle,
+      status: boletoAtualizado.status,
+      user_id: boletoAtualizado.user_id,
+      wallet_address: boletoAtualizado.wallet_address
+    });
+    
     const boletoMapeado = {
       ...boletoAtualizado,
       status: mapStatus(boletoAtualizado.status)

@@ -11,6 +11,7 @@ import {
   FaUserCheck, 
   FaIdCard 
 } from 'react-icons/fa';
+import StatusBadge from '../components/ui/status-badge';
 
 function DashboardGestaoPage() {
   // Estado para controle de abas
@@ -247,7 +248,7 @@ function DashboardGestaoPage() {
   };
 
   return (
-    <div className="min-h-screen bg-lime-100 flex flex-col">
+    <div className="min-h-screen bg-lime-300 flex flex-col">
       <main className="flex-1 container mx-auto px-4 py-1">
         <div className="space-y-6">
           <h1 className="text-3xl font-bold mb-2 text-greenDark bitcoin-font">Dashboard de Gestão</h1>
@@ -449,13 +450,7 @@ function DashboardGestaoPage() {
                         {boleto.valorLiquidoRepasse !== undefined && boleto.valorLiquidoRepasse !== null ? boleto.valorLiquidoRepasse.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' }) : '-'}
                       </td>
                       <td className="table-cell">
-                        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                          boleto.status === 'Pago' 
-                            ? 'bg-green-100 text-green-800' 
-                            : 'bg-yellow-100 text-yellow-800'
-                        }`}>
-                          {boleto.status}
-                        </span>
+                        <StatusBadge status={boleto.status} />
                       </td>
                     </tr>
                   ))}
@@ -596,5 +591,7 @@ function DashboardGestaoPage() {
     </div>
   );
 }
+
+
 
 export default DashboardGestaoPage;

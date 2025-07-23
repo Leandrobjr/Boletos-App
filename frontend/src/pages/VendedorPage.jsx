@@ -4,7 +4,7 @@ import {
   FaTrash, FaWallet, FaFileInvoiceDollar,
   FaList, FaCheck, FaHistory,
   FaExclamationTriangle, FaInfoCircle, FaTimes, FaHandPointer,
-  FaUpload, FaTimesCircle
+  FaUpload, FaTimesCircle, FaFilePdf
 } from 'react-icons/fa';
 import HistoricoTransacoes from '../components/HistoricoTransacoes';
 import {
@@ -29,6 +29,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../components/ui/dropdown-menu';
 import { parseValorBRL } from '../lib/utils';
 import ModernWalletConnector from '../components/wallet/ModernWalletConnector';
+import StatusBadge from '../components/ui/status-badge';
 import { useParams, useNavigate } from 'react-router-dom';
 
 function VendedorPage() {
@@ -45,9 +46,6 @@ function VendedorPage() {
   });
   const [boletos, setBoletos] = useState([]);
   const [alertInfo, setAlertInfo] = useState(null);
-  // Painel de debug
-  const [debugBoleto, setDebugBoleto] = useState(null);
-  const [debugUrl, setDebugUrl] = useState('');
   const wallet = useWalletConnection();
   const { taxaConversao, brlToUsdt, fetchTaxaConversao } = useUSDTConversion();
   const { travarBoleto, liberarBoleto } = useBoletoEscrow();
@@ -76,26 +74,15 @@ function VendedorPage() {
   const fetchBoletos = async () => {
     if (!user?.uid) return;
     const url = `http://localhost:3001/boletos/usuario/${user.uid}`;
-    setDebugUrl(url);
     try {
       const res = await fetch(url);
       if (!res.ok) {
         throw new Error(`Erro ${res.status}: ${res.statusText}`);
       }
       const data = await res.json();
-      console.log('DEBUG: Dados recebidos do backend:', data);
       
       const boletosMapeados = data.map(boleto => {
         const statusMapeado = mapStatus(boleto.status);
-        console.log('DEBUG: Mapeamento de status:', {
-          original: boleto.status,
-          mapeado: statusMapeado,
-          boletoId: boleto.id,
-          numeroControle: boleto.numero_controle,
-          comprovanteUrl: boleto.comprovante_url ? 'PRESENTE' : 'AUSENTE',
-          comprovanteUrlLength: boleto.comprovante_url ? boleto.comprovante_url.length : 0,
-          comprovanteUrlStart: boleto.comprovante_url ? boleto.comprovante_url.substring(0, 50) : 'NULL'
-        });
         
         return {
           ...boleto,
@@ -108,14 +95,6 @@ function VendedorPage() {
         };
       });
       
-      console.log('DEBUG: Boletos mapeados completos:', boletosMapeados);
-      console.log('DEBUG: Boletos com comprovante:', boletosMapeados.filter(b => b.comprovante_url).length);
-      console.log('DEBUG: Detalhes dos comprovantes:', boletosMapeados.map(b => ({
-        numeroControle: b.numeroControle,
-        temComprovante: !!b.comprovante_url,
-        comprovanteLength: b.comprovante_url ? b.comprovante_url.length : 0,
-        comprovanteStart: b.comprovante_url ? b.comprovante_url.substring(0, 50) : 'NULL'
-      })));
       setBoletos(boletosMapeados);
     } catch (error) {
       console.error('Erro ao buscar boletos:', error);
@@ -127,12 +106,6 @@ function VendedorPage() {
   // Monitorar mudanças no selectedComprovante e showComprovanteModal
   useEffect(() => {
     if (showComprovanteModal && selectedComprovante) {
-      console.log('DEBUG: Modal de comprovante aberto com:', {
-        numeroBoleto: selectedComprovante.numeroControle,
-        status: selectedComprovante.status,
-        comprovanteUrl: selectedComprovante.comprovante_url ? (selectedComprovante.comprovante_url.startsWith('data:') ? 'BASE64_DATA' : selectedComprovante.comprovante_url.substring(0, 100)) : 'NULL',
-        comprovanteUrlLength: selectedComprovante.comprovante_url ? selectedComprovante.comprovante_url.length : 0
-      });
     }
   }, [showComprovanteModal, selectedComprovante]);
 
@@ -142,28 +115,13 @@ function VendedorPage() {
 
   // Monitorar estado inicial da carteira
   useEffect(() => {
-    console.log('DEBUG: Estado inicial da carteira:', {
-      isConnected: wallet.isConnected,
-      address: wallet.address,
-      chainId: wallet.chainId,
-      chain: wallet.chain,
-      timestamp: new Date().toISOString()
-    });
   }, []);
 
   // Monitorar mudanças na carteira
   useEffect(() => {
-    console.log('DEBUG: Mudança detectada na carteira:', {
-      isConnected: wallet.isConnected,
-      address: wallet.address,
-      chainId: wallet.chainId,
-      chain: wallet.chain,
-      timestamp: new Date().toISOString()
-    });
     
     // Se estava processando baixa e agora a carteira está conectada, continuar automaticamente
     if (processandoBaixa && boletoParaBaixar && wallet.isConnected && wallet.address) {
-      console.log('DEBUG: Carteira conectada durante processo de baixa - continuando automaticamente');
       setProcessandoBaixa(false);
       setBoletoParaBaixar(null);
       
@@ -178,7 +136,6 @@ function VendedorPage() {
     if (processandoBaixa && boletoParaBaixar) {
       const timeout = setTimeout(() => {
         if (!wallet.isConnected) {
-          console.log('DEBUG: Timeout de conexão - limpando estado');
           setProcessandoBaixa(false);
           setBoletoParaBaixar(null);
           setAlertInfo({
@@ -253,14 +210,6 @@ function VendedorPage() {
     setButtonError(false);
     setButtonMessage('Cadastrando...');
     
-    // Logs detalhados para debug do estado da carteira
-    console.log('DEBUG: Estado da carteira no submit:', {
-      isConnected: wallet.isConnected,
-      address: wallet.address,
-      chainId: wallet.chainId,
-      chain: wallet.chain
-    });
-    
     let errors = {};
     if (formData.cpfCnpj.length < 11) errors.cpfCnpj = 'CPF/CNPJ deve ter pelo menos 11 dígitos';
     if (formData.codigoBarras.length < 30) errors.codigoBarras = 'Código de barras deve ter pelo menos 30 caracteres';
@@ -271,17 +220,13 @@ function VendedorPage() {
     
     // Validação mais rigorosa da carteira
     if (!wallet.isConnected || !wallet.address) {
-      console.log('DEBUG: Carteira não conectada - bloqueando cadastro');
       errors.wallet = 'Conecte sua carteira antes de travar o boleto';
     } else {
-      console.log('DEBUG: Carteira conectada - permitindo cadastro');
     }
     
     if (!user?.uid) errors.uid = 'Usuário não autenticado';
     if (!cotacaoValida) errors.cotacao = 'Cotação indisponível. Tente novamente em instantes.';
     if (!isFinite(valorUsdt) || valorUsdt <= 0) errors.usdt = 'Conversão para USDT inválida.';
-    
-    console.log('DEBUG: Erros de validação encontrados:', errors);
     
     if (Object.keys(errors).length > 0) {
       setButtonError(true);
@@ -305,7 +250,6 @@ function VendedorPage() {
       status: 'DISPONIVEL',
       numeroControle: Date.now().toString()
     };
-    setDebugBoleto(boletoObj);
     try {
       const resp = await fetch('http://localhost:3001/boletos', {
         method: 'POST',
@@ -429,14 +373,6 @@ function VendedorPage() {
 
   // Função para cancelar boleto
   const handleCancelar = async (boleto) => {
-    console.log('DEBUG: Cancelando boleto:', boleto);
-    console.log('DEBUG: Dados do boleto para cancelamento:', {
-      numeroControle: boleto.numeroControle,
-      numero_controle: boleto.numero_controle,
-      id: boleto.id,
-      status: boleto.status,
-      user_id: user?.uid
-    });
     
     try {
       // O backend espera o ID do boleto, não o numero_controle
@@ -450,26 +386,18 @@ function VendedorPage() {
         user_id: user.uid
       };
       
-      console.log('DEBUG: URL da requisição:', url);
-      console.log('DEBUG: Payload enviado:', payload);
-      
       const resp = await fetch(url, { 
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       
-      console.log('DEBUG: Status da resposta:', resp.status);
-      console.log('DEBUG: Status text:', resp.statusText);
-      
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
-        console.log('DEBUG: Dados do erro:', errorData);
         throw new Error(errorData.message || `Erro ${resp.status}: ${resp.statusText}`);
       }
       
       const result = await resp.json();
-      console.log('DEBUG: Boleto cancelado com sucesso:', result);
       
       // Atualizar a lista de boletos
       await fetchBoletos();
@@ -493,25 +421,16 @@ function VendedorPage() {
 
   // Função para baixar pagamento
   const handleBaixarPagamento = async (boleto) => {
-    console.log('DEBUG: Iniciando processo de baixa para boleto:', boleto.id);
-    
-    // Fechar o dropdown
-    setDropdownOpen(prev => ({ ...prev, [boleto.numeroControle]: false }));
     
     // Verificar se a carteira está conectada
     if (!wallet.isConnected || !wallet.address) {
-      console.log('DEBUG: Carteira não conectada - iniciando fluxo automático');
       setBoletoParaBaixar(boleto);
       setProcessandoBaixa(true);
       
       // Abrir modal de conexão automaticamente
       if (openConnectModal) {
-        console.log('DEBUG: Abrindo modal de conexão automaticamente');
         openConnectModal();
       } else {
-        console.log('DEBUG: Modal de conexão não disponível');
-        setProcessandoBaixa(false);
-        setBoletoParaBaixar(null);
         alert('Erro ao abrir modal de conexão. Tente conectar a carteira manualmente.');
         return;
       }
@@ -519,38 +438,27 @@ function VendedorPage() {
     }
 
     // Se a carteira já está conectada, processar diretamente
-    console.log('DEBUG: Carteira já conectada - processando diretamente');
     await processarBaixaBoleto(boleto);
   };
 
   const handleVisualizarBoleto = (boleto) => {
-    console.log('DEBUG: Visualizando boleto:', boleto);
-    console.log('DEBUG: Comprovante URL:', boleto.comprovante_url);
-    console.log('DEBUG: Tipo de URL:', boleto.comprovante_url ? boleto.comprovante_url.substring(0, 50) : 'NULL');
-    console.log('DEBUG: Comprovante URL completo (primeiros 200 chars):', boleto.comprovante_url ? boleto.comprovante_url.substring(0, 200) : 'NULL');
-    console.log('DEBUG: Comprovante URL length:', boleto.comprovante_url ? boleto.comprovante_url.length : 0);
-    console.log('DEBUG: Comprovante URL startsWith data:', boleto.comprovante_url ? boleto.comprovante_url.startsWith('data:') : false);
-    console.log('DEBUG: Comprovante URL startsWith http:', boleto.comprovante_url ? boleto.comprovante_url.startsWith('http') : false);
-
-    setDropdownOpen(prev => ({ ...prev, [boleto.numeroControle]: false }));
-
-    if (boleto.comprovante_url) {
-      // Verificar se é URL de exemplo
-      if (boleto.comprovante_url.includes('exemplo.com')) {
-        setAlertInfo({
-          type: 'destructive',
-          title: 'URL de Exemplo Detectada',
-          description: 'Este comprovante contém uma URL de exemplo. Use o botão "Limpar URLs de Exemplo" para corrigir.'
-        });
-        setTimeout(() => setAlertInfo(null), 5000);
-        return;
-      }
+    
+          if (boleto.comprovante_url) {
+        // Verificar se é URL de exemplo
+        if (boleto.comprovante_url.includes('exemplo.com')) {
+          setAlertInfo({
+            type: 'destructive',
+            title: 'URL de Exemplo Detectada',
+            description: 'Este comprovante contém uma URL de exemplo. Entre em contato com o suporte.'
+          });
+          setTimeout(() => setAlertInfo(null), 5000);
+          return;
+        }
 
       // Verificar se é base64 válido
       if (boleto.comprovante_url.startsWith('data:')) {
         const base64Data = boleto.comprovante_url.split(',')[1];
         if (!base64Data || base64Data.length < 100) {
-          console.log('DEBUG: Base64 muito pequeno ou inválido');
           setAlertInfo({
             type: 'destructive',
             title: 'Comprovante inválido',
@@ -566,7 +474,6 @@ function VendedorPage() {
         try {
           new URL(boleto.comprovante_url);
         } catch (e) {
-          console.log('DEBUG: URL inválida:', e);
           setAlertInfo({
             type: 'destructive',
             title: 'URL inválida',
@@ -577,11 +484,9 @@ function VendedorPage() {
         }
       }
 
-      console.log('DEBUG: Definindo selectedComprovante e abrindo modal');
       setSelectedComprovante(boleto);
       setShowComprovanteModal(true);
     } else {
-      console.log('DEBUG: Comprovante não disponível');
       setAlertInfo({
         type: 'destructive',
         title: 'Comprovante não disponível',
@@ -593,17 +498,9 @@ function VendedorPage() {
 
   // Função separada para processar a baixa do boleto
   const processarBaixaBoleto = async (boleto) => {
-    console.log('DEBUG: processarBaixaBoleto iniciada');
-    console.log('DEBUG: Boleto recebido:', boleto);
-    console.log('DEBUG: Estado atual da carteira:', {
-      isConnected: wallet.isConnected,
-      address: wallet.address,
-      chainId: wallet.chainId
-    });
     
     // Verificar se está na rede correta
     if (wallet.chainId !== 80002) {
-      console.log('DEBUG: Rede incorreta - chainId:', wallet.chainId);
       setAlertInfo({
         type: 'destructive',
         title: 'Rede incorreta',
@@ -615,7 +512,6 @@ function VendedorPage() {
 
     // Verificar se o boleto tem status "AGUARDANDO BAIXA"
     if (boleto.status !== 'AGUARDANDO BAIXA') {
-      console.log('DEBUG: Status inválido - status atual:', boleto.status);
       setAlertInfo({
         type: 'destructive',
         title: 'Status inválido',
@@ -626,9 +522,7 @@ function VendedorPage() {
     }
 
     // Verificar se há endereço do comprador
-    console.log('DEBUG: Verificando endereço do comprador:', boleto.wallet_address);
     if (!boleto.wallet_address) {
-      console.log('DEBUG: Endereço do comprador não encontrado');
       setAlertInfo({
         type: 'destructive',
         title: 'Dados incompletos',
@@ -638,7 +532,6 @@ function VendedorPage() {
       return;
     }
 
-    console.log('DEBUG: Todas as validações passaram - iniciando processo de baixa');
     setAlertInfo({
       type: 'default',
       title: 'Baixando boleto...',
@@ -646,11 +539,6 @@ function VendedorPage() {
     });
 
     try {
-      console.log('DEBUG: Chamando liberarBoleto com:', {
-        boletoId: boleto.numero_controle,
-        enderecoComprador: boleto.wallet_address,
-        enderecoVendedor: wallet.address
-      });
       
       // Primeiro, liberar os USDT do contrato inteligente para o COMPRADOR
       const result = await liberarBoleto({
@@ -659,13 +547,10 @@ function VendedorPage() {
         enderecoVendedor: wallet.address // Endereço do vendedor (para validação)
       });
       
-      console.log('DEBUG: Resultado do liberarBoleto:', result);
-
       if (!result.success) {
         throw new Error('Falha ao liberar USDT do contrato para o comprador');
       }
 
-      console.log('DEBUG: Chamando backend para baixar boleto');
       // Depois, chamar o backend para baixar o boleto
       const response = await fetch(`http://localhost:3001/boletos/${boleto.numeroControle || boleto.numero_controle}/baixar`, {
         method: 'PATCH',
@@ -678,16 +563,12 @@ function VendedorPage() {
         })
       });
 
-      console.log('DEBUG: Resposta do backend:', response.status, response.statusText);
-
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        console.log('DEBUG: Erro do backend:', errorData);
         throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
       }
 
       const responseData = await response.json();
-      console.log('DEBUG: Dados retornados do backend:', responseData);
 
       setAlertInfo({
         type: 'success',
@@ -697,9 +578,7 @@ function VendedorPage() {
       setTimeout(() => setAlertInfo(null), 5000);
 
       // Atualizar a lista de boletos
-      console.log('DEBUG: Chamando fetchBoletos para atualizar a lista');
       await fetchBoletos();
-      console.log('DEBUG: fetchBoletos concluído');
 
     } catch (error) {
       console.error('Erro ao baixar boleto:', error);
@@ -712,35 +591,7 @@ function VendedorPage() {
     }
   };
 
-  // Função para limpar URLs de exemplo (temporária)
-  const handleLimparExemplos = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/boletos/limpar-exemplos', {
-        method: 'PATCH'
-      });
-      const result = await response.json();
-      console.log('DEBUG: URLs de exemplo removidas:', result);
-      
-      setAlertInfo({
-        type: 'success',
-        title: 'URLs de exemplo removidas!',
-        description: `${result.boletosAtualizados} boletos foram atualizados.`
-      });
-      
-      // Recarregar boletos
-      await fetchBoletos();
-      
-      setTimeout(() => setAlertInfo(null), 3000);
-    } catch (error) {
-      console.error('Erro ao limpar URLs de exemplo:', error);
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Erro ao limpar URLs',
-        description: 'Não foi possível limpar as URLs de exemplo.'
-      });
-      setTimeout(() => setAlertInfo(null), 3000);
-    }
-  };
+
 
   // Função para resetar o formulário e estado do botão
   const resetForm = () => {
@@ -757,8 +608,6 @@ function VendedorPage() {
     setButtonMessage('Cadastrar e Travar USDT');
     setShowCotacao(false);
     setAlertInfo(null);
-    // Limpar qualquer estado de debug
-    setDebugBoleto(null);
   };
 
   // Funções de navegação para as rotas
@@ -770,7 +619,7 @@ function VendedorPage() {
   };
 
   return (
-    <div className="min-h-screen bg-lime-100 flex flex-col">
+    <div className="min-h-screen bg-lime-300 flex flex-col">
       <main className="flex-1 container mx-auto px-4 py-1">
         <div className="w-full max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold mb-2 bg-green-800 text-white p-2 rounded-lg text-center">
@@ -800,18 +649,10 @@ function VendedorPage() {
             </div>
           )}
           
-          {/* Botão temporário para limpar URLs de exemplo */}
-          <div className="mb-4 text-center">
-            <button
-              onClick={handleLimparExemplos}
-              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-semibold"
-            >
-              🧹 Limpar URLs de Exemplo (Correção)
-            </button>
-          </div>
+
           
           <Tabs value={activeTab} onValueChange={goToTab} className="w-full mb-6">
-            <TabsList className="grid w-full grid-cols-3 bg-lime-100 p-1 rounded-xl mb-2">
+            <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl mb-2">
               <TabsTrigger value="cadastrar" className="flex items-center justify-center text-lg font-bold py-3 h-12 data-[state=active]:bg-lime-600 data-[state=active]:text-white">
                 <FaFileInvoiceDollar className="mr-2" /> Cadastrar
               </TabsTrigger>
@@ -953,15 +794,7 @@ function VendedorPage() {
                                 <td className="py-3 px-4">{boleto.valor_usdt !== undefined ? Number(boleto.valor_usdt).toFixed(2) : '--'} USDT</td>
                                 <td className="py-3 px-4">{formatarData(boleto.vencimento)}</td>
                                 <td className="py-3 px-4">
-                                  <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                                    boleto.status === 'AGUARDANDO BAIXA' 
-                                      ? 'bg-yellow-100 text-yellow-800 border border-yellow-300' 
-                                      : boleto.status === 'BAIXADO'
-                                      ? 'bg-green-100 text-green-800 border border-green-300'
-                                      : 'bg-gray-100 text-gray-800 border border-gray-300'
-                                  }`}>
-                                    {boleto.status}
-                                  </span>
+                                  <StatusBadge status={boleto.status} />
                                 </td>
                                 <td className="py-3 px-4">
                                   {boleto.wallet_address ? (
@@ -984,8 +817,6 @@ function VendedorPage() {
                                       {boleto.comprovante_url && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            console.log('DEBUG: Botão Visualizar comprovante clicado!');
-                                            console.log('DEBUG: Boleto:', boleto);
                                             handleVisualizarBoleto(boleto);
                                           }}
                                         >
@@ -997,8 +828,6 @@ function VendedorPage() {
                                       {boleto.status === 'AGUARDANDO BAIXA' && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            console.log('DEBUG: Botão Baixar boleto clicado!');
-                                            console.log('DEBUG: Boleto:', boleto);
                                             handleBaixarPagamento(boleto);
                                           }}
                                         >
@@ -1010,8 +839,6 @@ function VendedorPage() {
                                       {boleto.status === 'DISPONIVEL' && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            console.log('DEBUG: Botão Cancelar boleto clicado!');
-                                            console.log('DEBUG: Boleto:', boleto);
                                             if (window.confirm('Deseja realmente cancelar este boleto? Esta ação não pode ser desfeita.')) {
                                               handleCancelar(boleto);
                                               setDropdownOpen(prev => ({ ...prev, [boleto.numeroControle]: false }));
@@ -1034,18 +861,6 @@ function VendedorPage() {
                   </div>
                 </CardContent>
               </Card>
-              {/* Painel de debug temporário para depuração de boletos */}
-              <div className="bg-black text-white p-3 mt-4 rounded shadow text-xs overflow-x-auto max-w-4xl mx-auto">
-                <b>DEBUG - Boletos recebidos do backend:</b>
-                <pre>{JSON.stringify(boletos, null, 2)}</pre>
-                <br />
-                <b>DEBUG - Estado da carteira:</b>
-                <pre>{JSON.stringify({
-                  isConnected: wallet.isConnected,
-                  address: wallet.address,
-                  chainId: wallet.chainId
-                }, null, 2)}</pre>
-              </div>
             </TabsContent>
             <TabsContent value="historico">
               <Card>
@@ -1064,14 +879,6 @@ function VendedorPage() {
       
       {/* Modal do Comprovante */}
       {showComprovanteModal && selectedComprovante && (() => {
-        console.log('DEBUG: Renderizando modal do comprovante no VendedorPage:', {
-          numeroBoleto: selectedComprovante.numeroControle,
-          status: selectedComprovante.status,
-          comprovanteUrl: selectedComprovante.comprovante_url ? (selectedComprovante.comprovante_url.startsWith('data:') ? 'BASE64_DATA' : selectedComprovante.comprovante_url.substring(0, 100)) : 'NULL',
-          comprovanteUrlType: selectedComprovante.comprovante_url ? selectedComprovante.comprovante_url.substring(0, 50) : 'NULL',
-          isImage: selectedComprovante.comprovante_url ? selectedComprovante.comprovante_url.startsWith('data:image/') : false,
-          isPdf: selectedComprovante.comprovante_url ? selectedComprovante.comprovante_url.startsWith('data:application/pdf') : false
-        });
         return createPortal(
         <>
           <div
@@ -1082,19 +889,20 @@ function VendedorPage() {
             }}
           />
           <div
-            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto text-gray-800 shadow-2xl rounded-2xl border border-green-700"
+            className="fixed top-1/2 left-1/2 z-[9999] w-[90%] max-w-5xl h-[85vh] flex flex-col text-gray-800 shadow-2xl rounded-2xl border border-green-700"
             style={{
               transform: 'translate(-50%, -50%)',
               backgroundColor: '#bef264'
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="px-6 pt-6 pb-4 border-b border-green-700 flex items-center justify-between bg-green-50 rounded-t-2xl">
+            {/* Cabeçalho - Fixo */}
+            <div className="px-6 pt-6 pb-4 border-b border-green-700 flex items-center justify-between bg-green-50 rounded-t-2xl flex-shrink-0">
               <h2 className="text-2xl font-bold text-green-800 flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
                   <FaUpload className="text-white text-lg" />
                 </div>
-                Comprovante do Boleto {selectedComprovante.numeroControle}
+                Comprovante de Pagamento do Boleto {selectedComprovante.numeroControle}
               </h2>
               <button
                 onClick={() => {
@@ -1107,7 +915,9 @@ function VendedorPage() {
                 <FaTimesCircle size={24} />
               </button>
             </div>
-            <div className="px-6 py-4">
+            
+            {/* Conteúdo - Sem scroll externo */}
+            <div className="flex-1 px-6 py-4">
               {/* Informações do Boleto - Compactas */}
               <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-lime-50 rounded-lg border border-green-200">
                 <div className="grid grid-cols-4 gap-4 text-sm">
@@ -1132,76 +942,68 @@ function VendedorPage() {
               
               {/* Visualização do Comprovante - Priorizada */}
               <div className="bg-white rounded-lg border border-green-200 shadow-sm">
-                <div className="p-4 border-b border-green-200">
-                  <h3 className="font-bold text-green-800 text-lg flex items-center gap-2">
-                    <FaUpload className="text-green-600" />
-                    Comprovante de Pagamento
-                  </h3>
-                </div>
-                
-                {/* Área principal do arquivo - Maior */}
+                {/* Área principal do arquivo - Com scroll interno */}
                 <div className="p-4">
-                  <div className="border border-green-200 rounded-lg overflow-hidden bg-white">
+                  <div className="border border-green-200 rounded-lg overflow-y-auto overflow-x-hidden bg-white" style={{ height: 'calc(100vh - 450px)', minHeight: '350px' }}>
                     {(() => {
-                      console.log('DEBUG: Renderizando arquivo no VendedorPage:', {
-                        hasUrl: !!selectedComprovante.comprovante_url,
-                        urlStartsWithData: selectedComprovante.comprovante_url ? selectedComprovante.comprovante_url.startsWith('data:') : false,
-                        urlType: selectedComprovante.comprovante_url ? selectedComprovante.comprovante_url.substring(0, 50) : 'NULL'
-                      });
                       
                       if (selectedComprovante.comprovante_url && selectedComprovante.comprovante_url.startsWith('data:')) {
                         // Se for base64, mostrar em iframe ou imagem
                         if (selectedComprovante.comprovante_url.startsWith('data:image/')) {
-                          console.log('DEBUG: Renderizando como imagem no VendedorPage');
                           return (
                             <img
                               src={selectedComprovante.comprovante_url}
                               alt="Comprovante de Pagamento"
-                              className="w-full h-[70vh] object-contain"
+                              className="w-full h-full object-contain"
                               onError={(e) => {
-                                console.log('Erro ao carregar imagem no VendedorPage:', e);
                               }}
                               onLoad={() => {
-                                console.log('Imagem carregada com sucesso no VendedorPage');
                               }}
                             />
                           );
-                        } else {
-                          console.log('DEBUG: Renderizando como iframe no VendedorPage');
+                        } else if (selectedComprovante.comprovante_url.startsWith('data:application/pdf')) {
+                          // Fallback: tentar iframe e, se falhar, usar <object>
                           return (
-                            <iframe
-                              src={selectedComprovante.comprovante_url}
-                              className="w-full h-[70vh]"
-                              title="Comprovante de Pagamento"
-                              onError={(e) => {
-                                console.log('Erro ao carregar arquivo no VendedorPage:', e);
-                              }}
-                              onLoad={() => {
-                                console.log('Iframe carregado com sucesso no VendedorPage');
-                              }}
-                            />
+                            <>
+                              <iframe
+                                src={selectedComprovante.comprovante_url.replace(/\n/g, '')}
+                                className="w-full h-full"
+                                title="Comprovante de Pagamento"
+                                onError={(e) => {
+                                  document.getElementById('pdf-fallback').style.display = 'block';
+                                }}
+                              />
+                              <object
+                                id="pdf-fallback"
+                                data={selectedComprovante.comprovante_url.replace(/\n/g, '')}
+                                type="application/pdf"
+                                className="w-full h-full"
+                                style={{ display: 'none' }}
+                              >
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                  <p className="text-gray-500">Não foi possível exibir o comprovante PDF. Baixe o arquivo ou tente em outro navegador.</p>
+                                </div>
+                              </object>
+
+                            </>
                           );
                         }
                       } else if (selectedComprovante.comprovante_url && selectedComprovante.comprovante_url.startsWith('http')) {
                         // Se for URL externa, usar iframe
-                        console.log('DEBUG: Renderizando URL externa no VendedorPage');
                         return (
                           <iframe
                             src={selectedComprovante.comprovante_url}
-                            className="w-full h-[70vh]"
+                            className="w-full h-full"
                             title="Comprovante de Pagamento"
                             onError={(e) => {
-                              console.log('Erro ao carregar URL externa no VendedorPage:', e);
                             }}
                             onLoad={() => {
-                              console.log('URL externa carregada com sucesso no VendedorPage');
                             }}
                           />
                         );
                       } else {
-                        console.log('DEBUG: Arquivo não disponível no VendedorPage');
-                        return (
-                          <div className="w-full h-[70vh] flex items-center justify-center bg-gray-100">
+                                                  return (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
                             <p className="text-gray-500">Arquivo não disponível</p>
                           </div>
                         );
@@ -1209,21 +1011,39 @@ function VendedorPage() {
                     })()}
                   </div>
                 </div>
-                
-                {/* Botões de ação - Compactos */}
-                <div className="p-4 border-t border-green-200 bg-gray-50">
-                  <button
-                    onClick={() => {
-                      setShowComprovanteModal(false);
-                      setSelectedComprovante(null);
-                    }}
-                    className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors duration-200"
-                  >
-                    <FaTimesCircle className="text-sm" /> 
-                    FECHAR
-                  </button>
-                </div>
               </div>
+            </div>
+            
+            {/* Rodapé - Fixo */}
+            <div className="p-4 border-t border-green-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+              {/* Botão BAIXAR PDF - Fixo */}
+              {selectedComprovante.comprovante_url && (
+                <div className="mb-3 flex justify-center">
+                  <a
+                    href={selectedComprovante.comprovante_url.replace(/\n/g, '')}
+                    download={`comprovante-${selectedComprovante.numeroControle || selectedComprovante.numero_controle || 'boleto'}.pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold px-6 py-3 rounded-lg text-sm transition-colors duration-200"
+                    style={{ backgroundColor: '#fecaca !important', color: '#b91c1c !important' }}
+                  >
+                    <FaFilePdf className="text-sm" style={{ color: '#b91c1c !important' }} />
+                    BAIXAR PDF
+                  </a>
+                </div>
+              )}
+              
+              {/* Botão FECHAR */}
+              <button
+                onClick={() => {
+                  setShowComprovanteModal(false);
+                  setSelectedComprovante(null);
+                }}
+                className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors duration-200"
+              >
+                <FaTimesCircle className="text-sm" /> 
+                FECHAR
+              </button>
             </div>
           </div>
         </>,
@@ -1244,5 +1064,7 @@ function mapStatus(status) {
     default: return status ? status.toUpperCase() : status;
   }
 }
+
+
 
 export default VendedorPage;

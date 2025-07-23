@@ -11,13 +11,14 @@ import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '../components/ui/tabs';
 import { Alert, AlertTitle, AlertDescription } from '../components/ui/alert';
-import ModernWalletConnector from '../components/wallet/ModernWalletConnector';
+
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
 import { useWalletConnection } from '../hooks/useWalletConnection';
 import { useBoletoEscrow } from '../hooks/useBoletoEscrow';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
+import StatusBadge from '../components/ui/status-badge';
 
 const CompradorPage = () => {
   const { user } = useAuth();
@@ -86,7 +87,6 @@ const CompradorPage = () => {
       const res = await fetch(`http://localhost:3001/boletos/comprados/${user.uid}`);
       if (!res.ok) throw new Error('Erro ao buscar boletos do usuário');
       const data = await res.json();
-      console.log('DEBUG: Dados brutos recebidos do backend:', JSON.stringify(data, null, 2));
       
       const boletosMapeados = data.map(boleto => ({
         ...boleto,
@@ -97,13 +97,6 @@ const CompradorPage = () => {
         comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
         status: mapStatus(boleto.status)
       }));
-      
-      console.log('DEBUG: Boletos mapeados completos:', JSON.stringify(boletosMapeados, null, 2));
-      console.log('DEBUG: Comprovante URLs:', boletosMapeados.map(b => ({
-        numeroBoleto: b.numeroBoleto,
-        status: b.status,
-        comprovanteUrl: b.comprovanteUrl ? (b.comprovanteUrl.startsWith('data:') ? 'BASE64_DATA' : b.comprovanteUrl.substring(0, 100)) : 'NULL'
-      })));
       
       setMeusBoletos(boletosMapeados);
     } catch (error) {
@@ -338,8 +331,6 @@ const CompradorPage = () => {
         }
         
         const boletoAtualizado = await response.json();
-        console.log('DEBUG: Boleto atualizado após envio de comprovante:', boletoAtualizado);
-        console.log('DEBUG: URL do comprovante sendo salva:', comprovanteUrl.substring(0, 50) + '...');
         
         // Atualizar o boleto selecionado com a URL do comprovante
         setSelectedBoleto(prev => ({
@@ -382,18 +373,13 @@ const CompradorPage = () => {
 
   // Função para abrir modal do comprovante
   const handleVisualizarComprovante = (boleto) => {
-    console.log('DEBUG: Abrindo modal do comprovante para boleto:', {
-      numeroBoleto: boleto.numeroBoleto,
-      status: boleto.status,
-      comprovanteUrl: boleto.comprovanteUrl ? (boleto.comprovanteUrl.startsWith('data:') ? 'BASE64_DATA' : boleto.comprovanteUrl.substring(0, 100)) : 'NULL'
-    });
     
     // Se for URL de exemplo, mostrar alerta
     if (boleto.comprovanteUrl && boleto.comprovanteUrl.includes('exemplo.com')) {
       setAlertInfo({
         type: 'destructive',
         title: 'URL de Exemplo Detectada',
-        description: 'Este comprovante contém uma URL de exemplo. Use o botão "Limpar URLs de Exemplo" para corrigir.'
+        description: 'Este comprovante contém uma URL de exemplo. Entre em contato com o suporte.'
       });
       setTimeout(() => setAlertInfo(null), 5000);
       return;
@@ -403,7 +389,6 @@ const CompradorPage = () => {
     if (boleto.comprovanteUrl && boleto.comprovanteUrl.startsWith('data:')) {
       const base64Data = boleto.comprovanteUrl.split(',')[1];
       if (!base64Data || base64Data.length < 100) {
-        console.log('DEBUG: Base64 muito pequeno ou inválido');
         setAlertInfo({
           type: 'destructive',
           title: 'Comprovante inválido',
@@ -419,7 +404,6 @@ const CompradorPage = () => {
       try {
         new URL(boleto.comprovanteUrl);
       } catch (e) {
-        console.log('DEBUG: URL inválida:', e);
         setAlertInfo({
           type: 'destructive',
           title: 'URL inválida',
@@ -451,35 +435,7 @@ const CompradorPage = () => {
     setTimeout(() => setAlertInfo(null), 3000);
   };
 
-  // Função para limpar URLs de exemplo (temporária)
-  const handleLimparExemplos = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/boletos/limpar-exemplos', {
-        method: 'PATCH'
-      });
-      const result = await response.json();
-      console.log('DEBUG: URLs de exemplo removidas:', result);
-      
-      setAlertInfo({
-        type: 'success',
-        title: 'URLs de exemplo removidas!',
-        description: `${result.boletosAtualizados} boletos foram atualizados.`
-      });
-      
-      // Recarregar boletos
-      await fetchMeusBoletos();
-      
-      setTimeout(() => setAlertInfo(null), 3000);
-    } catch (error) {
-      console.error('Erro ao limpar URLs de exemplo:', error);
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Erro ao limpar URLs',
-        description: 'Não foi possível limpar as URLs de exemplo.'
-      });
-      setTimeout(() => setAlertInfo(null), 3000);
-    }
-  };
+
 
   useEffect(() => {
     let timer;
@@ -581,17 +537,9 @@ const CompradorPage = () => {
             </div>
           )}
           
-          <ModernWalletConnector />
+
           
-          {/* Botão temporário para limpar URLs de exemplo */}
-          <div className="mb-4 text-center">
-            <button
-              onClick={handleLimparExemplos}
-              className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded-lg text-sm font-semibold"
-            >
-              🧹 Limpar URLs de Exemplo (Correção)
-            </button>
-          </div>
+
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
             <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl">
               <TabsTrigger value="comprar" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
@@ -632,16 +580,14 @@ const CompradorPage = () => {
                         {boletosDisponiveis
                           .filter(boleto => ["DISPONIVEL", "AGUARDANDO PAGAMENTO", "AGUARDANDO BAIXA"].includes(boleto.status))
                           .map((boleto) => (
-                            <tr key={boleto.id} className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-100' : ''}`}>
+                            <tr key={boleto.id} className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-300' : ''}`}>
                               <td className="py-3 px-4">{boleto.numeroControle}</td>
                               <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? Number(boleto.valor_brl).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                              <td className="py-3 px-4">{valorLiquidoUSDT(boleto.valor_usdt)} USDT</td>
+                              <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
                               <td className="py-3 px-4">{boleto.vencimento ? new Date(boleto.vencimento).toLocaleDateString('pt-BR') : '--'}</td>
                               <td className="py-3 px-4">{boleto.cpfCnpj || '--'}</td>
                               <td className="py-3 px-4">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  {boleto.status}
-                                </span>
+                                <StatusBadge status={boleto.status} />
                               </td>
                               <td className="py-3 px-4">
                                 {boleto.status === "DISPONIVEL" ? (
@@ -699,14 +645,12 @@ const CompradorPage = () => {
                           {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').map((boleto) => (
                             <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
                               <td className="py-3 px-4">{boleto.numeroBoleto}</td>
-                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                              <td className="py-3 px-4">{valorLiquidoUSDT(boleto.valor_usdt)} USDT</td>
-                              <td className="py-3 px-4">R$ {taxaServicoReais(boleto.valor)} ({taxaServicoUSDT(boleto.valor_usdt)} USDT)</td>
-                              <td className="py-3 px-4">{new Date(boleto.dataCompra).toLocaleDateString('pt-BR')} {new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}</td>
+                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                              <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
+                              <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
+                              <td className="py-3 px-4">{boleto.dataCompra ? new Date(boleto.dataCompra).toLocaleDateString('pt-BR') + ' ' + new Date(boleto.dataCompra).toLocaleTimeString('pt-BR') : '--'}</td>
                               <td className="py-3 px-4">
-                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                  {boleto.status}
-                                </span>
+                                <StatusBadge status={boleto.status} />
                               </td>
                               <td className="py-3 px-6 w-44 flex gap-2">
                                 <DropdownMenu>
@@ -734,17 +678,14 @@ const CompradorPage = () => {
                                       Enviar Comprovante
                                     </DropdownMenuItem>
                                     
-                                    <DropdownMenuItem 
-                                      onClick={() => handleVisualizarComprovante(boleto)}
-                                      disabled={!boleto.comprovanteUrl && boleto.status !== 'AGUARDANDO BAIXA'}
-                                      className={`text-sm font-medium ${(!boleto.comprovanteUrl && boleto.status !== 'AGUARDANDO BAIXA') ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
-                                    >
-                                      <FaUpload className="mr-2 text-sm" />
-                                      Visualizar Comprovante
-                                      {boleto.comprovanteUrl && boleto.comprovanteUrl.includes('exemplo.com') && (
-                                        <span className="ml-1 text-xs text-orange-600">(Exemplo)</span>
-                                      )}
-                                    </DropdownMenuItem>
+                                                                          <DropdownMenuItem 
+                                        onClick={() => handleVisualizarComprovante(boleto)}
+                                        disabled={!boleto.comprovanteUrl && boleto.status !== 'AGUARDANDO BAIXA'}
+                                        className={`text-sm font-medium ${(!boleto.comprovanteUrl && boleto.status !== 'AGUARDANDO BAIXA') ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
+                                      >
+                                        <FaUpload className="mr-2 text-sm" />
+                                        Visualizar Comprovante
+                                      </DropdownMenuItem>
                                     
                                     <DropdownMenuItem 
                                       onClick={() => handleDisputa(boleto)}
@@ -791,10 +732,20 @@ const CompradorPage = () => {
                         <tbody>
                           {meusBoletos.map((boleto) => (
                             <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
-                              <td className="py-3 px-4">{new Date(boleto.dataCompra).toLocaleDateString('pt-BR')}<br /><span className="text-xs text-gray-400">{new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}</span></td>
-                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                              <td className="py-3 px-4">{valorLiquidoUSDT(boleto.valor_usdt)} USDT</td>
-                              <td className="py-3 px-4">R$ {taxaServicoReais(boleto.valor)} ({taxaServicoUSDT(boleto.valor_usdt)} USDT)</td>
+                              <td className="py-3 px-4">
+                                {boleto.dataCompra ? (
+                                  <>
+                                    {new Date(boleto.dataCompra).toLocaleDateString('pt-BR')}
+                                    <br />
+                                    <span className="text-xs text-gray-400">
+                                      {new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}
+                                    </span>
+                                  </>
+                                ) : '--'}
+                              </td>
+                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                              <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
+                              <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
                               <td className="py-3 px-4">
                                 {(boleto.comprovanteUrl || boleto.status === 'AGUARDANDO BAIXA') ? (
                                   <button
@@ -803,9 +754,6 @@ const CompradorPage = () => {
                                     title="Visualizar Comprovante"
                                   >
                                     <FaUpload /> VISUALIZAR COMPROVANTE
-                                    {boleto.comprovanteUrl && boleto.comprovanteUrl.includes('exemplo.com') && (
-                                      <span className="ml-1 text-xs">(Exemplo)</span>
-                                    )}
                                   </button>
                                 ) : (
                                   <span className="text-gray-400 text-sm">Não enviado</span>
@@ -891,7 +839,7 @@ const CompradorPage = () => {
               </div>
               <div className="flex justify-between items-center gap-2">
                 <span className="font-semibold">Código de Barras:</span>
-                <span className="font-mono text-[12px] bg-lime-100 p-3 rounded-2xl border border-green-700 text-gray-800 select-all overflow-x-auto whitespace-nowrap max-w-[420px] shadow-inner" style={{wordBreak:'break-all'}}>
+                <span className="font-mono text-[12px] bg-lime-300 p-3 rounded-2xl border border-green-700 text-gray-800 select-all overflow-x-auto whitespace-nowrap max-w-[420px] shadow-inner" style={{wordBreak:'break-all'}}>
                   {(selectedBoleto.codigoBarras || selectedBoleto.codigo_barras || '--')}
                 </span>
                 <button
@@ -1060,14 +1008,6 @@ const CompradorPage = () => {
       
       {/* Modal do Comprovante */}
       {showComprovanteModal && selectedComprovante && (() => {
-        console.log('DEBUG: Renderizando modal do comprovante:', {
-          numeroBoleto: selectedComprovante.numeroBoleto,
-          status: selectedComprovante.status,
-          comprovanteUrl: selectedComprovante.comprovanteUrl ? (selectedComprovante.comprovanteUrl.startsWith('data:') ? 'BASE64_DATA' : selectedComprovante.comprovanteUrl.substring(0, 100)) : 'NULL',
-          comprovanteUrlType: selectedComprovante.comprovanteUrl ? selectedComprovante.comprovanteUrl.substring(0, 50) : 'NULL',
-          isImage: selectedComprovante.comprovanteUrl ? selectedComprovante.comprovanteUrl.startsWith('data:image/') : false,
-          isPdf: selectedComprovante.comprovanteUrl ? selectedComprovante.comprovanteUrl.startsWith('data:application/pdf') : false
-        });
         return createPortal(
         <React.Fragment>
           <div
@@ -1078,19 +1018,20 @@ const CompradorPage = () => {
             }}
           />
           <div
-            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto text-gray-800 shadow-2xl rounded-2xl border border-green-700"
+            className="fixed top-1/2 left-1/2 z-[9999] w-[90%] max-w-5xl h-[85vh] flex flex-col text-gray-800 shadow-2xl rounded-2xl border border-green-700"
             style={{
               transform: 'translate(-50%, -50%)',
               backgroundColor: '#bef264'
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="px-6 pt-6 pb-4 border-b border-green-700 flex items-center justify-between bg-green-50 rounded-t-2xl">
+            {/* Cabeçalho - Fixo */}
+            <div className="px-6 pt-6 pb-4 border-b border-green-700 flex items-center justify-between bg-green-50 rounded-t-2xl flex-shrink-0">
               <h2 className="text-2xl font-bold text-green-800 flex items-center gap-3">
                 <div className="w-10 h-10 bg-green-600 rounded-full flex items-center justify-center">
                   <FaUpload className="text-white text-lg" />
                 </div>
-                Comprovante do Boleto {selectedComprovante.numeroBoleto}
+                Comprovante de Pagamento do Boleto {selectedComprovante.numeroBoleto}
               </h2>
               <button
                 onClick={() => {
@@ -1103,7 +1044,9 @@ const CompradorPage = () => {
                 <FaTimesCircle size={24} />
               </button>
             </div>
-            <div className="px-6 py-4">
+            
+            {/* Conteúdo - Sem scroll externo */}
+            <div className="flex-1 px-6 py-4">
               {/* Informações do Boleto - Compactas */}
               <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-lime-50 rounded-lg border border-green-200">
                 <div className="grid grid-cols-4 gap-4 text-sm">
@@ -1128,60 +1071,68 @@ const CompradorPage = () => {
               
               {/* Visualização do Comprovante - Priorizada */}
               <div className="bg-white rounded-lg border border-green-200 shadow-sm">
-                <div className="p-4 border-b border-green-200">
-                  <h3 className="font-bold text-green-800 text-lg flex items-center gap-2">
-                    <FaUpload className="text-green-600" />
-                    Comprovante de Pagamento
-                  </h3>
-                </div>
-                
-                {/* Área principal do arquivo - Maior */}
+                {/* Área principal do arquivo - Com scroll interno */}
                 <div className="p-4">
-                  <div className="border border-green-200 rounded-lg overflow-hidden bg-white">
+                  <div className="border border-green-200 rounded-lg overflow-y-auto overflow-x-hidden bg-white" style={{ height: 'calc(100vh - 450px)', minHeight: '350px' }}>
                     {(() => {
-                      console.log('DEBUG: Renderizando arquivo:', {
-                        hasUrl: !!selectedComprovante.comprovanteUrl,
-                        urlStartsWithData: selectedComprovante.comprovanteUrl ? selectedComprovante.comprovanteUrl.startsWith('data:') : false,
-                        urlType: selectedComprovante.comprovanteUrl ? selectedComprovante.comprovanteUrl.substring(0, 50) : 'NULL'
-                      });
                       
                       if (selectedComprovante.comprovanteUrl && selectedComprovante.comprovanteUrl.startsWith('data:')) {
                         // Se for base64, mostrar em iframe ou imagem
                         if (selectedComprovante.comprovanteUrl.startsWith('data:image/')) {
-                          console.log('DEBUG: Renderizando como imagem');
                           return (
                             <img
                               src={selectedComprovante.comprovanteUrl}
                               alt="Comprovante de Pagamento"
-                              className="w-full h-[70vh] object-contain"
+                              className="w-full h-full object-contain"
                               onError={(e) => {
-                                console.log('Erro ao carregar imagem:', e);
                               }}
                               onLoad={() => {
-                                console.log('Imagem carregada com sucesso');
                               }}
                             />
                           );
                         } else {
-                          console.log('DEBUG: Renderizando como iframe');
+                          // Corrigir: remover quebras de linha do base64
+                          const pdfSrc = selectedComprovante.comprovanteUrl.replace(/\n/g, '');
                           return (
-                            <iframe
-                              src={selectedComprovante.comprovanteUrl}
-                              className="w-full h-[70vh]"
-                              title="Comprovante de Pagamento"
-                              onError={(e) => {
-                                console.log('Erro ao carregar arquivo:', e);
-                              }}
-                              onLoad={() => {
-                                console.log('Iframe carregado com sucesso');
-                              }}
-                            />
+                            <>
+                              <iframe
+                                src={pdfSrc}
+                                className="w-full h-full"
+                                title="Comprovante de Pagamento"
+                                onError={(e) => {
+                                  const fallback = document.getElementById('pdf-fallback');
+                                  if (fallback) fallback.style.display = 'block';
+                                }}
+                                onLoad={() => {
+                                }}
+                              />
+                              <object
+                                id="pdf-fallback"
+                                data={pdfSrc}
+                                type="application/pdf"
+                                className="w-full h-full"
+                                style={{ display: 'none' }}
+                              >
+                                <div className="w-full h-full flex items-center justify-center bg-gray-100">
+                                  <p className="text-gray-500">Não foi possível exibir o comprovante PDF. Baixe o arquivo ou tente em outro navegador.</p>
+                                </div>
+                              </object>
+
+                            </>
                           );
                         }
-                      } else {
-                        console.log('DEBUG: Arquivo não disponível');
+                      } else if (selectedComprovante.comprovanteUrl && selectedComprovante.comprovanteUrl.startsWith('http')) {
+                        // Se for URL externa, usar iframe
                         return (
-                          <div className="w-full h-[70vh] flex items-center justify-center bg-gray-100">
+                          <iframe
+                            src={selectedComprovante.comprovanteUrl}
+                            className="w-full h-full"
+                            title="Comprovante de Pagamento"
+                          />
+                        );
+                      } else {
+                                                  return (
+                            <div className="w-full h-full flex items-center justify-center bg-gray-100">
                             <p className="text-gray-500">Arquivo não disponível</p>
                           </div>
                         );
@@ -1189,21 +1140,39 @@ const CompradorPage = () => {
                     })()}
                   </div>
                 </div>
-                
-                {/* Botões de ação - Compactos */}
-                <div className="p-4 border-t border-green-200 bg-gray-50">
-                  <button
-                    onClick={() => {
-                      setShowComprovanteModal(false);
-                      setSelectedComprovante(null);
-                    }}
-                    className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors duration-200"
-                  >
-                    <FaTimesCircle className="text-sm" /> 
-                    FECHAR
-                  </button>
-                </div>
               </div>
+            </div>
+            
+            {/* Rodapé - Fixo */}
+            <div className="p-4 border-t border-green-200 bg-gray-50 rounded-b-2xl flex-shrink-0">
+              {/* Botão BAIXAR PDF - Fixo */}
+              {selectedComprovante.comprovanteUrl && (
+                <div className="mb-3 flex justify-center">
+                  <a
+                    href={selectedComprovante.comprovanteUrl.replace(/\n/g, '')}
+                    download={`comprovante-${selectedComprovante.numeroBoleto || 'boleto'}.pdf`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-2 bg-red-100 hover:bg-red-200 text-red-700 font-bold px-6 py-3 rounded-lg text-sm transition-colors duration-200"
+                    style={{ backgroundColor: '#fecaca !important', color: '#b91c1c !important' }}
+                  >
+                    <FaFilePdf className="text-sm" style={{ color: '#b91c1c !important' }} />
+                    BAIXAR PDF
+                  </a>
+                </div>
+              )}
+              
+              {/* Botão FECHAR */}
+              <button
+                onClick={() => {
+                  setShowComprovanteModal(false);
+                  setSelectedComprovante(null);
+                }}
+                className="w-full bg-gray-500 hover:bg-gray-600 text-white py-3 px-4 rounded-lg flex items-center justify-center gap-2 font-semibold text-sm transition-colors duration-200"
+              >
+                <FaTimesCircle className="text-sm" /> 
+                FECHAR
+              </button>
             </div>
           </div>
         </React.Fragment>,
@@ -1211,13 +1180,7 @@ const CompradorPage = () => {
       );
       })()}
       
-      {/* Painel de debug temporário para depuração de meusBoletos */}
-      {/* 
-      <div className="bg-black text-white p-3 mt-4 rounded shadow text-xs overflow-x-auto max-w-4xl mx-auto">
-        <b>DEBUG - MeusBoletos recebidos do backend:</b>
-        <pre>{JSON.stringify(meusBoletos, null, 2)}</pre>
-      </div>
-      */}
+
     </div>
   );
 };
@@ -1232,5 +1195,7 @@ function mapStatus(status) {
     default: return status ? status.toUpperCase() : status;
   }
 }
+
+
 
 export default CompradorPage;
