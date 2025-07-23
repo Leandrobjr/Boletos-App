@@ -4,7 +4,7 @@ import {
   FaTrash, FaWallet, FaFileInvoiceDollar,
   FaList, FaCheck, FaHistory,
   FaExclamationTriangle, FaInfoCircle, FaTimes, FaHandPointer,
-  FaUpload, FaTimesCircle, FaFilePdf
+  FaUpload, FaTimesCircle, FaFilePdf, FaUnlock
 } from 'react-icons/fa';
 import HistoricoTransacoes from '../components/HistoricoTransacoes';
 import {
@@ -64,6 +64,7 @@ function VendedorPage() {
   const [dropdownOpen, setDropdownOpen] = useState({});
   const [showComprovanteModal, setShowComprovanteModal] = useState(false);
   const [selectedComprovante, setSelectedComprovante] = useState(null);
+  const [destravamentoTimer, setDestravamentoTimer] = useState(null);
 
   // Função para abrir o modal de conexão da carteira
   const handleWalletConnection = () => {
@@ -112,6 +113,35 @@ function VendedorPage() {
   useEffect(() => {
     if (user?.uid) fetchBoletos();
   }, [user]);
+
+  // Monitorar boletos para destravamento automático
+  useEffect(() => {
+    if (boletos.length > 0) {
+      // Verificar imediatamente
+      verificarBoletosParaDestravar();
+      
+      // Configurar verificação a cada 1 minuto
+      const timer = setInterval(() => {
+        verificarBoletosParaDestravar();
+      }, 60000); // 60 segundos
+      
+      setDestravamentoTimer(timer);
+      
+      // Limpar timer quando componente for desmontado
+      return () => {
+        if (timer) clearInterval(timer);
+      };
+    }
+  }, [boletos]);
+
+  // Limpar timer quando componente for desmontado
+  useEffect(() => {
+    return () => {
+      if (destravamentoTimer) {
+        clearInterval(destravamentoTimer);
+      }
+    };
+  }, [destravamentoTimer]);
 
   // Monitorar estado inicial da carteira
   useEffect(() => {
@@ -479,6 +509,100 @@ function VendedorPage() {
       }
       setTimeout(() => setAlertInfo(null), 5000);
     }
+  };
+
+  // Função para destravar boleto automaticamente após 65 minutos
+  const handleDestravarBoleto = async (boleto) => {
+    try {
+      console.log(`Destravando boleto ${boleto.numeroControle} automaticamente após 65 minutos`);
+      
+      // Verificar se a carteira está conectada
+      if (!wallet.isConnected || !wallet.address) {
+        setAlertInfo({
+          type: 'destructive',
+          title: 'Carteira não conectada',
+          description: 'Conecte sua carteira para destravar o boleto automaticamente.'
+        });
+        setTimeout(() => setAlertInfo(null), 5000);
+        return;
+      }
+
+      // Verificar se está na rede correta
+      if (wallet.chainId !== 80002) {
+        setAlertInfo({
+          type: 'destructive',
+          title: 'Rede incorreta',
+          description: 'Para destravar o boleto, você precisa estar na rede Polygon Amoy.'
+        });
+        setTimeout(() => setAlertInfo(null), 5000);
+        return;
+      }
+
+      // Destravar USDT no contrato
+      const txHash = await liberarBoleto(boleto.numeroControle);
+      
+      if (txHash) {
+        // Atualizar status no backend
+        const response = await fetch(`http://localhost:3001/boletos/${boleto.id}/destravar`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            status: 'DISPONIVEL',
+            data_destravamento: new Date().toISOString(),
+            tx_hash: txHash
+          })
+        });
+
+        if (response.ok) {
+          setAlertInfo({
+            type: 'success',
+            title: 'Boleto destravado automaticamente',
+            description: `Boleto ${boleto.numeroControle} foi destravado após 65 minutos sem pagamento.`
+          });
+          // Recarregar os boletos
+          fetchBoletos();
+        } else {
+          throw new Error('Erro ao atualizar status no backend');
+        }
+      } else {
+        throw new Error('Erro ao destravar USDT no contrato');
+      }
+    } catch (error) {
+      console.error('Erro ao destravar boleto:', error);
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Erro ao destravar boleto',
+        description: 'Ocorreu um erro ao destravar o boleto automaticamente. Tente novamente.'
+      });
+    }
+    setTimeout(() => setAlertInfo(null), 5000);
+  };
+
+  // Função para verificar e destravar boletos automaticamente
+  const verificarBoletosParaDestravar = () => {
+    const agora = new Date();
+    const boletosParaDestravar = boletos.filter(boleto => {
+      // Verificar se o boleto está travado (AGUARDANDO PAGAMENTO)
+      if (boleto.status !== 'AGUARDANDO PAGAMENTO') return false;
+      
+      // Verificar se tem data de travamento
+      if (!boleto.data_travamento) return false;
+      
+      // Calcular tempo decorrido desde o travamento
+      const dataTravamento = new Date(boleto.data_travamento);
+      const tempoDecorrido = agora.getTime() - dataTravamento.getTime();
+      const minutosDecorridos = tempoDecorrido / (1000 * 60);
+      
+      // Destravar após 65 minutos (60 + 5 de tolerância)
+      return minutosDecorridos >= 65;
+    });
+
+    // Destravar cada boleto que passou do prazo
+    boletosParaDestravar.forEach(boleto => {
+      handleDestravarBoleto(boleto);
+    });
   };
 
   const handleVisualizarBoleto = (boleto) => {
@@ -903,6 +1027,8 @@ function VendedorPage() {
                                           Disputa
                                         </DropdownMenuItem>
                                       )}
+                                      
+
                                     </DropdownMenuContent>
                                   </DropdownMenu>
                                 </td>
