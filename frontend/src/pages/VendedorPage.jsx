@@ -20,7 +20,7 @@ import {
 import {
   Alert, AlertTitle, AlertDescription
 } from '../components/ui/alert';
-import Button from '../components/ui/button';
+import Button from '../components/ui/Button';
 import { useWalletConnection } from '../hooks/useWalletConnection';
 import { useUSDTConversion } from '../hooks/useUSDTConversion';
 import { useBoletoEscrow } from '../hooks/useBoletoEscrow';
