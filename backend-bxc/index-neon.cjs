@@ -1,20 +1,41 @@
 const express = require('express');
 const cors = require('cors');
-const { Pool } = require('pg');
 require('dotenv').config();
+
+// Verificar se pg está disponível
+let Pool;
+try {
+  Pool = require('pg').Pool;
+} catch (error) {
+  console.error('❌ Erro: pg não está instalado. Execute: npm install pg');
+  process.exit(1);
+}
 
 const app = express();
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// Verificar se DATABASE_URL está configurado
+if (!process.env.DATABASE_URL) {
+  console.error('❌ Erro: DATABASE_URL não está configurado');
+  process.exit(1);
+}
+
 // Configuração do Neon PostgreSQL
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+let pool;
+try {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+  console.log('✅ Pool de conexão criado com sucesso');
+} catch (error) {
+  console.error('❌ Erro ao criar pool de conexão:', error);
+  process.exit(1);
+}
 
 // Testar conexão
 pool.query('SELECT NOW()', (err, res) => {
@@ -66,7 +87,10 @@ async function initDb() {
   }
 }
 
-initDb();
+// Inicializar banco de forma assíncrona
+initDb().catch(error => {
+  console.error('❌ Erro na inicialização do banco:', error);
+});
 
 // Função para executar queries com Promise
 function runQuery(sql, params = []) {
@@ -117,6 +141,15 @@ function mapStatus(status) {
   }
 }
 
+// Rota de teste para verificar se o servidor está funcionando
+app.get('/', (req, res) => {
+  res.json({ 
+    message: 'Backend BXC funcionando!', 
+    timestamp: new Date().toISOString(),
+    database: process.env.DATABASE_URL ? 'Configurado' : 'Não configurado'
+  });
+});
+
 // Rotas da API
 app.get('/boletos', async (req, res) => {
   try {
@@ -128,7 +161,7 @@ app.get('/boletos', async (req, res) => {
     res.json(boletosMapeados);
   } catch (error) {
     console.error('Erro ao listar boletos:', error);
-    res.status(500).json({ error: 'Erro ao listar boletos' });
+    res.status(500).json({ error: 'Erro ao listar boletos', details: error.message });
   }
 });
 
@@ -146,7 +179,7 @@ app.get('/boletos/:id', async (req, res) => {
     res.json(boletoMapeado);
   } catch (error) {
     console.error('Erro ao buscar boleto:', error);
-    res.status(500).json({ error: 'Erro ao buscar boleto' });
+    res.status(500).json({ error: 'Erro ao buscar boleto', details: error.message });
   }
 });
 
@@ -171,7 +204,7 @@ app.post('/boletos', async (req, res) => {
     res.status(201).json(boletoMapeado);
   } catch (error) {
     console.error('Erro ao criar boleto:', error);
-    res.status(500).json({ error: 'Erro ao criar boleto' });
+    res.status(500).json({ error: 'Erro ao criar boleto', details: error.message });
   }
 });
 
@@ -186,7 +219,7 @@ app.get('/boletos/usuario/:user_id', async (req, res) => {
     res.json(boletosMapeados);
   } catch (error) {
     console.error('Erro ao buscar boletos do usuário:', error);
-    res.status(500).json({ error: 'Erro ao buscar boletos do usuário' });
+    res.status(500).json({ error: 'Erro ao buscar boletos do usuário', details: error.message });
   }
 });
 
@@ -204,7 +237,7 @@ app.get('/boletos/comprados/:user_id', async (req, res) => {
     res.json(boletosMapeados);
   } catch (error) {
     console.error('Erro ao buscar boletos comprados:', error);
-    res.status(500).json({ error: 'Erro ao buscar boletos comprados' });
+    res.status(500).json({ error: 'Erro ao buscar boletos comprados', details: error.message });
   }
 });
 
@@ -222,7 +255,7 @@ app.post('/perfil', async (req, res) => {
     res.json({ message: 'Perfil atualizado com sucesso' });
   } catch (error) {
     console.error('Erro ao atualizar perfil:', error);
-    res.status(500).json({ error: 'Erro ao atualizar perfil' });
+    res.status(500).json({ error: 'Erro ao atualizar perfil', details: error.message });
   }
 });
 
@@ -233,19 +266,32 @@ app.get('/perfil/:firebase_uid', async (req, res) => {
     res.json(result || {});
   } catch (error) {
     console.error('Erro ao buscar perfil:', error);
-    res.status(500).json({ error: 'Erro ao buscar perfil' });
+    res.status(500).json({ error: 'Erro ao buscar perfil', details: error.message });
   }
+});
+
+// Middleware de tratamento de erros
+app.use((error, req, res, next) => {
+  console.error('Erro não tratado:', error);
+  res.status(500).json({ 
+    error: 'Erro interno do servidor', 
+    details: error.message,
+    stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+  });
 });
 
 // Iniciar servidor
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`🚀 Servidor backend Neon PostgreSQL rodando na porta ${PORT}`);
+  console.log(`📊 DATABASE_URL configurado: ${process.env.DATABASE_URL ? 'Sim' : 'Não'}`);
 });
 
 // Graceful shutdown
 process.on('SIGINT', () => {
-  pool.end();
-  console.log('✅ Conexão Neon PostgreSQL fechada com sucesso');
+  if (pool) {
+    pool.end();
+    console.log('✅ Conexão Neon PostgreSQL fechada com sucesso');
+  }
   process.exit(0);
 });
