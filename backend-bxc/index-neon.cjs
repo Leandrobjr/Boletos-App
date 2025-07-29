@@ -40,8 +40,11 @@ try {
   pool = new Pool({
     connectionString: connectionString,
     ssl: {
-      rejectUnauthorized: false
-    }
+      rejectUnauthorized: false,
+      sslmode: 'require'
+    },
+    connectionTimeoutMillis: 10000,
+    idleTimeoutMillis: 30000
   });
   console.log('✅ Pool de conexão criado com sucesso');
 } catch (error) {
