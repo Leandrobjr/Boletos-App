@@ -5,19 +5,5 @@
       "src": "index-neon.cjs",
       "use": "@vercel/node"
     }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index-neon.cjs"
-    }
-  ],
-  "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "index-neon.cjs": {
-      "maxDuration": 30
-    }
-  }
-} 
+  ]
+}
