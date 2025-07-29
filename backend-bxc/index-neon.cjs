@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
+console.log('🚀 Iniciando backend com variáveis separadas -', new Date().toISOString());
+
 // Verificar se pg está disponível
 let Pool;
 try {
