@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "index-sqlite.cjs",
+      "src": "index-neon.cjs",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/(.*)",
-      "dest": "/index-sqlite.cjs"
+      "dest": "/index-neon.cjs"
     }
   ],
   "env": {
