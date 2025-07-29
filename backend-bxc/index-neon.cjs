@@ -31,8 +31,18 @@ console.log('🔍 DATABASE_URL completo:', process.env.DATABASE_URL || 'NÃO DEF
 // Configuração do Neon PostgreSQL
 let pool;
 try {
+  // Construir string de conexão a partir de variáveis separadas
+  const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
+  const dbUser = process.env.DB_USER || 'neondb_owner';
+  const dbPass = process.env.DB_PASS || 'npg_xxxxxxxxxxxx';
+  const dbName = process.env.DB_NAME || 'neondb';
+  
+  const connectionString = `postgresql://${dbUser}:${dbPass}@${dbHost}/${dbName}?sslmode=require&channel_binding=require`;
+  
+  console.log('🔍 String de conexão construída:', connectionString);
+  
   pool = new Pool({
-    connectionString: process.env.DATABASE_URL,
+    connectionString: connectionString,
     ssl: {
       rejectUnauthorized: false
     }
