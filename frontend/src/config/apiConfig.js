@@ -4,9 +4,9 @@ const API_CONFIG = {
   BASE_URL: (() => {
     // Se estiver em produção (Vercel) e não tiver VITE_API_URL configurado
     if (window.location.hostname !== 'localhost' && !import.meta.env.VITE_API_URL) {
-      console.warn('⚠️ VITE_API_URL não configurado em produção. Usando fallback.');
-      // URL de fallback - você deve substituir pela URL real do seu backend
-      return 'https://seu-backend.vercel.app';
+      console.warn('⚠️ VITE_API_URL não configurado em produção. Usando backend Vercel.');
+      // URL do backend no Vercel
+      return 'https://bxc-boletos-app.vercel.app';
     }
     return import.meta.env.VITE_API_URL || 'http://localhost:3001';
   })(),
