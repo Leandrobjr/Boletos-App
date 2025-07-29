@@ -19,7 +19,8 @@ const AlterarCadastroPage = () => {
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
-      fetch(`http://localhost:3001/perfil/${user.uid}`)
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+    fetch(`${apiUrl}/perfil/${user.uid}`)
         .then(res => res.json())
         .then(data => {
           if (data) {
@@ -55,7 +56,8 @@ const AlterarCadastroPage = () => {
       }
       // Salvar dados no backend
       if (user) {
-        await fetch('http://localhost:3001/perfil', {
+        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+      await fetch(`${apiUrl}/perfil`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
