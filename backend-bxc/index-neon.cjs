@@ -16,27 +16,21 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Verificar se DATABASE_URL está configurado
-if (!process.env.DATABASE_URL) {
-  console.error('❌ Erro: DATABASE_URL não está configurado');
-  process.exit(1);
-}
+// Verificar se as variáveis de ambiente estão configuradas
+const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
+const dbUser = process.env.DB_USER || 'neondb_owner';
+const dbPass = process.env.DB_PASS || 'npg_xxxxxxxxxxxx';
+const dbName = process.env.DB_NAME || 'neondb';
 
-// Log para debug (remover em produção)
-console.log('🔍 DATABASE_URL configurado:', process.env.DATABASE_URL ? 'Sim' : 'Não');
-console.log('🔍 DATABASE_URL preview:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'Não definido');
-console.log('🔍 DATABASE_URL length:', process.env.DATABASE_URL ? process.env.DATABASE_URL.length : 0);
-console.log('🔍 DATABASE_URL completo:', process.env.DATABASE_URL || 'NÃO DEFINIDO');
+console.log('🔍 DB_HOST:', dbHost);
+console.log('🔍 DB_USER:', dbUser);
+console.log('🔍 DB_PASS configurado:', dbPass ? 'Sim' : 'Não');
+console.log('🔍 DB_NAME:', dbName);
 
 // Configuração do Neon PostgreSQL
 let pool;
 try {
   // Construir string de conexão a partir de variáveis separadas
-  const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
-  const dbUser = process.env.DB_USER || 'neondb_owner';
-  const dbPass = process.env.DB_PASS || 'npg_xxxxxxxxxxxx';
-  const dbName = process.env.DB_NAME || 'neondb';
-  
   const connectionString = `postgresql://${dbUser}:${dbPass}@${dbHost}/${dbName}?sslmode=require&channel_binding=require`;
   
   console.log('🔍 String de conexão construída:', connectionString);
