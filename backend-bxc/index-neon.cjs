@@ -22,6 +22,10 @@ if (!process.env.DATABASE_URL) {
   process.exit(1);
 }
 
+// Log para debug (remover em produção)
+console.log('🔍 DATABASE_URL configurado:', process.env.DATABASE_URL ? 'Sim' : 'Não');
+console.log('🔍 DATABASE_URL preview:', process.env.DATABASE_URL ? process.env.DATABASE_URL.substring(0, 50) + '...' : 'Não definido');
+
 // Configuração do Neon PostgreSQL
 let pool;
 try {
