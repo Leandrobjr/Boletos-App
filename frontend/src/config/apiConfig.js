@@ -6,7 +6,7 @@ const API_CONFIG = {
     if (window.location.hostname !== 'localhost' && !import.meta.env.VITE_API_URL) {
       console.warn('⚠️ VITE_API_URL não configurado em produção. Usando backend Vercel.');
       // URL do backend no Vercel
-      return 'https://bxc-boletos-app.vercel.app';
+      return 'https://boletos-backend-290725.vercel.app';
     }
     return import.meta.env.VITE_API_URL || 'http://localhost:3001';
   })(),
@@ -38,7 +38,7 @@ export const buildApiUrl = (endpoint) => {
 export const apiRequest = async (endpoint, options = {}) => {
   const url = buildApiUrl(endpoint);
   
-  console.log('🌐 Fazendo requisição para:', url);
+  console.log('�� Fazendo requisição para:', url);
   
   const defaultOptions = {
     headers: {
@@ -58,9 +58,10 @@ export const apiRequest = async (endpoint, options = {}) => {
     return await response.json();
   } catch (error) {
     console.error('❌ Erro na requisição API:', error);
-    console.error('📡 URL tentada:', url);
+    console.error('�� URL tentada:', url);
     throw error;
   }
 };
 
-export default API_CONFIG; 
+export default API_CONFIG;
+  
