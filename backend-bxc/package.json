@@ -2,10 +2,15 @@
   "name": "backend-bxc",
   "version": "1.0.0",
   "description": "Backend para BoletoXCrypto",
-  "main": "index-neon.cjs",
+  "main": "index.js",
+  "engines": {
+    "node": ">=20.0.0"
+  },
   "scripts": {
-    "start": "node index-neon.cjs",
-    "dev": "node index-neon.cjs"
+    "start": "node index.js",
+    "dev": "node index.js",
+    "build": "npm install",
+    "vercel-build": "npm install"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -20,4 +25,5 @@
   ],
   "author": "BXC Team",
   "license": "MIT"
+}
 }
