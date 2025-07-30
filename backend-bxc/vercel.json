@@ -1,7 +1,7 @@
 {
   "version": 2,
   "functions": {
-    "api/index.js": {
+    "index-neon.cjs": {
       "runtime": "nodejs20.x"
     }
   }
