@@ -31,6 +31,7 @@ import { parseValorBRL } from '../lib/utils';
 import ModernWalletConnector from '../components/wallet/ModernWalletConnector';
 import StatusBadge from '../components/ui/status-badge';
 import { useParams, useNavigate } from 'react-router-dom';
+import { buildApiUrl } from '../config/apiConfig';
 
 function VendedorPage() {
   const { user } = useAuth();
@@ -74,7 +75,7 @@ function VendedorPage() {
   // Função para buscar boletos do backend
   const fetchBoletos = async () => {
     if (!user?.uid) return;
-    const url = `http://localhost:3001/boletos/usuario/${user.uid}`;
+    const url = buildApiUrl(`/boletos/usuario/${user.uid}`);
     try {
       const res = await fetch(url);
       if (!res.ok) {
@@ -281,7 +282,7 @@ function VendedorPage() {
       numeroControle: Date.now().toString()
     };
     try {
-      const resp = await fetch('http://localhost:3001/boletos', {
+      const resp = await fetch(buildApiUrl('/boletos'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(boletoObj)
@@ -336,7 +337,7 @@ function VendedorPage() {
 
   const handleDelete = async (id) => {
     try {
-      const resp = await fetch(`http://localhost:3001/boletos/${id}`, { method: 'DELETE' });
+      const resp = await fetch(buildApiUrl(`/boletos/${id}`), { method: 'DELETE' });
       if (!resp.ok) throw new Error('Erro ao excluir boleto');
     setBoletos(boletos.filter((b) => b.id !== id));
     setAlertInfo({
@@ -411,7 +412,7 @@ function VendedorPage() {
         throw new Error('ID do boleto não encontrado');
       }
       
-      const url = `http://localhost:3001/boletos/${boletoId}/cancelar`;
+      const url = buildApiUrl(`/boletos/${boletoId}/cancelar`);
       const payload = { 
         user_id: user.uid
       };
@@ -477,7 +478,7 @@ function VendedorPage() {
       try {
         // Aqui você pode implementar a lógica de disputa
         // Por exemplo, atualizar o status do boleto para "EM DISPUTA"
-        const response = await fetch(`http://localhost:3001/boletos/${boleto.id}/disputa`, {
+        const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/disputa`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -543,7 +544,7 @@ function VendedorPage() {
       
       if (txHash) {
         // Atualizar status no backend
-        const response = await fetch(`http://localhost:3001/boletos/${boleto.id}/destravar`, {
+        const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
@@ -716,7 +717,7 @@ function VendedorPage() {
       }
 
       // Depois, chamar o backend para baixar o boleto
-      const response = await fetch(`http://localhost:3001/boletos/${boleto.numeroControle || boleto.numero_controle}/baixar`, {
+      const response = await fetch(buildApiUrl(`/boletos/${boleto.numeroControle || boleto.numero_controle}/baixar`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
