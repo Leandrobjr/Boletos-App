@@ -2,13 +2,13 @@
   "name": "backend-bxc",
   "version": "1.0.0",
   "description": "Backend para BoletoXCrypto",
-  "main": "index.js",
+  "main": "api/index.js",
   "engines": {
     "node": ">=20.0.0"
   },
   "scripts": {
-    "start": "node index.js",
-    "dev": "node index.js",
+    "start": "node api/index.js",
+    "dev": "node api/index.js",
     "build": "npm install",
     "vercel-build": "npm install"
   },
@@ -26,4 +26,3 @@
   "author": "BXC Team",
   "license": "MIT"
 }
-
