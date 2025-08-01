@@ -4,6 +4,7 @@
   "description": "Backend para BoletoXCrypto",
   "main": "api/index.js",
   "engines": {
+<<<<<<< HEAD
     "node": ">=18.0.0"
   },
   "scripts": {
@@ -11,6 +12,15 @@
     "dev": "node index-neon.cjs",
     "build": "npm install",
     "vercel-build": "echo 'Build complete'"
+=======
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "start": "node api/index.js",
+    "dev": "node api/index.js",
+    "build": "npm install",
+    "vercel-build": "npm install"
+>>>>>>> 754c65fa4087a81477508a22173adabb8c93e8d1
   },
   "dependencies": {
     "pg": "^8.11.3"

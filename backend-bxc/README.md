@@ -14,4 +14,8 @@ Forçando deploy com configuração simples.
 
 ## Teste
 - URL: https://boletos-backend-290725.vercel.app/api
+<<<<<<< HEAD
 - Endpoint: /api/hello 
+=======
+- Endpoint: /api/hello
+>>>>>>> 754c65fa4087a81477508a22173adabb8c93e8d1
