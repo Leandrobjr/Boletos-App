@@ -3,6 +3,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../services/firebaseConfig';
 import { updateProfile } from 'firebase/auth';
+import { buildApiUrl } from '../config/apiConfig';
 
 const AlterarCadastroPage = () => {
   const { user } = useAuth();
@@ -19,8 +20,7 @@ const AlterarCadastroPage = () => {
   useEffect(() => {
     if (user) {
       setEmail(user.email || '');
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-    fetch(`${apiUrl}/perfil/${user.uid}`)
+      fetch(buildApiUrl(`/perfil/${user.uid}`))
         .then(res => res.json())
         .then(data => {
           if (data) {
@@ -56,8 +56,7 @@ const AlterarCadastroPage = () => {
       }
       // Salvar dados no backend
       if (user) {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-      await fetch(`${apiUrl}/perfil`, {
+        await fetch(buildApiUrl('/perfil'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({

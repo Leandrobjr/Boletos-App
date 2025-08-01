@@ -1,23 +1,10 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "index-neon.cjs",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/(.*)",
-      "dest": "/index-neon.cjs"
-    }
-  ],
   "env": {
-    "NODE_ENV": "production"
-  },
-  "functions": {
-    "index-neon.cjs": {
-      "maxDuration": 30
-    }
+    "NODE_ENV": "production",
+    "DB_HOST": "@db-host",
+    "DB_USER": "@db-user", 
+    "DB_PASS": "@db-pass",
+    "DB_NAME": "@db-name"
   }
-} 
+}

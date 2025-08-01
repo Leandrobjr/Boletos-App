@@ -1,17 +1,13 @@
 const express = require('express');
 const cors = require('cors');
+const { Pool } = require('pg');
 require('dotenv').config();
 
-console.log('🚀 Iniciando backend com variáveis separadas -', new Date().toISOString());
-
-// Verificar se pg está disponível
-let Pool;
-try {
-  Pool = require('pg').Pool;
-} catch (error) {
-  console.error('❌ Erro: pg não está instalado. Execute: npm install pg');
-  process.exit(1);
-}
+console.log('🚀 DEBUG: Iniciando backend -', new Date().toISOString());
+console.log('🔍 DEBUG: NODE_ENV =', process.env.NODE_ENV);
+console.log('🔍 DEBUG: PORT =', process.env.PORT);
+console.log('🔍 DEBUG: PWD =', process.cwd());
+console.log('🔍 DEBUG: Arquivos no diretório:', require('fs').readdirSync('.'));
 
 const app = express();
 app.use(cors());
@@ -21,7 +17,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 // Verificar se as variáveis de ambiente estão configuradas
 const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
 const dbUser = process.env.DB_USER || 'neondb_owner';
-const dbPass = process.env.DB_PASS || 'npg_xxxxxxxxxxxx';
+const dbPass = process.env.DB_PASS || 'npg_dPQtsIq53OVc';
 const dbName = process.env.DB_NAME || 'neondb';
 
 console.log('🔍 DB_HOST:', dbHost);
@@ -295,18 +291,23 @@ app.use((error, req, res, next) => {
   });
 });
 
-// Iniciar servidor
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => {
-  console.log(`🚀 Servidor backend Neon PostgreSQL rodando na porta ${PORT}`);
-  console.log(`📊 DATABASE_URL configurado: ${process.env.DATABASE_URL ? 'Sim' : 'Não'}`);
-});
+// Exportar para Vercel Functions
+module.exports = app;
 
-// Graceful shutdown
-process.on('SIGINT', () => {
-  if (pool) {
-    pool.end();
-    console.log('✅ Conexão Neon PostgreSQL fechada com sucesso');
-  }
-  process.exit(0);
-});
+// Iniciar servidor apenas se não estiver no Vercel
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  const PORT = process.env.PORT || 3001;
+  app.listen(PORT, () => {
+    console.log(`🚀 Servidor backend Neon PostgreSQL rodando na porta ${PORT}`);
+    console.log(`📊 DATABASE_URL configurado: ${process.env.DATABASE_URL ? 'Sim' : 'Não'}`);
+  });
+
+  // Graceful shutdown
+  process.on('SIGINT', () => {
+    if (pool) {
+      pool.end();
+      console.log('✅ Conexão Neon PostgreSQL fechada com sucesso');
+    }
+    process.exit(0);
+  });
+}

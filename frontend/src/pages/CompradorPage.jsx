@@ -19,6 +19,7 @@ import { useWalletConnection } from '../hooks/useWalletConnection';
 import { useBoletoEscrow } from '../hooks/useBoletoEscrow';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import StatusBadge from '../components/ui/status-badge';
+import { buildApiUrl } from '../config/apiConfig';
 
 const CompradorPage = () => {
   const { user } = useAuth();
@@ -84,7 +85,7 @@ const CompradorPage = () => {
   const fetchMeusBoletos = async () => {
     if (!user?.uid) return;
     try {
-      const res = await fetch(`http://localhost:3001/boletos/comprados/${user.uid}`);
+      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}`));
       if (!res.ok) throw new Error('Erro ao buscar boletos do usuário');
       const data = await res.json();
       
@@ -187,7 +188,7 @@ const CompradorPage = () => {
       }
 
       // Depois, chamar o backend para reservar o boleto
-      const response = await fetch(`http://localhost:3001/boletos/${selectedBoleto.numero_controle}/reservar`, {
+      const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/reservar`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -249,7 +250,7 @@ const CompradorPage = () => {
 
       // Liberar o boleto no backend
       if (selectedBoleto.numero_controle) {
-        await fetch(`http://localhost:3001/boletos/${selectedBoleto.numero_controle}/liberar`, {
+        await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/liberar`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: user.uid })
@@ -315,7 +316,7 @@ const CompradorPage = () => {
       
       try {
         // Enviar comprovante para o backend
-        const response = await fetch(`http://localhost:3001/boletos/${selectedBoleto.numero_controle}/comprovante`, {
+        const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/comprovante`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -453,7 +454,7 @@ const CompradorPage = () => {
 
   useEffect(() => {
     // Buscar boletos disponíveis do backend
-    fetch('http://localhost:3001/boletos')
+    fetch(buildApiUrl('/boletos'))
       .then(res => res.json())
       .then(data => setBoletosDisponiveis(data.map(boleto => ({
         ...boleto,

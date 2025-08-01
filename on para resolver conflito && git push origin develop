@@ -1,0 +1,5 @@
+[33mf3382fdf[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m)[m fix: atualizar vercel.json para forcar deteccao Node.js
+[33m06d65496[m fix: melhorar configuracao SSL para Neon
+[33m4e2477eb[m fix: atualizar URL do backend para Vercel
+[33m3a19ba3a[m debug: adicionar timestamp para confirmar novo deploy
+[33m8334658a[m fix: remover verificacao de DATABASE_URL e usar apenas variaveis separadas
