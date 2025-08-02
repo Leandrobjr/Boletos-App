@@ -42,7 +42,7 @@ module.exports = async (req, res) => {
       console.log('📍 GET perfil para UID:', uid);
       
       const result = await pool.query(
-        'SELECT * FROM usuarios WHERE firebase_uid = $1',
+        'SELECT * FROM users WHERE firebase_uid = $1',
         [uid]
       );
       
@@ -71,7 +71,7 @@ module.exports = async (req, res) => {
       }
       
       const result = await pool.query(`
-        INSERT INTO usuarios (firebase_uid, nome, email, cpf, telefone, endereco, created_at, updated_at)
+        INSERT INTO users (firebase_uid, nome, email, cpf, telefone, endereco, created_at, updated_at)
         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
         ON CONFLICT (firebase_uid) 
         DO UPDATE SET 
