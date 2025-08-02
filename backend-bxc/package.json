@@ -8,7 +8,8 @@
   },
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'Build complete'"
+    "build": "echo 'Vercel Serverless Functions - No build needed'",
+    "start": "node index-neon.cjs"
   },
   "dependencies": {
     "pg": "^8.11.3"
