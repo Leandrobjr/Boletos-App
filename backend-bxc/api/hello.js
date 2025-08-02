@@ -1,5 +1,5 @@
-// API Route para Vercel - Teste de conectividade
-export default async function handler(req, res) {
+// API Route para Vercel - Teste de conectividade  
+module.exports = async (req, res) => {
   // Headers CORS FORÇADOS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -14,11 +14,11 @@ export default async function handler(req, res) {
 
   console.log(`🚀 API Hello Request: ${req.method} ${req.url}`);
 
-  return res.status(200).json({
+  res.status(200).json({
     message: 'Backend BXC funcionando no Vercel!',
     timestamp: new Date().toISOString(),
     method: req.method,
     url: req.url,
     version: '1.0.0'
   });
-}
+};

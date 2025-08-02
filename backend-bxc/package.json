@@ -2,24 +2,21 @@
   "name": "backend-bxc",
   "version": "1.0.0",
   "description": "Backend para BoletoXCrypto - Vercel Functions",
-  "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
   "scripts": {
     "dev": "vercel dev",
-    "build": "echo 'Vercel Serverless Functions - No build needed'",
-    "start": "node index-neon.cjs"
+    "build": "echo 'Build complete'"
   },
   "dependencies": {
     "pg": "^8.11.3"
   },
   "keywords": [
     "boleto",
-    "crypto",
+    "crypto", 
     "backend",
-    "vercel",
-    "serverless"
+    "vercel"
   ],
   "author": "BXC Team",
   "license": "MIT"

@@ -1,5 +1,5 @@
 // API Route para Vercel - Perfil de usuário
-import { Pool } from 'pg';
+const { Pool } = require('pg');
 
 // Configuração do banco
 const pool = new Pool({
@@ -9,7 +9,7 @@ const pool = new Pool({
   }
 });
 
-export default async function handler(req, res) {
+module.exports = async (req, res) => {
   // Headers CORS FORÇADOS
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
@@ -19,7 +19,7 @@ export default async function handler(req, res) {
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     console.log('🔧 CORS Preflight request');
-    return res.status(200).end();
+    res.status(200).end();
   }
 
   console.log(`🚀 API Perfil Request: ${req.method} ${req.url}`);
@@ -30,7 +30,7 @@ export default async function handler(req, res) {
       const { uid } = req.query;
       
       if (!uid) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'UID é obrigatório',
           message: 'Parâmetro uid não fornecido'
         });
@@ -44,13 +44,13 @@ export default async function handler(req, res) {
       );
       
       if (result.rows.length === 0) {
-        return res.status(404).json({
+        res.status(404).json({
           error: 'Usuário não encontrado',
           uid: uid
         });
       }
       
-      return res.status(200).json(result.rows[0]);
+      res.status(200).json(result.rows[0]);
     }
 
     if (req.method === 'POST') {
@@ -59,7 +59,7 @@ export default async function handler(req, res) {
       const { firebase_uid, nome, email, cpf, telefone, endereco } = req.body;
       
       if (!firebase_uid) {
-        return res.status(400).json({
+        res.status(400).json({
           error: 'firebase_uid é obrigatório'
         });
       }
@@ -78,11 +78,11 @@ export default async function handler(req, res) {
         RETURNING *
       `, [firebase_uid, nome, email, cpf, telefone, endereco]);
       
-      return res.status(200).json(result.rows[0]);
+      res.status(200).json(result.rows[0]);
     }
 
     // Método não permitido
-    return res.status(405).json({
+    res.status(405).json({
       error: 'Método não permitido',
       method: req.method,
       allowed: ['GET', 'POST', 'OPTIONS']
@@ -90,7 +90,7 @@ export default async function handler(req, res) {
 
   } catch (error) {
     console.error('❌ Erro na API Perfil:', error);
-    return res.status(500).json({
+    res.status(500).json({
       error: 'Erro interno do servidor',
       details: error.message
     });
