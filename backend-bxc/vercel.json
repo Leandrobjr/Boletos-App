@@ -1,19 +1,19 @@
 {
   "version": 2,
   "functions": {
-    "index-neon.cjs": {
+    "api/*.js": {
       "runtime": "@vercel/node@3"
     }
   },
   "routes": [
     {
-      "src": "/(.*)",
-      "dest": "/index-neon.cjs"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     }
   ],
   "headers": [
     {
-      "source": "/(.*)",
+      "source": "/api/(.*)",
       "headers": [
         {
           "key": "Access-Control-Allow-Origin",
@@ -21,24 +21,17 @@
         },
         {
           "key": "Access-Control-Allow-Methods",
-          "value": "GET, POST, PUT, DELETE, PATCH, OPTIONS"
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
         },
         {
           "key": "Access-Control-Allow-Headers",
-          "value": "Content-Type, Authorization, X-Requested-With"
-        },
-        {
-          "key": "Access-Control-Allow-Credentials",
-          "value": "true"
+          "value": "Content-Type, Authorization"
         }
       ]
     }
   ],
   "env": {
     "NODE_ENV": "production",
-    "DB_HOST": "@db-host",
-    "DB_USER": "@db-user", 
-    "DB_PASS": "@db-pass",
-    "DB_NAME": "@db-name"
+    "DATABASE_URL": "postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require"
   }
 }
