@@ -1,11 +1,23 @@
-module.exports = (req, res) => {
-  res.json({ 
-    message: 'Hello from Vercel API!', 
+// API Route para Vercel - Teste de conectividade
+export default async function handler(req, res) {
+  // Headers CORS
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  console.log(`🚀 API Hello Request: ${req.method} ${req.url}`);
+
+  return res.status(200).json({
+    message: 'Backend BXC funcionando no Vercel!',
     timestamp: new Date().toISOString(),
-    path: '/api/hello'
+    method: req.method,
+    url: req.url,
+    version: '1.0.0'
   });
-<<<<<<< HEAD
-}; 
-=======
-};
->>>>>>> 754c65fa4087a81477508a22173adabb8c93e8d1
+}

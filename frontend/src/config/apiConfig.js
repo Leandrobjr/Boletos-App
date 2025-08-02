@@ -16,7 +16,7 @@ const getCorrectApiUrl = () => {
   
   // PRODUÇÃO: Se estamos no Vercel do frontend
   if (currentHost.includes('vercel.app') || currentHost.includes('boletos-app')) {
-    const prodUrl = 'https://boletos-backend-290725.vercel.app/api';
+    const prodUrl = 'https://bxc-boletos-app-backend.vercel.app/api';
     console.log('✅ PRODUÇÃO DETECTADA - Usando:', prodUrl);
     return prodUrl;
   }
@@ -29,7 +29,7 @@ const getCorrectApiUrl = () => {
   }
   
   // FALLBACK: Sempre usar produção se não conseguir detectar
-  const fallbackUrl = 'https://boletos-backend-290725.vercel.app/api';
+  const fallbackUrl = 'https://bxc-boletos-app-backend.vercel.app/api';
   console.log('🔄 FALLBACK - Usando:', fallbackUrl);
   return fallbackUrl;
 };
