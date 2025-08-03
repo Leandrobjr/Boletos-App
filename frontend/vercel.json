@@ -1,4 +1,9 @@
 {
+  "version": 2,
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "installCommand": "npm install",
+  "framework": "vite",
   "routes": [
     {
       "src": "/[^.]+",
@@ -14,7 +19,7 @@
           "value": "storage-access=*, camera=*, microphone=*, geolocation=*"
         },
         {
-          "key": "Cross-Origin-Embedder-Policy", 
+          "key": "Cross-Origin-Embedder-Policy",
           "value": "unsafe-none"
         },
         {
