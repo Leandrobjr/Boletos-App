@@ -1,7 +1,0 @@
-/*
-  Permissions-Policy: storage-access=*, unload=*, camera=*, microphone=*, geolocation=*
-  Feature-Policy: storage-access 'self'; camera 'self'; microphone 'self'
-  Cross-Origin-Embedder-Policy: unsafe-none
-  Cross-Origin-Opener-Policy: same-origin-allow-popups
-  X-Frame-Options: SAMEORIGIN
-  Referrer-Policy: strict-origin-when-cross-origin
