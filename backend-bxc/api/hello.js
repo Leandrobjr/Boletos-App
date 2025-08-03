@@ -1,9 +1,10 @@
 // API Route para Vercel - Teste de conectividade  
 module.exports = async (req, res) => {
-  // Headers CORS FORÇADOS
-  res.setHeader('Access-Control-Allow-Origin', '*');
+  // Headers CORS FORÇADOS + Storage Permission
+  res.setHeader('Access-Control-Allow-Origin', 'https://boletos-app-mocha.vercel.app');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Allow-Credentials', 'true');
   res.setHeader('Access-Control-Max-Age', '86400');
 
   // Handle preflight requests

@@ -18,5 +18,24 @@
       "src": "/(.*)",
       "dest": "/index.html"
     }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Permissions-Policy",
+          "value": "storage-access=*, camera=*, microphone=*, geolocation=*"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy", 
+          "value": "unsafe-none"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        }
+      ]
+    }
   ]
 } 
