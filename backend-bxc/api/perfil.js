@@ -19,7 +19,7 @@ module.exports = async (req, res) => {
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
     console.log('🔧 CORS Preflight request');
-    res.status(200).end();
+    return res.status(200).end();
   }
 
   console.log(`🚀 API Perfil Request: ${req.method} ${req.url}`);
