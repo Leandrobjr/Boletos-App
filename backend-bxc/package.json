@@ -14,9 +14,9 @@
   },
   "keywords": [
     "boleto",
-    "crypto", 
+    "crypto",
     "backend",
-    "vercel"
+    "serverless"
   ],
   "author": "BXC Team",
   "license": "MIT"
