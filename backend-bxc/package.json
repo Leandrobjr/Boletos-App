@@ -6,7 +6,6 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "dev": "vercel dev",
     "build": "echo 'Build complete'"
   },
   "dependencies": {

@@ -10,25 +10,24 @@ const pool = new Pool({
 });
 
 module.exports = async (req, res) => {
-  // Headers CORS FORÇADOS + Storage Permission
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Max-Age', '86400');
-
-  // Handle preflight requests
-  if (req.method === 'OPTIONS') {
-    console.log('🔧 CORS Preflight request');
-    return res.status(200).end();
-  }
-
-  // Extrair UID da query string ou URL
-  const url = new URL(req.url, `http://${req.headers.host}`);
-  const uid = url.searchParams.get('uid') || url.pathname.split('/').pop();
-
-  console.log(`🚀 API Perfil [UID] Request: ${req.method} ${req.url}, UID: ${uid}`);
-
   try {
+    // Headers CORS FORÇADOS + Storage Permission
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    res.setHeader('Access-Control-Max-Age', '86400');
+
+    // Handle preflight requests
+    if (req.method === 'OPTIONS') {
+      console.log('🔧 CORS Preflight request');
+      return res.status(200).end();
+    }
+
+    // Extrair UID da query string ou URL
+    const url = new URL(req.url, `http://${req.headers.host}`);
+    const uid = url.searchParams.get('uid') || url.pathname.split('/').pop();
+
+    console.log(`🚀 API Perfil [UID] Request: ${req.method} ${req.url}, UID: ${uid}`);
     if (req.method === 'GET') {
       if (!uid || uid === 'perfil') {
         res.status(400).json({
@@ -96,6 +95,12 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('❌ Erro na API Perfil [UID]:', error);
+    
+    // Garantir headers CORS mesmo em erro
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+    
     res.status(500).json({
       error: 'Erro interno do servidor',
       details: error.message
