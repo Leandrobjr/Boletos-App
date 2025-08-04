@@ -10,18 +10,18 @@ const pool = new Pool({
 });
 
 module.exports = async (req, res) => {
-  try {
-    // Headers CORS FORÇADOS + Storage Permission
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    res.setHeader('Access-Control-Max-Age', '86400');
+  // 1. CORS Headers (OBRIGATÓRIO)
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+  res.setHeader('Access-Control-Max-Age', '86400');
 
-    // Handle preflight requests
-    if (req.method === 'OPTIONS') {
-      console.log('🔧 CORS Preflight request');
-      return res.status(200).end();
-    }
+  // 2. Preflight CORS
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  try {
 
     // Extrair UID da query string ou URL
     const url = new URL(req.url, `http://${req.headers.host}`);
