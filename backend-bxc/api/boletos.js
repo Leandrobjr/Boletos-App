@@ -25,7 +25,7 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       // Buscar todos os boletos
-      const result = await pool.query('SELECT * FROM boletos ORDER BY created_at DESC');
+      const result = await pool.query('SELECT * FROM boletos ORDER BY criado_em DESC');
       
       res.status(200).json({
         success: true,
@@ -35,7 +35,16 @@ module.exports = async (req, res) => {
 
     } else if (req.method === 'POST') {
       // Criar novo boleto
-      const { numero_controle, valor, vencimento, usuario_id, descricao } = req.body;
+      const { 
+        numero_controle, 
+        valor, 
+        vencimento, 
+        usuario_id, 
+        descricao,
+        codigo_barras,
+        cpf_cnpj,
+        instituicao
+      } = req.body;
 
       if (!numero_controle || !valor || !usuario_id) {
         return res.status(400).json({
@@ -44,9 +53,34 @@ module.exports = async (req, res) => {
         });
       }
 
+      // Formatar data de vencimento se fornecida
+      let dataVencimento = null;
+      if (vencimento) {
+        try {
+          // Converter de DD/MM/YYYY para YYYY-MM-DD
+          const [dia, mes, ano] = vencimento.split('/');
+          dataVencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+        } catch (error) {
+          console.warn('Erro ao formatar data de vencimento:', error);
+        }
+      }
+
       const result = await pool.query(
-        'INSERT INTO boletos (numero_controle, valor, vencimento, usuario_id, descricao, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [numero_controle, valor, vencimento, usuario_id, descricao, 'disponivel']
+        `INSERT INTO boletos (
+          numero_controle, valor, vencimento, user_id, descricao, 
+          status, codigo_barras, cpf_cnpj, instituicao, criado_em
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) RETURNING *`,
+        [
+          numero_controle, 
+          valor, 
+          dataVencimento, 
+          usuario_id, 
+          descricao, 
+          'DISPONIVEL',
+          codigo_barras || null,
+          cpf_cnpj || null,
+          instituicao || null
+        ]
       );
 
       res.status(201).json({

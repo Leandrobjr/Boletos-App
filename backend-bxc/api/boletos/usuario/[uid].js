@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
     if (req.method === 'GET') {
       // Buscar boletos do usuário
       const result = await pool.query(
-        'SELECT * FROM boletos WHERE usuario_id = $1 ORDER BY created_at DESC',
+        'SELECT * FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC',
         [uid]
       );
 
@@ -61,8 +61,8 @@ module.exports = async (req, res) => {
       }
 
       const result = await pool.query(
-        'INSERT INTO boletos (numero_controle, valor, vencimento, usuario_id, descricao, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',
-        [numero_controle, valor, vencimento, uid, descricao, 'disponivel']
+        'INSERT INTO boletos (numero_controle, valor, vencimento, user_id, descricao, status, criado_em) VALUES ($1, $2, $3, $4, $5, $6, NOW()) RETURNING *',
+        [numero_controle, valor, vencimento, uid, descricao, 'DISPONIVEL']
       );
 
       res.status(201).json({
