@@ -39,6 +39,17 @@ module.exports = async (req, res) => {
 
       console.log('📍 GET perfil para UID:', uid);
       
+      // Debug: verificar estrutura da tabela
+      const tableInfo = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users'");
+      console.log('📍 Estrutura da tabela users:', tableInfo.rows);
+      
+      // Debug: verificar conexão e banco
+      console.log('📍 DATABASE_URL:', process.env.DATABASE_URL ? 'Configurado' : 'NÃO CONFIGURADO');
+      
+      // Debug: buscar todos os usuários para verificar
+      const allUsers = await pool.query('SELECT firebase_uid, nome, email FROM users');
+      console.log('📍 Todos os usuários no banco:', allUsers.rows);
+      
       const result = await pool.query(
         'SELECT * FROM users WHERE firebase_uid = $1',
         [uid]
@@ -69,18 +80,15 @@ module.exports = async (req, res) => {
       }
       
       const result = await pool.query(`
-        INSERT INTO users (firebase_uid, nome, email, cpf, telefone, endereco, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        INSERT INTO users (firebase_uid, nome, email, telefone)
+        VALUES ($1, $2, $3, $4)
         ON CONFLICT (firebase_uid) 
         DO UPDATE SET 
           nome = EXCLUDED.nome,
           email = EXCLUDED.email,
-          cpf = EXCLUDED.cpf,
-          telefone = EXCLUDED.telefone,
-          endereco = EXCLUDED.endereco,
-          updated_at = NOW()
+          telefone = EXCLUDED.telefone
         RETURNING *
-      `, [firebase_uid, nome, email, cpf, telefone, endereco]);
+      `, [firebase_uid, nome, email, telefone]);
       
       res.status(200).json(result.rows[0]);
       return;
