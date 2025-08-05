@@ -75,7 +75,9 @@ function VendedorPage() {
   // Função para buscar boletos do backend
   const fetchBoletos = async () => {
     if (!user?.uid) return;
+    console.log('🔍 UID do usuário no frontend:', user.uid);
     const url = buildApiUrl(`/boletos/usuario/${user.uid}`);
+    console.log('🔗 URL da requisição:', url);
     try {
       const res = await fetch(url);
       if (!res.ok) {
@@ -83,7 +85,12 @@ function VendedorPage() {
       }
       const data = await res.json();
       
-      const boletosMapeados = data.map(boleto => {
+      console.log('📦 Dados retornados pela API:', data);
+      
+      // Verificar se data tem a propriedade 'data' (array de boletos)
+      const boletosArray = data.data || data;
+      
+      const boletosMapeados = boletosArray.map(boleto => {
         const statusMapeado = mapStatus(boleto.status);
         
         return {
@@ -93,7 +100,7 @@ function VendedorPage() {
           cpfCnpj: boleto.cpf_cnpj,
           vencimento: boleto.vencimento,
           status: statusMapeado,
-          comprovante_url: boleto.comprovante_url // Garantir que o campo está presente
+          comprovante_url: boleto.comprovante_url
         };
       });
       
@@ -271,15 +278,13 @@ function VendedorPage() {
     }
     const boletoObj = {
       user_id: user.uid,
-      cpfCnpj: formData.cpfCnpj,
-      codigoBarras: formData.codigoBarras,
-      valor_brl: valorNum,
-      valor_usdt: valorUsdt,
-      valorUsdt: valorUsdt,
+      cpf_cnpj: formData.cpfCnpj,
+      codigo_barras: formData.codigoBarras,
+      valor: valorNum,
       vencimento: formData.dataVencimento,
+      descricao: `Boleto ${formData.codigoBarras}`,
       instituicao: formData.instituicao,
-      status: 'DISPONIVEL',
-      numeroControle: Date.now().toString()
+      numero_controle: Date.now().toString()
     };
     try {
       const resp = await fetch(buildApiUrl('/boletos'), {
