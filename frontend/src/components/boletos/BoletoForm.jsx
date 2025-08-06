@@ -234,11 +234,19 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
       cpfCnpj,
       codigoBarras,
       valor: valorNum,
+      valor_usdt: usdt, // ✅ Adicionar valor USDT convertido
       vencimento: dataVenc.toISOString().slice(0,10),
       instituicao,
       status: "pendente",
       numeroControle: numeroControleStr
     };
+    
+    console.log('🔍 DEBUG BoletoForm - Dados sendo enviados:', {
+      valor: valorNum,
+      valor_usdt: usdt,
+      cotacao: cotacao,
+      valor_original: valor
+    });
     setDebugEnviado(boletoObj);
     try {
       const resp = await fetch(buildApiUrl('/boletos'), {

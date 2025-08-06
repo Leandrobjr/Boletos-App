@@ -1,5 +1,4 @@
 import { useState, useEffect, useRef } from 'react';
-import { createPortal } from 'react-dom';
 import {
   FaTrash, FaWallet, FaFileInvoiceDollar,
   FaList, FaCheck, FaHistory,
@@ -92,6 +91,8 @@ function VendedorPage() {
       
       const boletosMapeados = boletosArray.map(boleto => {
         const statusMapeado = mapStatus(boleto.status);
+        console.log('🔍 Boleto original (Vendedor):', boleto);
+        console.log('💰 Valor USDT original (Vendedor):', boleto.valor_usdt);
         
         return {
           ...boleto,
@@ -99,6 +100,7 @@ function VendedorPage() {
           codigoBarras: boleto.codigo_barras,
           cpfCnpj: boleto.cpf_cnpj,
           vencimento: boleto.vencimento,
+          valor_usdt: boleto.valor_usdt || 0,
           status: statusMapeado,
           comprovante_url: boleto.comprovante_url
         };
@@ -282,7 +284,6 @@ function VendedorPage() {
       codigo_barras: formData.codigoBarras,
       valor: valorNum,
       vencimento: formData.dataVencimento,
-      descricao: `Boleto ${formData.codigoBarras}`,
       instituicao: formData.instituicao,
       numero_controle: Date.now().toString()
     };
@@ -464,10 +465,26 @@ function VendedorPage() {
       setProcessandoBaixa(true);
       
       // Abrir modal de conexão automaticamente
-      if (openConnectModal) {
-        openConnectModal();
-      } else {
-        alert('Erro ao abrir modal de conexão. Tente conectar a carteira manualmente.');
+      try {
+        if (openConnectModal && typeof openConnectModal === 'function') {
+          openConnectModal();
+        } else {
+          setAlertInfo({
+            type: 'destructive',
+            title: 'Erro de conexão',
+            description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
+          });
+          setTimeout(() => setAlertInfo(null), 3000);
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao abrir modal de conexão:', error);
+        setAlertInfo({
+          type: 'destructive',
+          title: 'Erro de conexão',
+          description: 'Erro ao abrir modal. Tente conectar a carteira manualmente.'
+        });
+        setTimeout(() => setAlertInfo(null), 3000);
         return;
       }
       return;
@@ -612,8 +629,9 @@ function VendedorPage() {
   };
 
   const handleVisualizarBoleto = (boleto) => {
+    console.log('🔍 Visualizando boleto:', boleto);
     
-          if (boleto.comprovante_url) {
+    if (boleto.comprovante_url) {
         // Verificar se é URL de exemplo
         if (boleto.comprovante_url.includes('exemplo.com')) {
           setAlertInfo({
@@ -722,7 +740,7 @@ function VendedorPage() {
       }
 
       // Depois, chamar o backend para baixar o boleto
-      const response = await fetch(buildApiUrl(`/boletos/${boleto.numeroControle || boleto.numero_controle}/baixar`), {
+      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/baixar`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1064,21 +1082,24 @@ function VendedorPage() {
       </main>
       
       {/* Modal do Comprovante */}
-      {showComprovanteModal && selectedComprovante && (() => {
-        return createPortal(
+      {showComprovanteModal && selectedComprovante && (
         <>
           <div
-            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-50"
             onClick={() => {
               setShowComprovanteModal(false);
               setSelectedComprovante(null);
             }}
           />
           <div
-            className="fixed top-1/2 left-1/2 z-[9999] w-[90%] max-w-5xl h-[85vh] flex flex-col text-gray-800 shadow-2xl rounded-2xl border border-green-700"
+            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-6xl h-[90vh] flex flex-col text-gray-800 shadow-2xl rounded-2xl border border-green-700 bg-lime-200"
             style={{
               transform: 'translate(-50%, -50%)',
-              backgroundColor: '#bef264'
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              position: 'fixed',
+              top: '50%',
+              left: '50%'
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -1232,10 +1253,8 @@ function VendedorPage() {
               </button>
             </div>
           </div>
-        </>,
-        document.body
-      );
-      })()}
+        </>
+      )}
     </div>
   );
 }

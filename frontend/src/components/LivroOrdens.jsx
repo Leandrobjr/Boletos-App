@@ -9,7 +9,7 @@ const LivroOrdens = () => {
     fetch(buildApiUrl('/boletos'))
       .then(res => res.json())
       .then(data => {
-        setBoletos(data);
+        setBoletos(data.data || []);
         setLoading(false);
       })
       .catch(error => {

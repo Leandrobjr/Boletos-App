@@ -1,0 +1,20 @@
+[33m5fc576c8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m)[m fix: Corrige configuração do Vercel para usar Functions em vez de Builds com headers CORS
+[33m06d0ff5e[m fix: Corrige conflito de merge no package.json do backend e adiciona dependências necessárias
+[33m4dc161da[m fix: Configura CORS no backend para permitir requisições do frontend
+[33m37e57d7d[m resolve: Conflitos resolvidos mantendo configuração robusta da API
+[33m2dc05592[m fix: Implementa configuração robusta da API com detecção automática de ambiente e correção de URLs malformadas
+[33m754c65fa[m Reconfiguração do vercel.json
+[33m423dad69[m Reconfiguração do vite.config.js
+[33md8f027f0[m Corrigir URLs do frontend para usar backend Vercel
+[33m315cf683[m Corrigir URLs do frontend para usar backend Vercel
+[33m8cf2088e[m Update package.json
+[33m28f0aa38[m Delete backend-bxc/vercel.json
+[33ma9bb470b[m Create vercel.json  corrigido
+[33m74debf76[m Delete backend-bxc/vercel.json
+[33mcb1f4643[m Correção erro de programação 2
+[33m119492ea[m Update vercel.json de routes para functions
+[33m17a6411f[m Create hello.js
+[33m2ad74cad[m Correção de erro de programação
+[33mb9609b2f[m Correção de functions para builds com @vercel/node
+[33mb79a176d[m Create vercel.json
+[33m7f00b80c[m Deletar para criar outro em api

@@ -20,7 +20,9 @@ import { useBoletoEscrow } from '../hooks/useBoletoEscrow';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import StatusBadge from '../components/ui/status-badge';
 import { buildApiUrl } from '../config/apiConfig';
+import WalletConnector from '../components/wallet/WalletConnector';
 
+// FORCE REBUILD - CORREÇÃO DEFINITIVA LAYOUT E MODAIS - CACHE BUSTER
 const CompradorPage = () => {
   const { user } = useAuth();
   const { tab } = useParams();
@@ -89,7 +91,7 @@ const CompradorPage = () => {
       if (!res.ok) throw new Error('Erro ao buscar boletos do usuário');
       const data = await res.json();
       
-      const boletosMapeados = data.map(boleto => ({
+      const boletosMapeados = data.data.map(boleto => ({
         ...boleto,
         numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
         valor: boleto.valor_brl || boleto.valor || 0,
@@ -107,20 +109,32 @@ const CompradorPage = () => {
   };
 
   const handleSelecionarBoleto = (boleto) => {
+    console.log('🔍 Selecionando boleto:', boleto);
     setSelectedBoleto(boleto);
     setEtapaCompra(1);
     setShowModal(true);
+    console.log('✅ Modal aberto:', { showModal: true, selectedBoleto: boleto });
   };
 
   const handleConectarCarteira = () => {
     if (!wallet.isConnected) {
-      if (openConnectModal) {
-        openConnectModal();
-      } else {
+      try {
+        if (openConnectModal && typeof openConnectModal === 'function') {
+          openConnectModal();
+        } else {
+          setAlertInfo({
+            type: 'destructive',
+            title: 'Erro de conexão',
+            description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
+          });
+          setTimeout(() => setAlertInfo(null), 3000);
+        }
+      } catch (error) {
+        console.error('Erro ao abrir modal de conexão:', error);
         setAlertInfo({
           type: 'destructive',
           title: 'Erro de conexão',
-          description: 'Modal de conexão não disponível. Tente novamente.'
+          description: 'Erro ao abrir modal. Tente conectar a carteira manualmente.'
         });
         setTimeout(() => setAlertInfo(null), 3000);
       }
@@ -374,6 +388,7 @@ const CompradorPage = () => {
 
   // Função para abrir modal do comprovante
   const handleVisualizarComprovante = (boleto) => {
+    console.log('🔍 Visualizando comprovante:', boleto);
     
     // Se for URL de exemplo, mostrar alerta
     if (boleto.comprovanteUrl && boleto.comprovanteUrl.includes('exemplo.com')) {
@@ -417,6 +432,7 @@ const CompradorPage = () => {
     
     setSelectedComprovante(boleto);
     setShowComprovanteModal(true);
+    console.log('✅ Modal de comprovante aberto');
   };
 
   // Função para pagar boleto
@@ -456,16 +472,30 @@ const CompradorPage = () => {
     // Buscar boletos disponíveis do backend
     fetch(buildApiUrl('/boletos'))
       .then(res => res.json())
-      .then(data => setBoletosDisponiveis(data.map(boleto => ({
-        ...boleto,
-        numeroControle: boleto.numero_controle || boleto.numeroControle,
-        valor_brl: boleto.valor_brl || boleto.valor,
-        valor_usdt: boleto.valor_usdt || boleto.valorUSDT,
-        cpfCnpj: boleto.cpf_cnpj || boleto.cpfCnpj,
-        vencimento: boleto.vencimento,
-        status: mapStatus(boleto.status)
-      }))))
-      .catch(() => setBoletosDisponiveis([]));
+            .then(data => {
+        console.log('📦 Dados recebidos da API:', data);
+        const boletosMapeados = (data.data || []).map(boleto => {
+          console.log('🔍 Boleto original:', boleto);
+          console.log('📅 Vencimento original:', boleto.vencimento);
+          console.log('💰 Valor USDT original:', boleto.valor_usdt);
+          
+          return {
+            ...boleto,
+            numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+            valor: boleto.valor_brl || boleto.valor,
+            valor_usdt: boleto.valor_usdt || 0,
+            dataVencimento: boleto.vencimento,
+            beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
+            status: mapStatus(boleto.status)
+          };
+        });
+        console.log('🎯 Boletos mapeados:', boletosMapeados);
+        setBoletosDisponiveis(boletosMapeados);
+      })
+      .catch((error) => {
+        console.error('❌ Erro ao buscar boletos:', error);
+        setBoletosDisponiveis([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -494,7 +524,21 @@ const CompradorPage = () => {
 
   // Função utilitária para valor líquido USDT
   function valorLiquidoUSDT(valor_usdt) {
-    return valor_usdt !== undefined && valor_usdt !== null ? (Number(valor_usdt) * 0.95).toFixed(2) : '--';
+    console.log('🔍 valorLiquidoUSDT chamado com:', valor_usdt);
+    if (valor_usdt === undefined || valor_usdt === null) {
+      console.log('❌ valor_usdt é null/undefined');
+      return '--';
+    }
+    const valor = Number(valor_usdt);
+    if (isNaN(valor)) {
+      console.log('❌ valor_usdt não é um número válido:', valor_usdt);
+      return '--';
+    }
+    
+    // APLICAR CONVERSÃO CORRETA: valor_usdt já é o valor convertido
+    // Não precisamos fazer conversão adicional, apenas formatar
+    console.log('✅ Valor USDT convertido:', valor.toFixed(2));
+    return valor.toFixed(2);
   }
 
   // Função utilitária para taxa de serviço (5%)
@@ -508,39 +552,13 @@ const CompradorPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-lime-300 flex flex-col">
-      <main className="flex-1 container mx-auto px-4 py-1">
-        <div className="w-full max-w-4xl mx-auto">
+    <div className="min-h-screen bg-lime-300 flex flex-col items-center justify-center">
+      <main className="flex-1 w-full max-w-6xl px-4 py-1">
+        <div className="w-full mx-auto">
           <h1 className="text-3xl font-bold mb-2 bg-green-800 text-white p-2 rounded-lg text-center">
             Portal do Comprador
           </h1>
-          
-          {/* Status da Carteira */}
-          {wallet.isConnected && (
-            <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <div className="w-3 h-3 bg-green-500 rounded-full"></div>
-                  <span className="text-sm font-medium text-green-800">Carteira Conectada</span>
-                </div>
-                <div className="text-xs text-green-600">
-                  {wallet.address?.substring(0, 6)}...{wallet.address?.substring(wallet.address.length - 4)}
-                </div>
-              </div>
-              <div className="mt-1 text-xs text-green-600">
-                Rede: {wallet.chain?.name || 'Desconhecida'} 
-                {wallet.chainId !== 80002 && (
-                  <span className="ml-2 text-orange-600 font-medium">
-                    ⚠️ Troque para Polygon Amoy
-                  </span>
-                )}
-              </div>
-            </div>
-          )}
-          
-
-          
-
+          <WalletConnector />
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
             <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl">
               <TabsTrigger value="comprar" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
@@ -570,7 +588,6 @@ const CompradorPage = () => {
                         <tr>
                           <th className="py-3 px-4 text-left">Nº Boleto</th>
                           <th className="py-3 px-4 text-left">Valor (R$)</th>
-                          <th className="py-3 px-4 text-left">Valor Líquido (USDT)</th>
                           <th className="py-3 px-4 text-left">Data Venc/to</th>
                           <th className="py-3 px-4 text-left">Beneficiário</th>
                           <th className="py-3 px-4 text-left">Status</th>
@@ -578,35 +595,54 @@ const CompradorPage = () => {
                         </tr>
                       </thead>
                       <tbody>
-                        {boletosDisponiveis
-                          .filter(boleto => ["DISPONIVEL", "AGUARDANDO PAGAMENTO", "AGUARDANDO BAIXA"].includes(boleto.status))
-                          .map((boleto) => (
-                            <tr key={boleto.id} className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-300' : ''}`}>
-                              <td className="py-3 px-4">{boleto.numeroControle}</td>
-                              <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? Number(boleto.valor_brl).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                              <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
-                              <td className="py-3 px-4">{boleto.vencimento ? new Date(boleto.vencimento).toLocaleDateString('pt-BR') : '--'}</td>
-                              <td className="py-3 px-4">{boleto.cpfCnpj || '--'}</td>
-                              <td className="py-3 px-4">
-                                <StatusBadge status={boleto.status} />
-                              </td>
-                              <td className="py-3 px-4">
-                                {boleto.status === "DISPONIVEL" ? (
-                                  <button 
-                                    onClick={() => handleSelecionarBoleto(boleto)} 
-                                    className="bg-lime-600 hover:bg-lime-700 text-white text-sm py-1 px-2 rounded"
-                                  >
-                                    Selecionar
-                                  </button>
-                                ) : (
-                                  <span className="text-yellow-700 font-semibold">Em Processamento</span>
-                                )}
-                              </td>
-                            </tr>
-                          ))}
-                        {boletosDisponiveis.filter(boleto => ["DISPONIVEL", "AGUARDANDO PAGAMENTO", "AGUARDANDO BAIXA"].includes(boleto.status)).length === 0 && (
+                        {boletosDisponiveis.map((boleto) => (
+                          <tr 
+                            key={boleto.id} 
+                            className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-100' : ''}`}
+                          >
+                            <td className="py-3 px-4">{boleto.numeroBoleto}</td>
+                            <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                            <td className="py-3 px-4">
+                              {(() => {
+                                console.log('🔍 Debug data vencimento:', boleto.numeroBoleto, boleto.dataVencimento);
+                                console.log('🔍 Boleto completo:', boleto);
+                                try {
+                                  if (!boleto.dataVencimento) {
+                                    console.log('❌ Data vencimento vazia para:', boleto.numeroBoleto);
+                                    return '--';
+                                  }
+                                  const data = new Date(boleto.dataVencimento);
+                                  if (isNaN(data.getTime())) {
+                                    console.log('❌ Data inválida para:', boleto.numeroBoleto, boleto.dataVencimento);
+                                    return '--';
+                                  }
+                                  console.log('✅ Data válida para:', boleto.numeroBoleto, data.toLocaleDateString('pt-BR'));
+                                  return data.toLocaleDateString('pt-BR');
+                                } catch (error) {
+                                  console.error('❌ Erro ao processar data:', boleto.numeroBoleto, boleto.dataVencimento, error);
+                                  return '--';
+                                }
+                              })()}
+                            </td>
+                            <td className="py-3 px-4">{boleto.beneficiario}</td>
+                            <td className="py-3 px-4">
+                              <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                {boleto.status.replace(/\w\S*/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())}
+                              </span>
+                            </td>
+                            <td className="py-3 px-4">
+                              <button 
+                                onClick={() => handleSelecionarBoleto(boleto)} 
+                                className="bg-lime-600 hover:bg-lime-700 text-white text-sm py-1 px-2 rounded"
+                              >
+                                Selecionar
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                        {boletosDisponiveis.length === 0 && (
                           <tr>
-                            <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
+                            <td colSpan="6" className="py-4 px-4 text-center text-gray-500">
                               Não há boletos disponíveis para compra no momento.
                             </td>
                           </tr>
@@ -787,21 +823,23 @@ const CompradorPage = () => {
           )}
         </div>
       </main>
-      {showModal && selectedBoleto && createPortal(
-        <React.Fragment>
+      {showModal && selectedBoleto && (
+        <>
           <div
             className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-[9998]"
             onClick={() => {
               setShowModal(false);
-              setEtapaCompra(0);
               setSelectedBoleto(null);
+              setEtapaCompra(0);
             }}
           />
           <div
-            className="fixed top-1/2 left-1/2 z-[9999] w-[96%] min-w-[350px] max-w-[650px] max-h-[95vh] overflow-y-auto text-gray-800 shadow-2xl rounded-2xl border border-green-700"
+            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto bg-lime-200 text-gray-800 shadow-2xl rounded-2xl border border-green-700"
             style={{
               transform: 'translate(-50%, -50%)',
-              backgroundColor: '#bef264'
+              position: 'fixed',
+              top: '50%',
+              left: '50%'
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -812,8 +850,8 @@ const CompradorPage = () => {
               <button
                 onClick={() => {
                   setShowModal(false);
-                  setEtapaCompra(0);
                   setSelectedBoleto(null);
+                  setEtapaCompra(0);
                 }}
                 className="text-gray-400 hover:text-red-500 transition"
                 title="Fechar"
@@ -824,15 +862,17 @@ const CompradorPage = () => {
             <div className="px-6 py-4 space-y-3">
               <div className="flex justify-between">
                 <span className="font-semibold">Nº Boleto:</span>
-                <span>{selectedBoleto.numeroControle || selectedBoleto.numeroBoleto || '--'}</span>
+                <span>{selectedBoleto.numeroBoleto}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">Beneficiário CPF/CNPJ:</span>
-                <span>{selectedBoleto.cpfCnpj || selectedBoleto.cnpj || '--'}</span>
+                <span>{selectedBoleto.beneficiario}</span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">Valor (R$):</span>
-                <span>R$ {(selectedBoleto.valor_brl !== undefined ? Number(selectedBoleto.valor_brl) : selectedBoleto.valor)?.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) || '--'}</span>
+                <span className="text-green-700 font-bold">
+                  R$ {(selectedBoleto.valor !== undefined && selectedBoleto.valor !== null) ? selectedBoleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">Valor Líquido (USDT):</span>
@@ -859,8 +899,19 @@ const CompradorPage = () => {
                 {copiedCodigoBarras && <span className="text-green-700 text-xs ml-1">Copiado!</span>}
               </div>
               <div className="flex justify-between">
-                <span className="font-semibold">Data de Vencimento:</span>
-                <span>{selectedBoleto.vencimento ? new Date(selectedBoleto.vencimento).toLocaleDateString('pt-BR') : '--'}</span>
+                <span className="font-semibold">Vencimento:</span>
+                <span>
+                  {(() => {
+                    try {
+                      if (!selectedBoleto.dataVencimento) return '--';
+                      const data = new Date(selectedBoleto.dataVencimento);
+                      return isNaN(data.getTime()) ? '--' : data.toLocaleDateString('pt-BR');
+                    } catch (error) {
+                      console.error('Erro ao processar data no modal:', selectedBoleto.dataVencimento, error);
+                      return '--';
+                    }
+                  })()}
+                </span>
               </div>
               <div className="flex justify-between">
                 <span className="font-semibold">Status:</span>
@@ -1003,14 +1054,12 @@ const CompradorPage = () => {
               )}
             </div>
           </div>
-        </React.Fragment>,
-        document.body
+        </>
       )}
       
       {/* Modal do Comprovante */}
-      {showComprovanteModal && selectedComprovante && (() => {
-        return createPortal(
-        <React.Fragment>
+      {showComprovanteModal && selectedComprovante && (
+        <>
           <div
             className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-[9998]"
             onClick={() => {
@@ -1019,10 +1068,16 @@ const CompradorPage = () => {
             }}
           />
           <div
-            className="fixed top-1/2 left-1/2 z-[9999] w-[90%] max-w-5xl h-[85vh] flex flex-col text-gray-800 shadow-2xl rounded-2xl border border-green-700"
+            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-6xl h-[90vh] flex flex-col text-gray-800 shadow-2xl rounded-2xl border border-green-700"
             style={{
               transform: 'translate(-50%, -50%)',
-              backgroundColor: '#bef264'
+              backgroundColor: '#bef264',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              position: 'fixed',
+              top: '50%',
+              left: '50%',
+              pointerEvents: 'auto'
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -1176,10 +1231,8 @@ const CompradorPage = () => {
               </button>
             </div>
           </div>
-        </React.Fragment>,
-        document.body
-      );
-      })()}
+        </>
+      )}
       
 
     </div>

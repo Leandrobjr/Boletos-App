@@ -36,6 +36,10 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'GET') {
+      // Debug: verificar estrutura da tabela boletos
+      const tableInfo = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'boletos'");
+      console.log('📍 Estrutura da tabela boletos:', tableInfo.rows);
+      
       // Buscar boletos do usuário
       const result = await pool.query(
         'SELECT * FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC',

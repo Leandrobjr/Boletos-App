@@ -6,6 +6,10 @@
       "destination": "/api/perfil/[uid]?uid=$1"
     },
     {
+      "source": "/api/boletos/comprados/([^/]+)",
+      "destination": "/api/boletos/comprados/[uid]?uid=$1"
+    },
+    {
       "source": "/api/boletos/usuario/([^/]+)",
       "destination": "/api/boletos/usuario/[uid]?uid=$1"
     },
