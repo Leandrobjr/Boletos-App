@@ -2,7 +2,7 @@
   "version": 2,
   "functions": {
     "backend-bxc/api/**/*.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "@vercel/node@4.0.0"
     }
   },
   "rewrites": [
