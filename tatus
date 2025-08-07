@@ -1,20 +1,186 @@
-[33m5fc576c8[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m)[m fix: Corrige configuração do Vercel para usar Functions em vez de Builds com headers CORS
-[33m06d0ff5e[m fix: Corrige conflito de merge no package.json do backend e adiciona dependências necessárias
-[33m4dc161da[m fix: Configura CORS no backend para permitir requisições do frontend
-[33m37e57d7d[m resolve: Conflitos resolvidos mantendo configuração robusta da API
-[33m2dc05592[m fix: Implementa configuração robusta da API com detecção automática de ambiente e correção de URLs malformadas
-[33m754c65fa[m Reconfiguração do vercel.json
-[33m423dad69[m Reconfiguração do vite.config.js
-[33md8f027f0[m Corrigir URLs do frontend para usar backend Vercel
-[33m315cf683[m Corrigir URLs do frontend para usar backend Vercel
-[33m8cf2088e[m Update package.json
-[33m28f0aa38[m Delete backend-bxc/vercel.json
-[33ma9bb470b[m Create vercel.json  corrigido
-[33m74debf76[m Delete backend-bxc/vercel.json
-[33mcb1f4643[m Correção erro de programação 2
-[33m119492ea[m Update vercel.json de routes para functions
-[33m17a6411f[m Create hello.js
-[33m2ad74cad[m Correção de erro de programação
-[33mb9609b2f[m Correção de functions para builds com @vercel/node
-[33mb79a176d[m Create vercel.json
-[33m7f00b80c[m Deletar para criar outro em api
+[33mcommit b42f15df62417c48f79dd2ede2b956c5193329d7[m
+Author: BoletoXCrypto <dev@boletoxcrypto.com>
+Date:   Mon Aug 4 13:48:09 2025 -0300
+
+    feat: criar rotas /api/boletos e /api/boletos/usuario/[uid] com CORS
+
+[1mdiff --git a/backend-bxc/api/boletos.js b/backend-bxc/api/boletos.js[m
+[1mnew file mode 100644[m
+[1mindex 00000000..14c71da9[m
+[1m--- /dev/null[m
+[1m+++ b/backend-bxc/api/boletos.js[m
+[36m@@ -0,0 +1,73 @@[m
+[32m+[m[32mconst { Pool } = require('pg');[m
+[32m+[m
+[32m+[m[32m// Configuração do banco[m
+[32m+[m[32mconst pool = new Pool({[m
+[32m+[m[32m  connectionString: process.env.DATABASE_URL,[m
+[32m+[m[32m  ssl: {[m
+[32m+[m[32m    rejectUnauthorized: false[m
+[32m+[m[32m  }[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32mmodule.exports = async (req, res) => {[m
+[32m+[m[32m  // 1. CORS Headers (OBRIGATÓRIO)[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Origin', '*');[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');[m
+[32m+[m[32m  res.setHeader('Access-Control-Max-Age', '86400');[m
+[32m+[m
+[32m+[m[32m  // 2. Preflight CORS[m
+[32m+[m[32m  if (req.method === 'OPTIONS') {[m
+[32m+[m[32m    return res.status(200).end();[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  try {[m
+[32m+[m[32m    console.log(`🚀 API Boletos Request: ${req.method} ${req.url}`);[m
+[32m+[m
+[32m+[m[32m    if (req.method === 'GET') {[m
+[32m+[m[32m      // Buscar todos os boletos[m
+[32m+[m[32m      const result = await pool.query('SELECT * FROM boletos ORDER BY created_at DESC');[m
+[32m+[m[41m      [m
+[32m+[m[32m      res.status(200).json({[m
+[32m+[m[32m        success: true,[m
+[32m+[m[32m        data: result.rows,[m
+[32m+[m[32m        count: result.rowCount[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    } else if (req.method === 'POST') {[m
+[32m+[m[32m      // Criar novo boleto[m
+[32m+[m[32m      const { numero_controle, valor, vencimento, usuario_id, descricao } = req.body;[m
+[32m+[m
+[32m+[m[32m      if (!numero_controle || !valor || !usuario_id) {[m
+[32m+[m[32m        return res.status(400).json({[m
+[32m+[m[32m          error: 'Dados obrigatórios faltando',[m
+[32m+[m[32m          required: ['numero_controle', 'valor', 'usuario_id'][m
+[32m+[m[32m        });[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      const result = await pool.query([m
+[32m+[m[32m        'INSERT INTO boletos (numero_controle, valor, vencimento, usuario_id, descricao, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',[m
+[32m+[m[32m        [numero_controle, valor, vencimento, usuario_id, descricao, 'disponivel'][m
+[32m+[m[32m      );[m
+[32m+[m
+[32m+[m[32m      res.status(201).json({[m
+[32m+[m[32m        success: true,[m
+[32m+[m[32m        data: result.rows[0],[m
+[32m+[m[32m        message: 'Boleto criado com sucesso'[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    } else {[m
+[32m+[m[32m      res.status(405).json({[m
+[32m+[m[32m        error: 'Método não permitido',[m
+[32m+[m[32m        method: req.method,[m
+[32m+[m[32m        allowed: ['GET', 'POST', 'OPTIONS'][m
+[32m+[m[32m      });[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m  } catch (error) {[m
+[32m+[m[32m    console.error('❌ Erro na API Boletos:', error);[m
+[32m+[m[32m    res.status(500).json({[m
+[32m+[m[32m      error: 'Erro interno do servidor',[m
+[32m+[m[32m      details: error.message[m
+[32m+[m[32m    });[m
+[32m+[m[32m  }[m
+[32m+[m[32m};[m[41m [m
+\ No newline at end of file[m
+[1mdiff --git a/backend-bxc/api/boletos/usuario/[uid].js b/backend-bxc/api/boletos/usuario/[uid].js[m
+[1mnew file mode 100644[m
+[1mindex 00000000..23aab651[m
+[1m--- /dev/null[m
+[1m+++ b/backend-bxc/api/boletos/usuario/[uid].js[m
+[36m@@ -0,0 +1,93 @@[m
+[32m+[m[32mconst { Pool } = require('pg');[m
+[32m+[m
+[32m+[m[32m// Configuração do banco[m
+[32m+[m[32mconst pool = new Pool({[m
+[32m+[m[32m  connectionString: process.env.DATABASE_URL,[m
+[32m+[m[32m  ssl: {[m
+[32m+[m[32m    rejectUnauthorized: false[m
+[32m+[m[32m  }[m
+[32m+[m[32m});[m
+[32m+[m
+[32m+[m[32mmodule.exports = async (req, res) => {[m
+[32m+[m[32m  // 1. CORS Headers (OBRIGATÓRIO)[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Origin', '*');[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');[m
+[32m+[m[32m  res.setHeader('Access-Control-Max-Age', '86400');[m
+[32m+[m
+[32m+[m[32m  // 2. Preflight CORS[m
+[32m+[m[32m  if (req.method === 'OPTIONS') {[m
+[32m+[m[32m    return res.status(200).end();[m
+[32m+[m[32m  }[m
+[32m+[m
+[32m+[m[32m  try {[m
+[32m+[m[32m    // Extrair UID da query string ou URL[m
+[32m+[m[32m    const url = new URL(req.url, `http://${req.headers.host}`);[m
+[32m+[m[32m    const uid = url.searchParams.get('uid') || url.pathname.split('/').pop();[m
+[32m+[m
+[32m+[m[32m    console.log(`🚀 API Boletos Usuario [UID] Request: ${req.method} ${req.url}, UID: ${uid}`);[m
+[32m+[m
+[32m+[m[32m    if (!uid || uid === 'usuario') {[m
+[32m+[m[32m      res.status(400).json({[m
+[32m+[m[32m        error: 'UID é obrigatório',[m
+[32m+[m[32m        message: 'Parâmetro uid não fornecido na URL'[m
+[32m+[m[32m      });[m
+[32m+[m[32m      return;[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m    if (req.method === 'GET') {[m
+[32m+[m[32m      // Buscar boletos do usuário[m
+[32m+[m[32m      const result = await pool.query([m
+[32m+[m[32m        'SELECT * FROM boletos WHERE usuario_id = $1 ORDER BY created_at DESC',[m
+[32m+[m[32m        [uid][m
+[32m+[m[32m      );[m
+[32m+[m
+[32m+[m[32m      res.status(200).json({[m
+[32m+[m[32m        success: true,[m
+[32m+[m[32m        data: result.rows,[m
+[32m+[m[32m        count: result.rowCount,[m
+[32m+[m[32m        usuario_id: uid[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    } else if (req.method === 'POST') {[m
+[32m+[m[32m      // Criar boleto para o usuário[m
+[32m+[m[32m      const { numero_controle, valor, vencimento, descricao } = req.body;[m
+[32m+[m
+[32m+[m[32m      if (!numero_controle || !valor) {[m
+[32m+[m[32m        return res.status(400).json({[m
+[32m+[m[32m          error: 'Dados obrigatórios faltando',[m
+[32m+[m[32m          required: ['numero_controle', 'valor'][m
+[32m+[m[32m        });[m
+[32m+[m[32m      }[m
+[32m+[m
+[32m+[m[32m      const result = await pool.query([m
+[32m+[m[32m        'INSERT INTO boletos (numero_controle, valor, vencimento, usuario_id, descricao, status) VALUES ($1, $2, $3, $4, $5, $6) RETURNING *',[m
+[32m+[m[32m        [numero_controle, valor, vencimento, uid, descricao, 'disponivel'][m
+[32m+[m[32m      );[m
+[32m+[m
+[32m+[m[32m      res.status(201).json({[m
+[32m+[m[32m        success: true,[m
+[32m+[m[32m        data: result.rows[0],[m
+[32m+[m[32m        message: 'Boleto criado com sucesso'[m
+[32m+[m[32m      });[m
+[32m+[m
+[32m+[m[32m    } else {[m
+[32m+[m[32m      res.status(405).json({[m
+[32m+[m[32m        error: 'Método não permitido',[m
+[32m+[m[32m        method: req.method,[m
+[32m+[m[32m        allowed: ['GET', 'POST', 'OPTIONS'][m
+[32m+[m[32m      });[m
+[32m+[m[32m    }[m
+[32m+[m
+[32m+[m[32m  } catch (error) {[m
+[32m+[m[32m    console.error('❌ Erro na API Boletos Usuario [UID]:', error);[m
+[32m+[m[32m    // Garantir headers CORS mesmo em erro[m
+[32m+[m[32m    res.setHeader('Access-Control-Allow-Origin', '*');[m
+[32m+[m[32m    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');[m
+[32m+[m[32m    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');[m
+[32m+[m[32m    res.status(500).json({[m
+[32m+[m[32m      error: 'Erro interno do servidor',[m
+[32m+[m[32m      details: error.message[m
+[32m+[m[32m    });[m
+[32m+[m[32m  }[m
+[32m+[m[32m};[m[41m [m
+\ No newline at end of file[m
