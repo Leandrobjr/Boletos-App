@@ -6,7 +6,9 @@
     "node": ">=18.0.0"
   },
   "scripts": {
-    "build": "echo 'Build complete'"
+    "build": "echo 'Backend build complete - Vercel Functions ready'",
+    "start": "node index-neon.cjs",
+    "dev": "node index-neon.cjs"
   },
   "dependencies": {
     "pg": "^8.11.3"

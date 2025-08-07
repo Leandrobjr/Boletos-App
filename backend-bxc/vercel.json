@@ -1,9 +1,16 @@
 {
   "version": 2,
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/perfil/([^/]+)",
-      "destination": "/api/perfil/[uid]?uid=$1"
+      "destination": "/api/perfil?uid=$1"
     },
     {
       "source": "/api/boletos/comprados/([^/]+)",
