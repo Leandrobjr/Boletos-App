@@ -1,15 +1,9 @@
 {
   "version": 2,
-  "builds": [
+  "rewrites": [
     {
-      "src": "backend-bxc/api/**/*.js",
-      "use": "@vercel/node"
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "/backend-bxc/api/$1"
+      "source": "/api/(.*)",
+      "destination": "/backend-bxc/api/$1"
     }
   ]
 } 
