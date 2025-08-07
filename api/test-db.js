@@ -11,10 +11,22 @@ module.exports = async (req, res) => {
   }
   
   try {
-    console.log('🔍 DATABASE_URL configurado:', process.env.DATABASE_URL ? 'SIM' : 'NÃO');
+    // Verificar se as variáveis de ambiente estão configuradas
+    const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
+    const dbUser = process.env.DB_USER || 'neondb_owner';
+    const dbPass = process.env.DB_PASS || 'npg_dPQtsIq53OVc';
+    const dbName = process.env.DB_NAME || 'neondb';
+
+    console.log('🔍 DB_HOST:', dbHost);
+    console.log('🔍 DB_USER:', dbUser);
+    console.log('🔍 DB_PASS configurado:', dbPass ? 'SIM' : 'NÃO');
+    console.log('🔍 DB_NAME:', dbName);
+    
+    // Construir string de conexão a partir de variáveis separadas
+    const connectionString = `postgresql://${dbUser}:${dbPass}@${dbHost}/${dbName}?sslmode=require&channel_binding=require`;
     
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require',
+      connectionString: connectionString,
       ssl: {
         rejectUnauthorized: false
       }
