@@ -3,34 +3,14 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "functions": {
-    "api/**/*.js": {
+    "api/index.js": {
       "runtime": "nodejs18.x"
     }
   },
   "rewrites": [
     {
-      "source": "/api/perfil/([^/]+)",
-      "destination": "/api/perfil?uid=$1"
-    },
-    {
-      "source": "/api/boletos/comprados/([^/]+)",
-      "destination": "/api/boletos/comprados/[uid]?uid=$1"
-    },
-    {
-      "source": "/api/boletos/usuario/([^/]+)",
-      "destination": "/api/boletos/usuario/[uid]?uid=$1"
-    },
-    {
-      "source": "/api/boletos/([^/]+)/([^/]+)",
-      "destination": "/api/boletos/[id]?id=$1&action=$2"
-    },
-    {
-      "source": "/api/boletos/([^/]+)",
-      "destination": "/api/boletos/[id]?id=$1"
-    },
-    {
       "source": "/api/(.*)",
-      "destination": "/api/$1"
+      "destination": "/api/index.js"
     }
   ]
 }
