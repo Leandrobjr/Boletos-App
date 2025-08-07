@@ -1,5 +1,13 @@
-// API Route para Vercel - Perfil de usuário com UID dinâmico
+// Vercel Function para perfil dinâmico - [uid].js
 const { Pool } = require('pg');
+
+// Headers CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Max-Age': '86400'
+};
 
 // Configuração do banco
 const pool = new Pool({
@@ -10,45 +18,34 @@ const pool = new Pool({
 });
 
 module.exports = async (req, res) => {
-  // 1. CORS Headers (OBRIGATÓRIO)
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Max-Age', '86400');
+  // Adicionar headers CORS
+  Object.keys(corsHeaders).forEach(key => {
+    res.setHeader(key, corsHeaders[key]);
+  });
 
-  // 2. Preflight CORS
+  // Handle preflight requests
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
+  const { method, url } = req;
+  
+  console.log(`🚀 API Perfil Dinâmico Request: ${method} ${url}`);
+  console.log('📍 Query:', req.query);
+  console.log('📍 Body:', req.body);
+
   try {
-
-    // Extrair UID da query string ou URL
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const uid = url.searchParams.get('uid') || url.pathname.split('/').pop();
-
-    console.log(`🚀 API Perfil [UID] Request: ${req.method} ${req.url}, UID: ${uid}`);
-    if (req.method === 'GET') {
-      if (!uid || uid === 'perfil') {
-        res.status(400).json({
+    // GET /api/perfil/[uid]?uid=ABC123
+    if (method === 'GET') {
+      const uid = req.query.uid;
+      console.log('📍 GET perfil dinâmico para UID:', uid);
+      
+      if (!uid) {
+        return res.status(400).json({
           error: 'UID é obrigatório',
-          message: 'Parâmetro uid não fornecido na URL'
+          example: '/api/perfil/[uid]?uid=ABC123'
         });
-        return;
       }
-
-      console.log('📍 GET perfil para UID:', uid);
-      
-      // Debug: verificar estrutura da tabela
-      const tableInfo = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'users'");
-      console.log('📍 Estrutura da tabela users:', tableInfo.rows);
-      
-      // Debug: verificar conexão e banco
-      console.log('📍 DATABASE_URL:', process.env.DATABASE_URL ? 'Configurado' : 'NÃO CONFIGURADO');
-      
-      // Debug: buscar todos os usuários para verificar
-      const allUsers = await pool.query('SELECT firebase_uid, nome, email FROM users');
-      console.log('📍 Todos os usuários no banco:', allUsers.rows);
       
       const result = await pool.query(
         'SELECT * FROM users WHERE firebase_uid = $1',
@@ -56,62 +53,30 @@ module.exports = async (req, res) => {
       );
       
       if (result.rows.length === 0) {
-        res.status(404).json({
+        console.log('❌ Usuário não encontrado para UID:', uid);
+        return res.status(404).json({
           error: 'Usuário não encontrado',
           uid: uid
         });
-        return;
       }
       
-      res.status(200).json(result.rows[0]);
-      return;
+      console.log('✅ Perfil encontrado:', result.rows[0]);
+      return res.status(200).json(result.rows[0]);
     }
 
-    if (req.method === 'POST') {
-      console.log('📍 POST perfil:', req.body);
-      
-      const { firebase_uid, nome, email, cpf, telefone, endereco } = req.body;
-      
-      if (!firebase_uid) {
-        res.status(400).json({
-          error: 'firebase_uid é obrigatório'
-        });
-        return;
-      }
-      
-      const result = await pool.query(`
-        INSERT INTO users (firebase_uid, nome, email, telefone)
-        VALUES ($1, $2, $3, $4)
-        ON CONFLICT (firebase_uid) 
-        DO UPDATE SET 
-          nome = EXCLUDED.nome,
-          email = EXCLUDED.email,
-          telefone = EXCLUDED.telefone
-        RETURNING *
-      `, [firebase_uid, nome, email, telefone]);
-      
-      res.status(200).json(result.rows[0]);
-      return;
-    }
-
-    // Método não permitido
-    res.status(405).json({
+    // Method not allowed
+    return res.status(405).json({
       error: 'Método não permitido',
-      method: req.method,
-      allowed: ['GET', 'POST', 'OPTIONS']
+      allowed: ['GET'],
+      method: method
     });
 
   } catch (error) {
-    console.error('❌ Erro na API Perfil [UID]:', error);
-    
-    // Garantir headers CORS mesmo em erro
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-    
-    res.status(500).json({
+    console.error('❌ Erro na API Perfil Dinâmico:', error);
+    return res.status(500).json({
       error: 'Erro interno do servidor',
-      details: error.message
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
