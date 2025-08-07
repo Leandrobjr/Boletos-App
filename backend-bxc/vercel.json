@@ -1,23 +1,13 @@
 {
   "version": 2,
-  "buildCommand": "npm run build",
-  "installCommand": "npm install",
-  "functions": {
-    "api/hello.js": {
-      "runtime": "nodejs18.x"
-    },
-    "api/index.js": {
-      "runtime": "nodejs18.x"
-    }
-  },
   "rewrites": [
     {
-      "source": "/api/hello",
-      "destination": "/api/hello.js"
+      "source": "/api/perfil/([^/]+)",
+      "destination": "/api/perfil/[uid]?uid=$1"
     },
     {
       "source": "/api/(.*)",
-      "destination": "/api/index.js"
+      "destination": "/api/$1"
     }
   ]
 }

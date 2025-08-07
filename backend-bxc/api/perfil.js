@@ -1,5 +1,13 @@
-// API Route para Vercel - Perfil de usuário
+// Vercel Function para perfil - Base
 const { Pool } = require('pg');
+
+// Headers CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Max-Age': '86400'
+};
 
 // Configuração do banco
 const pool = new Pool({
@@ -10,33 +18,34 @@ const pool = new Pool({
 });
 
 module.exports = async (req, res) => {
-  // Headers CORS FORÇADOS
-  res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-  res.setHeader('Access-Control-Max-Age', '86400');
+  // Adicionar headers CORS
+  Object.keys(corsHeaders).forEach(key => {
+    res.setHeader(key, corsHeaders[key]);
+  });
 
   // Handle preflight requests
   if (req.method === 'OPTIONS') {
-    console.log('🔧 CORS Preflight request');
     return res.status(200).end();
   }
 
-  console.log(`🚀 API Perfil Request: ${req.method} ${req.url}`);
+  const { method, url } = req;
+  
+  console.log(`🚀 API Perfil Request: ${method} ${url}`);
+  console.log('📍 Query:', req.query);
+  console.log('📍 Body:', req.body);
 
   try {
-    if (req.method === 'GET') {
-      // GET /api/perfil?uid=xxx
-      const { uid } = req.query;
+    // GET /api/perfil?uid=ABC123
+    if (method === 'GET') {
+      const uid = req.query.uid;
+      console.log('📍 GET perfil para UID:', uid);
       
       if (!uid) {
-        res.status(400).json({
+        return res.status(400).json({
           error: 'UID é obrigatório',
-          message: 'Parâmetro uid não fornecido'
+          example: '/api/perfil?uid=ABC123'
         });
       }
-
-      console.log('📍 GET perfil para UID:', uid);
       
       const result = await pool.query(
         'SELECT * FROM users WHERE firebase_uid = $1',
@@ -55,10 +64,11 @@ module.exports = async (req, res) => {
       return res.status(200).json(result.rows[0]);
     }
 
-    if (req.method === 'POST') {
+    // POST /api/perfil
+    if (method === 'POST') {
       console.log('📍 POST perfil:', req.body);
       
-      const { firebase_uid, nome, email, cpf, telefone, endereco } = req.body;
+      const { firebase_uid, nome, email, telefone } = req.body;
       
       if (!firebase_uid) {
         return res.status(400).json({
@@ -81,18 +91,19 @@ module.exports = async (req, res) => {
       return res.status(200).json(result.rows[0]);
     }
 
-    // Método não permitido
+    // Method not allowed
     return res.status(405).json({
       error: 'Método não permitido',
-      method: req.method,
-      allowed: ['GET', 'POST', 'OPTIONS']
+      allowed: ['GET', 'POST'],
+      method: method
     });
 
   } catch (error) {
     console.error('❌ Erro na API Perfil:', error);
-    res.status(500).json({
+    return res.status(500).json({
       error: 'Erro interno do servidor',
-      details: error.message
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
-}
+};
