@@ -164,14 +164,30 @@ app.get('/', (req, res) => {
 // Rotas da API
 app.get('/boletos', async (req, res) => {
   try {
+    console.log('🔍 Buscando todos os boletos...');
     const boletos = await allQuery('SELECT * FROM boletos ORDER BY criado_em DESC');
-    const boletosMapeados = boletos.map(boleto => ({
-      ...boleto,
-      status: mapStatus(boleto.status)
-    }));
+    console.log(`✅ ${boletos.length} boletos encontrados`);
+    
+    const boletosMapeados = boletos.map(boleto => {
+      console.log('📊 Boleto original:', {
+        id: boleto.id,
+        numero_controle: boleto.numero_controle,
+        valor_brl: boleto.valor_brl,
+        valor_usdt: boleto.valor_usdt,
+        vencimento: boleto.vencimento,
+        status: boleto.status
+      });
+      
+      return {
+        ...boleto,
+        status: mapStatus(boleto.status)
+      };
+    });
+    
+    console.log('🎯 Boletos mapeados enviados para o frontend');
     res.json(boletosMapeados);
   } catch (error) {
-    console.error('Erro ao listar boletos:', error);
+    console.error('❌ Erro ao listar boletos:', error);
     res.status(500).json({ error: 'Erro ao listar boletos', details: error.message });
   }
 });
