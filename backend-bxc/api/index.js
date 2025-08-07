@@ -35,15 +35,17 @@ module.exports = async (req, res) => {
   console.log('📍 Body:', req.body);
 
   try {
-    // Rota raiz
-    if (url === '/api' || url === '/') {
-      return res.json({ 
-        message: 'Backend Vercel Function funcionando',
-        timestamp: new Date().toISOString(),
-        method,
-        url
-      });
-    }
+    // Rota raiz - responder a qualquer URL que comece com /api
+    if (url === '/api' || url === '/' || url.startsWith('/api/')) {
+      // Se for apenas /api, retornar status
+      if (url === '/api' || url === '/') {
+        return res.json({ 
+          message: 'Backend Vercel Function funcionando',
+          timestamp: new Date().toISOString(),
+          method,
+          url
+        });
+      }
 
     // GET /api/perfil/:uid
     if (method === 'GET' && url.startsWith('/api/perfil/')) {
