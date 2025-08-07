@@ -1,14 +1,14 @@
 {
   "version": 2,
   "functions": {
-    "backend-bxc/api/**/*.js": {
+    "api/**/*.js": {
       "runtime": "@vercel/node@4.0.0"
     }
   },
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "/backend-bxc/api/$1"
+      "destination": "/api/$1"
     }
   ]
 } 
