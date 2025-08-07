@@ -10,7 +10,38 @@ console.log('🔍 DEBUG: PWD =', process.cwd());
 console.log('🔍 DEBUG: Arquivos no diretório:', require('fs').readdirSync('.'));
 
 const app = express();
-app.use(cors());
+
+// Configuração CORS robusta
+const corsOptions = {
+  origin: [
+    'https://boletos-app-mocha.vercel.app',
+    'https://boletos-app.vercel.app',
+    'https://bxc-boletos-app.vercel.app',
+    'http://localhost:3000',
+    'http://localhost:5173',
+    'http://127.0.0.1:3000',
+    'http://127.0.0.1:5173'
+  ],
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
+};
+
+app.use(cors(corsOptions));
+
+// Middleware para headers adicionais
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
@@ -288,11 +319,26 @@ app.post('/perfil', async (req, res) => {
 
 app.get('/perfil/:firebase_uid', async (req, res) => {
   const { firebase_uid } = req.params;
+  console.log('🔍 Buscando perfil para UID:', firebase_uid);
+  
   try {
     const result = await getQuery('SELECT * FROM users WHERE firebase_uid = $1', [firebase_uid]);
+    console.log('📊 Resultado da busca de perfil:', result);
+    
+    if (result) {
+      console.log('✅ Perfil encontrado:', {
+        firebase_uid: result.firebase_uid,
+        nome: result.nome,
+        email: result.email,
+        telefone: result.telefone
+      });
+    } else {
+      console.log('❌ Perfil não encontrado para UID:', firebase_uid);
+    }
+    
     res.json(result || {});
   } catch (error) {
-    console.error('Erro ao buscar perfil:', error);
+    console.error('❌ Erro ao buscar perfil:', error);
     res.status(500).json({ error: 'Erro ao buscar perfil', details: error.message });
   }
 });
