@@ -44,13 +44,15 @@ module.exports = async (req, res) => {
       );
       
       if (result.rows.length === 0) {
-        res.status(404).json({
+        console.log('❌ Usuário não encontrado para UID:', uid);
+        return res.status(404).json({
           error: 'Usuário não encontrado',
           uid: uid
         });
       }
       
-      res.status(200).json(result.rows[0]);
+      console.log('✅ Perfil encontrado:', result.rows[0]);
+      return res.status(200).json(result.rows[0]);
     }
 
     if (req.method === 'POST') {
@@ -59,30 +61,28 @@ module.exports = async (req, res) => {
       const { firebase_uid, nome, email, cpf, telefone, endereco } = req.body;
       
       if (!firebase_uid) {
-        res.status(400).json({
+        return res.status(400).json({
           error: 'firebase_uid é obrigatório'
         });
       }
       
       const result = await pool.query(`
-        INSERT INTO users (firebase_uid, nome, email, cpf, telefone, endereco, created_at, updated_at)
-        VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+        INSERT INTO users (firebase_uid, nome, email, telefone)
+        VALUES ($1, $2, $3, $4)
         ON CONFLICT (firebase_uid) 
         DO UPDATE SET 
           nome = EXCLUDED.nome,
           email = EXCLUDED.email,
-          cpf = EXCLUDED.cpf,
-          telefone = EXCLUDED.telefone,
-          endereco = EXCLUDED.endereco,
-          updated_at = NOW()
+          telefone = EXCLUDED.telefone
         RETURNING *
-      `, [firebase_uid, nome, email, cpf, telefone, endereco]);
+      `, [firebase_uid, nome, email, telefone]);
       
-      res.status(200).json(result.rows[0]);
+      console.log('✅ Perfil atualizado:', result.rows[0]);
+      return res.status(200).json(result.rows[0]);
     }
 
     // Método não permitido
-    res.status(405).json({
+    return res.status(405).json({
       error: 'Método não permitido',
       method: req.method,
       allowed: ['GET', 'POST', 'OPTIONS']
