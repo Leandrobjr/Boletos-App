@@ -478,12 +478,13 @@ const CompradorPage = () => {
           console.log('🔍 Boleto original:', boleto);
           console.log('📅 Vencimento original:', boleto.vencimento);
           console.log('💰 Valor USDT original:', boleto.valor_usdt);
+          console.log('💰 Valor BRL original:', boleto.valor_brl);
           
           return {
             ...boleto,
             numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
             valor: boleto.valor_brl || boleto.valor,
-            valor_usdt: boleto.valor_usdt || 0,
+            valor_usdt: boleto.valor_usdt || boleto.valor_usdt_convertido || 0,
             dataVencimento: boleto.vencimento,
             beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
             status: mapStatus(boleto.status)
@@ -535,9 +536,8 @@ const CompradorPage = () => {
       return '--';
     }
     
-    // APLICAR CONVERSÃO CORRETA: valor_usdt já é o valor convertido
-    // Não precisamos fazer conversão adicional, apenas formatar
-    console.log('✅ Valor USDT convertido:', valor.toFixed(2));
+    // O valor_usdt já vem convertido do backend, apenas formatar
+    console.log('✅ Valor USDT formatado:', valor.toFixed(2));
     return valor.toFixed(2);
   }
 
@@ -588,6 +588,7 @@ const CompradorPage = () => {
                         <tr>
                           <th className="py-3 px-4 text-left">Nº Boleto</th>
                           <th className="py-3 px-4 text-left">Valor (R$)</th>
+                          <th className="py-3 px-4 text-left">Valor (USDT)</th>
                           <th className="py-3 px-4 text-left">Data Venc/to</th>
                           <th className="py-3 px-4 text-left">Beneficiário</th>
                           <th className="py-3 px-4 text-left">Status</th>
@@ -602,20 +603,34 @@ const CompradorPage = () => {
                           >
                             <td className="py-3 px-4">{boleto.numeroBoleto}</td>
                             <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                            <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
                             <td className="py-3 px-4">
                               {(() => {
                                 console.log('🔍 Debug data vencimento:', boleto.numeroBoleto, boleto.dataVencimento);
                                 console.log('🔍 Boleto completo:', boleto);
                                 try {
-                                  if (!boleto.dataVencimento) {
+                                  // Verificar se a data existe
+                                  if (!boleto.dataVencimento || boleto.dataVencimento === null) {
                                     console.log('❌ Data vencimento vazia para:', boleto.numeroBoleto);
                                     return '--';
                                   }
-                                  const data = new Date(boleto.dataVencimento);
+                                  
+                                  // Tentar diferentes formatos de data
+                                  let data;
+                                  if (typeof boleto.dataVencimento === 'string') {
+                                    data = new Date(boleto.dataVencimento);
+                                  } else if (boleto.dataVencimento instanceof Date) {
+                                    data = boleto.dataVencimento;
+                                  } else {
+                                    console.log('❌ Formato de data inválido para:', boleto.numeroBoleto, boleto.dataVencimento);
+                                    return '--';
+                                  }
+                                  
                                   if (isNaN(data.getTime())) {
                                     console.log('❌ Data inválida para:', boleto.numeroBoleto, boleto.dataVencimento);
                                     return '--';
                                   }
+                                  
                                   console.log('✅ Data válida para:', boleto.numeroBoleto, data.toLocaleDateString('pt-BR'));
                                   return data.toLocaleDateString('pt-BR');
                                 } catch (error) {
@@ -642,7 +657,7 @@ const CompradorPage = () => {
                         ))}
                         {boletosDisponiveis.length === 0 && (
                           <tr>
-                            <td colSpan="6" className="py-4 px-4 text-center text-gray-500">
+                            <td colSpan="7" className="py-4 px-4 text-center text-gray-500">
                               Não há boletos disponíveis para compra no momento.
                             </td>
                           </tr>
@@ -839,7 +854,9 @@ const CompradorPage = () => {
               transform: 'translate(-50%, -50%)',
               position: 'fixed',
               top: '50%',
-              left: '50%'
+              left: '50%',
+              pointerEvents: 'auto',
+              zIndex: 9999
             }}
             onClick={e => e.stopPropagation()}
           >
@@ -1077,7 +1094,8 @@ const CompradorPage = () => {
               position: 'fixed',
               top: '50%',
               left: '50%',
-              pointerEvents: 'auto'
+              pointerEvents: 'auto',
+              zIndex: 9999
             }}
             onClick={e => e.stopPropagation()}
           >

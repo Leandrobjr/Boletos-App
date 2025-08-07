@@ -387,24 +387,37 @@ function VendedorPage() {
 
   // Função robusta para formatar datas (sempre DD/MM/YYYY)
   const formatarData = (data) => {
-    if (!data) return "-";
+    console.log('🔍 formatarData chamada com:', data);
+    if (!data || data === null) {
+      console.log('❌ Data vazia ou null');
+      return "--";
+    }
+    
     try {
       // Trata string YYYY-MM-DD
       if (typeof data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
         const [ano, mes, dia] = data.split("-");
-        return `${dia}/${mes}/${ano}`;
+        const dataFormatada = `${dia}/${mes}/${ano}`;
+        console.log('✅ Data formatada (YYYY-MM-DD):', dataFormatada);
+        return dataFormatada;
       }
+      
       // Trata string ISO completa ou objeto Date
       const d = new Date(data);
       if (!isNaN(d.getTime())) {
         const dia = String(d.getDate()).padStart(2, '0');
         const mes = String(d.getMonth() + 1).padStart(2, '0');
         const ano = d.getFullYear();
-        return `${dia}/${mes}/${ano}`;
+        const dataFormatada = `${dia}/${mes}/${ano}`;
+        console.log('✅ Data formatada (Date):', dataFormatada);
+        return dataFormatada;
       }
-      return "Data inválida";
-    } catch {
-      return "Data inválida";
+      
+      console.log('❌ Data inválida:', data);
+      return "--";
+    } catch (error) {
+      console.error('❌ Erro ao formatar data:', error);
+      return "--";
     }
   };
 
@@ -979,7 +992,20 @@ function VendedorPage() {
                                 <td className="py-3 px-4">{boleto.numeroControle}</td>
                                 <td className="py-3 px-4">{boleto.cpfCnpj || '--'}</td>
                                 <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? boleto.valor_brl.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                                <td className="py-3 px-4">{boleto.valor_usdt !== undefined ? Number(boleto.valor_usdt).toFixed(2) : '--'} USDT</td>
+                                <td className="py-3 px-4">
+                                  {(() => {
+                                    console.log('🔍 Valor USDT para exibição:', boleto.numeroControle, boleto.valor_usdt);
+                                    if (boleto.valor_usdt !== undefined && boleto.valor_usdt !== null) {
+                                      const valor = Number(boleto.valor_usdt);
+                                      if (!isNaN(valor)) {
+                                        console.log('✅ Valor USDT formatado:', valor.toFixed(2));
+                                        return `${valor.toFixed(2)} USDT`;
+                                      }
+                                    }
+                                    console.log('❌ Valor USDT inválido ou vazio');
+                                    return '--';
+                                  })()}
+                                </td>
                                 <td className="py-3 px-4">{formatarData(boleto.vencimento)}</td>
                                 <td className="py-3 px-4">
                                   <StatusBadge status={boleto.status} />
