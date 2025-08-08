@@ -184,3 +184,8 @@ Date:   Mon Aug 4 13:48:09 2025 -0300
 [32m+[m[32m  }[m
 [32m+[m[32m};[m[41m [m
 \ No newline at end of file[m
+[33ma0ff7ab6[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mdevelop[m[33m, [m[1;31morigin/develop[m[33m)[m SOLUÇÃO DEFINITIVA: Corrigido package.json da raiz e configuração Vercel
+[33m39fb2699[m Correção banco - Aplicada solução com variáveis separadas (DB_HOST, DB_USER, DB_PASS, DB_NAME)
+[33mc4cc06e0[m Trigger deploy para aplicar DATABASE_URL
+[33m15963ec3[m Correção Vercel - Ajustado vercel.json para pasta api na raiz
+[33m3c265473[m Correção Vercel - Movido funções para pasta api na raiz

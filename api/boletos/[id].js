@@ -1,7 +1,13 @@
 const { Pool } = require('pg');
 
+// Configuração do banco usando variáveis separadas
+const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
+const dbUser = process.env.DB_USER || 'neondb_owner';
+const dbPass = process.env.DB_PASS || 'npg_dPQtsIq53OVc';
+const dbName = process.env.DB_NAME || 'neondb';
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: `postgresql://${dbUser}:${dbPass}@${dbHost}/${dbName}?sslmode=require&channel_binding=require`,
   ssl: { rejectUnauthorized: false }
 });
 
