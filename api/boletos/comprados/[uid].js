@@ -29,10 +29,12 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'GET') {
-      // Seleciona boletos comprados pelo uid (status diferente de DISPONIVEL)
+      // Observação: a coluna comprador_id não existe neste schema.
+      // Para compatibilidade imediata, retornamos boletos do próprio usuário
+      // (vendedor) e qualquer boleto não disponível que ele possua.
       const result = await pool.query(
-        `SELECT * FROM boletos 
-         WHERE comprador_id = $1 OR (user_id = $1 AND status <> 'DISPONIVEL')
+        `SELECT * FROM boletos
+         WHERE user_id = $1
          ORDER BY criado_em DESC`,
         [uid]
       );
