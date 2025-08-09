@@ -30,6 +30,10 @@ module.exports = async (req, res) => {
     console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
     console.log('🔍 Request Headers:', req.headers);
 
+    // Parse de URL e query
+    const urlObj = new URL(req.url, `http://${req.headers.host}`);
+    const op = urlObj.searchParams.get('op');
+
     if (req.method === 'GET') {
       // Buscar todos os boletos
       const result = await pool.query('SELECT * FROM boletos ORDER BY criado_em DESC');
@@ -157,7 +161,7 @@ module.exports = async (req, res) => {
         message: 'Boleto criado com sucesso'
       });
 
-    } else if (req.method === 'PATCH' && req.url.includes('/fix-null-dates')) {
+    } else if (req.method === 'PATCH' && (req.url.includes('/fix-null-dates') || op === 'fix-null-dates')) {
       // Endpoint para corrigir boletos com vencimento null
       console.log('🔧 Iniciando correção de datas null...');
       
@@ -213,7 +217,7 @@ module.exports = async (req, res) => {
         });
       }
 
-    } else if (req.method === 'PATCH' && req.url.includes('/fix-usdt-values')) {
+    } else if (req.method === 'PATCH' && (req.url.includes('/fix-usdt-values') || op === 'fix-usdt-values')) {
       // Endpoint para corrigir valores USDT dos boletos antigos
       console.log('🔧 Iniciando correção de valores USDT...');
       
