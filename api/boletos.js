@@ -84,14 +84,40 @@ module.exports = async (req, res) => {
 
       console.log('✅ Validação passou, formatando data...');
 
-      // Formatar data de vencimento se fornecida
+      // Formatar data de vencimento se fornecida (aceita DD/MM/YYYY, YYYY-MM-DD ou ISO)
       let dataVencimento = null;
       if (vencimento) {
         try {
-          // Converter de DD/MM/YYYY para YYYY-MM-DD
-          const [dia, mes, ano] = vencimento.split('/');
-          dataVencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
-          console.log('📅 Data formatada:', dataVencimento);
+          if (typeof vencimento === 'string') {
+            if (/^\d{4}-\d{2}-\d{2}$/.test(vencimento)) {
+              // Já está em YYYY-MM-DD
+              dataVencimento = vencimento;
+            } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(vencimento)) {
+              // Converte de DD/MM/YYYY
+              const [dia, mes, ano] = vencimento.split('/');
+              dataVencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+            } else {
+              // Tenta parsear como ISO ou outra string válida
+              const d = new Date(vencimento);
+              if (!isNaN(d.getTime())) {
+                const dia = String(d.getDate()).padStart(2, '0');
+                const mes = String(d.getMonth() + 1).padStart(2, '0');
+                const ano = d.getFullYear();
+                dataVencimento = `${ano}-${mes}-${dia}`;
+              }
+            }
+          } else if (vencimento instanceof Date) {
+            const d = vencimento;
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const ano = d.getFullYear();
+            dataVencimento = `${ano}-${mes}-${dia}`;
+          }
+          if (dataVencimento) {
+            console.log('📅 Data formatada:', dataVencimento);
+          } else {
+            console.warn('⚠️ Não foi possível formatar a data de vencimento recebida:', vencimento);
+          }
         } catch (error) {
           console.warn('Erro ao formatar data de vencimento:', error);
         }
