@@ -51,9 +51,9 @@ module.exports = async (req, res) => {
     // Atualizar status e dados de reserva
     const update = await pool.query(
       isUUID
-        ? 'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE id = $5 AND status = $6 RETURNING *'
-        : 'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE numero_controle = $5 AND status = $6 RETURNING *',
-      ['AGUARDANDO PAGAMENTO', user_id, wallet_address, tx_hash || null, id, 'DISPONIVEL']
+        ? 'UPDATE boletos SET status = $1, wallet_address = $2, tx_hash = $3 WHERE id = $4 AND status = $5 RETURNING *'
+        : 'UPDATE boletos SET status = $1, wallet_address = $2, tx_hash = $3 WHERE numero_controle = $4 AND status = $5 RETURNING *',
+      ['AGUARDANDO PAGAMENTO', wallet_address, tx_hash || null, id, 'DISPONIVEL']
     );
 
     if (update.rowCount === 0) return res.status(409).json({ error: 'Conflito', message: 'Boleto não está mais disponível' });

@@ -126,9 +126,9 @@ module.exports = async (req, res) => {
         console.log('✅ Boleto válido, executando UPDATE...');
         const result = await pool.query(
           isUUID
-            ? 'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE id = $5 AND status = $6 RETURNING *'
-            : 'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE numero_controle = $5 AND status = $6 RETURNING *',
-          ['AGUARDANDO PAGAMENTO', user_id, wallet_address, tx_hash, id, 'DISPONIVEL']
+            ? 'UPDATE boletos SET status = $1, wallet_address = $2, tx_hash = $3 WHERE id = $4 AND status = $5 RETURNING *'
+            : 'UPDATE boletos SET status = $1, wallet_address = $2, tx_hash = $3 WHERE numero_controle = $4 AND status = $5 RETURNING *',
+          ['AGUARDANDO PAGAMENTO', wallet_address, tx_hash, id, 'DISPONIVEL']
         );
 
         console.log('📊 Resultado do UPDATE:', result.rowCount, 'linhas afetadas');
