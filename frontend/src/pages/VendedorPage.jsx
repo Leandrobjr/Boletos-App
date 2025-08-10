@@ -283,6 +283,7 @@ function VendedorPage() {
       cpf_cnpj: formData.cpfCnpj,
       codigo_barras: formData.codigoBarras,
       valor: valorNum,
+      valor_usdt: valorUsdt,
       vencimento: formData.dataVencimento,
       instituicao: formData.instituicao,
       numero_controle: Date.now().toString()
