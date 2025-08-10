@@ -94,8 +94,10 @@ module.exports = async (req, res) => {
 
       try {
         console.log('🔍 Verificando boleto no banco...');
+        // Aceita tanto UUID (coluna id) quanto numero_controle (string)
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         const checkResult = await pool.query(
-          'SELECT * FROM boletos WHERE id = $1',
+          isUUID ? 'SELECT * FROM boletos WHERE id = $1' : 'SELECT * FROM boletos WHERE numero_controle = $1',
           [id]
         );
         
@@ -123,7 +125,9 @@ module.exports = async (req, res) => {
 
         console.log('✅ Boleto válido, executando UPDATE...');
         const result = await pool.query(
-          'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE id = $5 AND status = $6 RETURNING *',
+          isUUID
+            ? 'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE id = $5 AND status = $6 RETURNING *'
+            : 'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE numero_controle = $5 AND status = $6 RETURNING *',
           ['AGUARDANDO PAGAMENTO', user_id, wallet_address, tx_hash, id, 'DISPONIVEL']
         );
 
