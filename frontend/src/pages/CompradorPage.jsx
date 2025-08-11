@@ -217,6 +217,7 @@ const CompradorPage = () => {
       }
 
       setEtapaCompra(3);
+      setSelectedBoleto(prev => prev ? { ...prev, status: 'AGUARDANDO PAGAMENTO' } : prev);
       setTempoRestante(3600);
       setAlertInfo({
         type: 'success',
