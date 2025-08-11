@@ -19,6 +19,17 @@ const pool = new Pool({
   ssl: { rejectUnauthorized: false },
 });
 
+async function getJsonBody(req) {
+  if (req.body && typeof req.body === 'object') return req.body;
+  return await new Promise(resolve => {
+    let data = '';
+    req.on('data', c => (data += c));
+    req.on('end', () => {
+      try { resolve(JSON.parse(data || '{}')); } catch { resolve({}); }
+    });
+  });
+}
+
 module.exports = async (req, res) => {
   Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
   if (req.method === 'OPTIONS') return res.status(200).end();
@@ -30,7 +41,7 @@ module.exports = async (req, res) => {
     const parts = url.pathname.split('/'); // ['', 'api', 'boletos', '{id}', 'reservar']
     const id = req.query?.id || parts[3];
 
-    const { user_id, wallet_address, tx_hash } = req.body || {};
+    const { user_id, wallet_address, tx_hash } = await getJsonBody(req);
     if (!id) return res.status(400).json({ error: 'ID é obrigatório' });
     if (!user_id || !wallet_address) return res.status(400).json({ error: 'Dados obrigatórios', required: ['user_id', 'wallet_address'] });
 

@@ -19,6 +19,7 @@ const pool = new Pool({
 
 module.exports = async (req, res) => {
   Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+  res.setHeader('Cache-Control', 'no-store');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
