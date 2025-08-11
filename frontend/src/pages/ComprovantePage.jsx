@@ -1,7 +1,9 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Document, Page, pdfjs } from 'react-pdf';
-// Usa o worker local empacotado pelo Vite (evita CDN e incompatibilidades de versão)
-pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs-dist/build/pdf.worker.min.js', import.meta.url).toString();
+// Aponta para o worker do PDF.js gerado pelo Vite (usa URL estática do asset)
+// Import com '?url' garante que o caminho final do build seja resolvido corretamente
+import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
+pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
 import { useParams, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config/apiConfig';
 
