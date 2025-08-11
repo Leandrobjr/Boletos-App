@@ -1032,7 +1032,12 @@ function VendedorPage() {
                                       {boleto.comprovante_url && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            handleVisualizarBoleto(boleto);
+                                            const ident = boleto.id || boleto.numeroControle || boleto.numero_controle;
+                                            if (ident) {
+                                              navigate(`/app/vendedor/comprovante/${ident}`);
+                                            } else {
+                                              handleVisualizarBoleto(boleto);
+                                            }
                                           }}
                                         >
                                           Visualizar Comprovante

@@ -17,6 +17,7 @@ import UIShowcasePage from './pages/UIShowcasePage';
 import Landpage from './pages/Landpage';
 import HomePage from './pages/HomePage';
 import ConfirmacaoCompra from './pages/ConfirmacaoCompra';
+import ComprovantePage from './pages/ComprovantePage';
 import TestePage from './pages/TestePage';
 import AlterarCadastroPage from './pages/AlterarCadastroPage';
 
@@ -98,6 +99,7 @@ function AppRoutes() {
         <Route path="gestao" element={<DashboardGestaoPage />} />
         <Route path="ui" element={<UIShowcasePage />} />
         <Route path="confirmacao/:id" element={<ConfirmacaoCompra />} />
+        <Route path="vendedor/comprovante/:id" element={<ComprovantePage />} />
       </Route>
     </Routes>
   );
