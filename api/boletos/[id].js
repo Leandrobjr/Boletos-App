@@ -23,8 +23,11 @@ module.exports = async (req, res) => {
   try {
     const url = new URL(req.url, `http://${req.headers.host}`);
     const pathParts = url.pathname.split('/');
-    const id = pathParts[pathParts.length - 2]; // ID está antes da action
-    const action = pathParts[pathParts.length - 1]; // Action é o último elemento
+    // path padrão: /api/boletos/:id  OU  /api/boletos/:id/:action
+    const possibleAction = pathParts[pathParts.length - 1];
+    const knownActions = new Set(['cancelar', 'baixar', 'comprovante', 'liberar', 'reservar', 'atualizar']);
+    const action = knownActions.has(possibleAction) ? possibleAction : null;
+    const id = action ? pathParts[pathParts.length - 2] : pathParts[pathParts.length - 1];
 
     console.log(`🚀 API Boletos [ID] Request: ${req.method} ${req.url}, ID: ${id}, Action: ${action}`);
 
@@ -56,9 +59,12 @@ module.exports = async (req, res) => {
       });
 
     } else if (req.method === 'PATCH' && action === 'baixar') {
-      // Baixar boleto
+      // Baixar boleto (aceita UUID ou numero_controle)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       const result = await pool.query(
-        'UPDATE boletos SET status = $1 WHERE id = $2 RETURNING *',
+        isUUID
+          ? 'UPDATE boletos SET status = $1 WHERE id = $2 RETURNING *'
+          : 'UPDATE boletos SET status = $1 WHERE numero_controle = $2 RETURNING *',
         ['BAIXADO', id]
       );
 
@@ -251,9 +257,10 @@ module.exports = async (req, res) => {
       });
 
     } else if (req.method === 'GET') {
-      // Buscar boleto específico
+      // Buscar boleto específico (UUID ou numero_controle)
+      const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
       const result = await pool.query(
-        'SELECT * FROM boletos WHERE id = $1',
+        isUUID ? 'SELECT * FROM boletos WHERE id = $1' : 'SELECT * FROM boletos WHERE numero_controle = $1',
         [id]
       );
 

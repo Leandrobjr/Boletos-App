@@ -1,12 +1,15 @@
 const { Pool } = require('pg');
 
 // CORS
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-  'Access-Control-Max-Age': '86400',
-};
+function applyCors(req, res) {
+  const origin = req.headers.origin || '*';
+  const acrh = req.headers['access-control-request-headers'];
+  res.setHeader('Access-Control-Allow-Origin', origin);
+  res.setHeader('Vary', 'Origin, Access-Control-Request-Headers, Access-Control-Request-Method');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', acrh || 'Content-Type, Authorization, X-Requested-With, Accept, Origin');
+  res.setHeader('Access-Control-Max-Age', '86400');
+}
 
 // DB (variáveis separadas)
 const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
@@ -31,7 +34,7 @@ async function getJsonBody(req) {
 }
 
 module.exports = async (req, res) => {
-  Object.entries(corsHeaders).forEach(([k, v]) => res.setHeader(k, v));
+  applyCors(req, res);
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'PATCH') return res.status(405).json({ error: 'Método não permitido', allowed: ['PATCH'] });
 
