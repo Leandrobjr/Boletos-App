@@ -75,6 +75,51 @@ module.exports = async (req, res) => {
         message: 'Boleto baixado com sucesso'
       });
 
+    } else if (req.method === 'PATCH' && action === 'comprovante') {
+      // Receber e gravar comprovante (base64 ou URL)
+      try {
+        const { comprovante_url, filename, filesize, filetype } = req.body || {};
+        if (!comprovante_url) {
+          return res.status(400).json({ error: 'comprovante_url é obrigatório' });
+        }
+
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        const update = await pool.query(
+          isUUID
+            ? 'UPDATE boletos SET comprovante_url = $1, status = $2 WHERE id = $3 RETURNING *'
+            : 'UPDATE boletos SET comprovante_url = $1, status = $2 WHERE numero_controle = $3 RETURNING *',
+          [comprovante_url, 'AGUARDANDO BAIXA', id]
+        );
+
+        if (update.rowCount === 0) {
+          return res.status(404).json({ error: 'Boleto não encontrado', id });
+        }
+
+        return res.status(200).json({ success: true, data: update.rows[0] });
+      } catch (error) {
+        console.error('❌ Erro ao salvar comprovante:', error);
+        return res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+      }
+
+    } else if (req.method === 'PATCH' && action === 'liberar') {
+      // Liberar boleto (voltar para DISPONIVEL)
+      try {
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        const update = await pool.query(
+          isUUID
+            ? 'UPDATE boletos SET status = $1 WHERE id = $2 RETURNING *'
+            : 'UPDATE boletos SET status = $1 WHERE numero_controle = $2 RETURNING *',
+          ['DISPONIVEL', id]
+        );
+        if (update.rowCount === 0) {
+          return res.status(404).json({ error: 'Boleto não encontrado', id });
+        }
+        return res.status(200).json({ success: true, data: update.rows[0], message: 'Boleto liberado com sucesso' });
+      } catch (error) {
+        console.error('❌ Erro ao liberar boleto:', error);
+        return res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+      }
+
     } else if (req.method === 'PATCH' && action === 'reservar') {
       // Reservar boleto
       console.log('🔒 Iniciando reserva de boleto:', { id, action });

@@ -722,7 +722,12 @@ const CompradorPage = () => {
                                     </DropdownMenuItem>
                                     
                                     <DropdownMenuItem 
-                                      onClick={() => handleEnviarComprovante(boleto)}
+                                      onClick={() => {
+                                        setSelectedComprovante(null);
+                                        setSelectedBoleto(boleto);
+                                        setEtapaCompra(3);
+                                        setShowModal(true);
+                                      }}
                                       disabled={boleto.comprovanteUrl || boleto.status === 'BAIXADO'}
                                       className={`text-sm font-medium ${boleto.comprovanteUrl || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
                                     >
