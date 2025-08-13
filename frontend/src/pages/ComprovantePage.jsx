@@ -92,26 +92,6 @@ export default function ComprovantePage() {
     else navigate('/app/comprador/meusBoletos');
   };
 
-  const handlePrint = () => {
-    const src = (resolvedUrl || rawUrl || '').replace(/\n/g, '');
-    try {
-      // Tentar imprimir via iframe (PDF)
-      if (iframeRef.current && iframeRef.current.contentWindow) {
-        iframeRef.current.contentWindow.focus();
-        iframeRef.current.contentWindow.print();
-        return;
-      }
-    } catch {}
-    // Fallback: abrir em nova aba e acionar print
-    if (src) {
-      const w = window.open(src, '_blank', 'noopener,noreferrer');
-      if (w) {
-        const onLoad = () => { try { w.focus(); w.print(); } catch {} };
-        try { w.addEventListener('load', onLoad); } catch { try { w.print(); } catch {} }
-      }
-    }
-  };
-
   const renderContent = () => {
     const url = (resolvedUrl || rawUrl || '').replace(/\n/g, '');
     
@@ -201,34 +181,7 @@ export default function ComprovantePage() {
           padding: 0
         }}
       >
-        {/* BOTÕES DE CONTROLE FLUTUANTES */}
-        <div className="absolute top-4 right-4 z-50 flex gap-3">
-          <button 
-            onClick={handleBack} 
-            className="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg text-lg font-semibold"
-            style={{ zIndex: 60 }}
-          >
-            ← Voltar
-          </button>
-          <button 
-            onClick={handlePrint} 
-            className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg shadow-lg text-lg font-semibold"
-            style={{ zIndex: 60 }}
-          >
-            🖨️ Imprimir
-          </button>
-        </div>
 
-        {/* INFORMAÇÕES DO BOLETO FLUTUANTES */}
-        {boleto && !loading && (
-          <div className="absolute top-4 left-4 bg-black bg-opacity-80 text-white p-4 rounded-lg z-50 max-w-md">
-            <div className="text-sm space-y-1">
-              <div><strong>Nº:</strong> {boleto.numero_controle || boleto.numeroControle || boleto.id}</div>
-              <div><strong>Valor:</strong> R$ {Number(boleto.valor_brl || boleto.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-              <div><strong>Status:</strong> {boleto.status}</div>
-            </div>
-          </div>
-        )}
 
         {/* CONTEÚDO DO COMPROVANTE */}
         {renderContent()}
