@@ -1,9 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Document, Page, pdfjs } from 'react-pdf';
-// Aponta para o worker do PDF.js gerado pelo Vite (usa URL estática do asset)
-// Import com '?url' garante que o caminho final do build seja resolvido corretamente
-import pdfWorker from 'pdfjs-dist/build/pdf.worker.min.mjs?url';
-pdfjs.GlobalWorkerOptions.workerSrc = pdfWorker;
+import React, { useEffect, useRef, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { buildApiUrl } from '../config/apiConfig';
 
@@ -13,18 +8,9 @@ export default function ComprovantePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [boleto, setBoleto] = useState(null);
-  const [zoom, setZoom] = useState(2.0);
-  const [pdfZoom, setPdfZoom] = useState(180);
-  const scrollRef = useRef(null);
   const [resolvedUrl, setResolvedUrl] = useState(null);
-  const [numPages, setNumPages] = useState(null);
   const rawUrl = boleto?.comprovante_url || boleto?.comprovanteUrl;
-  const [isPdfMode, setIsPdfMode] = useState(false);
-  const isPdf = useMemo(() => {
-    if (!rawUrl && !resolvedUrl) return false;
-    const src = rawUrl || resolvedUrl || '';
-    return src.startsWith('data:application/pdf') || /\.pdf($|[?#])/i.test(src) || (src.startsWith('blob:') && true);
-  }, [rawUrl, resolvedUrl]);
+  const iframeRef = useRef(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -32,7 +18,16 @@ export default function ComprovantePage() {
       try {
         setLoading(true);
         setError(null);
-        const res = await fetch(buildApiUrl(`/boletos/${id}`));
+        // Determinar rota correta: ID numérico INT32 vs numero_controle (string/long number)
+        const numeric = Number(id);
+        const isValidInt32 = Number.isInteger(numeric) && Math.abs(numeric) <= 2147483647;
+        const primaryEndpoint = isValidInt32 ? `/boletos/${numeric}` : `/boletos/controle/${encodeURIComponent(id)}`;
+
+        let res = await fetch(buildApiUrl(primaryEndpoint));
+        // Fallback: se tentou ID e deu 400/404, tenta como numero_controle
+        if (!res.ok && isValidInt32 && (res.status === 400 || res.status === 404)) {
+          res = await fetch(buildApiUrl(`/boletos/controle/${encodeURIComponent(id)}`));
+        }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         if (!cancelled) setBoleto(data.data || data);
@@ -46,7 +41,7 @@ export default function ComprovantePage() {
     return () => { cancelled = true; };
   }, [id]);
 
-  // Resolve URL do comprovante (converte data:application/pdf para blob: para permitir zoom via #params)
+  // Resolve URL do comprovante (converte data:application/pdf para blob: para permitir visualização estável)
   useEffect(() => {
     if (!boleto) return;
     const ru = boleto?.comprovante_url || boleto?.comprovanteUrl;
@@ -70,144 +65,174 @@ export default function ComprovantePage() {
     // data:image → usar direto
     if (ru.startsWith('data:image/')) {
       setResolvedUrl(ru);
-      setIsPdfMode(false);
       return;
     }
 
-    // data:application/pdf → converter para blob: e aplicar view params
+    // data:application/pdf → converter para blob:
     if (ru.startsWith('data:application/pdf')) {
       const blobUrl = toBlobUrl(ru, 'application/pdf');
-      if (blobUrl) setResolvedUrl(`${blobUrl}#page=1&view=FitH&zoom=${pdfZoom}`);
+      if (blobUrl) setResolvedUrl(`${blobUrl}#zoom=200&view=FitH`);
       else setResolvedUrl(ru);
-      setIsPdfMode(true);
       return () => { try { URL.revokeObjectURL(blobUrl); } catch { /* noop */ } };
     }
 
     // http(s) → anexar parâmetros se for PDF
     if (/\.pdf($|[?#])/i.test(ru)) {
       const base = ru.split('#')[0];
-      setResolvedUrl(`${base}#page=1&view=FitH&zoom=${pdfZoom}`);
-      setIsPdfMode(true);
+      setResolvedUrl(`${base}#zoom=200&view=FitH`);
     } else {
       setResolvedUrl(ru);
-      setIsPdfMode(false);
     }
-  }, [boleto, pdfZoom]);
+  }, [boleto]);
 
-  // Ajuste automático de zoom inicial para mobile/desktop
-  useEffect(() => {
-    const isMobile = typeof window !== 'undefined' && window.innerWidth < 640;
-    if (isMobile) {
-      setZoom(1.2);
-      setPdfZoom(220);
-    } else {
-      setZoom(2.0);
-      setPdfZoom(180);
+  const handleBack = () => {
+    const params = new URLSearchParams(window.location.search);
+    const back = params.get('from');
+    if (back) navigate(back);
+    else navigate('/app/comprador/meusBoletos');
+  };
+
+  const handlePrint = () => {
+    const src = (resolvedUrl || rawUrl || '').replace(/\n/g, '');
+    try {
+      // Tentar imprimir via iframe (PDF)
+      if (iframeRef.current && iframeRef.current.contentWindow) {
+        iframeRef.current.contentWindow.focus();
+        iframeRef.current.contentWindow.print();
+        return;
+      }
+    } catch {}
+    // Fallback: abrir em nova aba e acionar print
+    if (src) {
+      const w = window.open(src, '_blank', 'noopener,noreferrer');
+      if (w) {
+        const onLoad = () => { try { w.focus(); w.print(); } catch {} };
+        try { w.addEventListener('load', onLoad); } catch { try { w.print(); } catch {} }
+      }
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id]);
+  };
 
-  const renderViewer = () => {
-    const url = resolvedUrl || rawUrl;
-    if (!url) return (
-      <div className="w-full flex flex-col items-center gap-4">
-        <div className="w-full h-[85vh] flex items-center justify-center bg-gray-100 rounded-lg border border-green-200">
-          <p className="text-gray-500">Comprovante não disponível</p>
-        </div>
-        <div className="w-full grid grid-cols-1 md:grid-cols-2 gap-3">
-          <button onClick={() => navigate(-1)} className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg">Voltar</button>
-        </div>
-      </div>
-    );
-    if (url.startsWith('data:image/')) {
+  const renderContent = () => {
+    const url = (resolvedUrl || rawUrl || '').replace(/\n/g, '');
+    
+    if (loading) {
       return (
-        <div className="w-full h-[85vh] bg-white rounded-lg border border-green-200 overflow-auto" ref={scrollRef}>
-          <div className="min-w-full min-h-full p-2">
-            <img
-              src={url}
-              alt="Comprovante"
-              className="block select-none"
-              style={{ transform: `scale(${zoom})`, transformOrigin: 'top left', maxWidth: 'none', maxHeight: 'none' }}
-              draggable={false}
-            />
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
+          <div className="text-white text-xl">Carregando comprovante...</div>
+        </div>
+      );
+    }
+
+    if (error) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
+          <div className="text-center text-white">
+            <div className="text-xl mb-4">Erro: {error}</div>
+            <button onClick={handleBack} className="bg-red-600 hover:bg-red-700 text-white px-6 py-3 rounded text-lg">
+              Voltar
+            </button>
           </div>
         </div>
       );
     }
-    // Renderização profissional via PDF.js (react-pdf)
-    const src = url.replace(/\n/g, '');
-    const scale = pdfZoom / 100;
+
+    if (!url) {
+      return (
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
+          <div className="text-center text-white">
+            <div className="text-xl mb-4">Comprovante não disponível</div>
+            <button onClick={handleBack} className="bg-gray-600 hover:bg-gray-700 text-white px-6 py-3 rounded text-lg">
+              Voltar
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    // Renderização para imagens
+    if (url.startsWith('data:image/') || /\.(png|jpe?g|webp)($|[?#])/i.test(url)) {
+      return (
+        <div className="absolute inset-0 bg-black flex items-center justify-center">
+          <img 
+            src={url} 
+            alt="Comprovante" 
+            className="max-w-full max-h-full object-contain"
+            style={{ width: 'auto', height: 'auto', maxWidth: '100%', maxHeight: '100%' }}
+            draggable={false} 
+          />
+        </div>
+      );
+    }
+
+    // Renderização para PDFs - FULLSCREEN ABSOLUTO
     return (
-      <div className="w-full h-[85vh] rounded-lg border border-green-200 bg-white overflow-auto">
-        <Document file={src} onLoadSuccess={({ numPages }) => setNumPages(numPages)} loading={<div className="p-6">Carregando PDF...</div>}>
-          {Array.from(new Array(numPages || 1), (el, index) => (
-            <Page key={`page_${index + 1}`} pageNumber={index + 1} scale={scale} renderTextLayer={false} renderAnnotationLayer={false} className="mx-auto my-2" />
-          ))}
-        </Document>
-      </div>
+      <iframe 
+        ref={iframeRef} 
+        src={url}
+        className="absolute inset-0 w-full h-full"
+        style={{
+          width: '100vw',
+          height: '100vh',
+          border: 'none',
+          margin: 0,
+          padding: 0,
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          zIndex: 40
+        }}
+        title="Comprovante PDF"
+      />
     );
   };
 
   return (
-    <div className="min-h-screen bg-lime-300 flex flex-col">
-      <main className="flex-1 container mx-auto px-4 py-4">
-        <div className="w-full max-w-[1200px] mx-auto">
-          <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
-            <h1 className="text-xl md:text-2xl font-bold text-green-800">Comprovante de Pagamento</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => navigate(-1)}
-                className="bg-gray-600 hover:bg-gray-700 text-white px-4 py-2 rounded-lg"
-              >Voltar</button>
-              {(resolvedUrl || rawUrl) && (
-                <a
-                  href={(resolvedUrl || rawUrl).replace(/\n/g, '')}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-green-700 hover:bg-green-800 text-white px-4 py-2 rounded-lg"
-                >Abrir em nova aba</a>
-              )}
-              {!isPdfMode && (resolvedUrl || rawUrl) && (
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setZoom(z => Math.max(0.5, +(z - 0.2).toFixed(2)))} className="px-3 py-2 rounded-lg bg-lime-600 text-white">-</button>
-                  <span className="px-2 text-green-800 font-semibold w-16 text-center">{Math.round(zoom * 100)}%</span>
-                  <button onClick={() => setZoom(z => Math.min(4, +(z + 0.2).toFixed(2)))} className="px-3 py-2 rounded-lg bg-lime-600 text-white">+</button>
-                  <button onClick={() => setZoom(1)} className="px-3 py-2 rounded-lg bg-gray-200 text-green-800">100%</button>
-                  <button onClick={() => setZoom(1.6)} className="px-3 py-2 rounded-lg bg-gray-200 text-green-800">Ajustar</button>
-                </div>
-              )}
-              {isPdfMode && (resolvedUrl || rawUrl) && (
-                <div className="flex items-center gap-1">
-                  <button onClick={() => setPdfZoom(z => Math.max(80, z - 20))} className="px-3 py-2 rounded-lg bg-lime-600 text-white">-</button>
-                  <span className="px-2 text-green-800 font-semibold w-16 text-center">{pdfZoom}%</span>
-                  <button onClick={() => setPdfZoom(z => Math.min(400, z + 20))} className="px-3 py-2 rounded-lg bg-lime-600 text-white">+</button>
-                  <button onClick={() => setPdfZoom(100)} className="px-3 py-2 rounded-lg bg-gray-200 text-green-800">100%</button>
-                  <button onClick={() => setPdfZoom(180)} className="px-3 py-2 rounded-lg bg-gray-200 text-green-800">Ajustar</button>
-                </div>
-              )}
+    <>
+      {/* OVERLAY FULLSCREEN ABSOLUTO */}
+      <div 
+        className="fixed inset-0 bg-black z-50"
+        style={{
+          width: '100vw',
+          height: '100vh',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          margin: 0,
+          padding: 0
+        }}
+      >
+        {/* BOTÕES DE CONTROLE FLUTUANTES */}
+        <div className="absolute top-4 right-4 z-50 flex gap-3">
+          <button 
+            onClick={handleBack} 
+            className="bg-gray-800 hover:bg-gray-900 text-white px-6 py-3 rounded-lg shadow-lg text-lg font-semibold"
+            style={{ zIndex: 60 }}
+          >
+            ← Voltar
+          </button>
+          <button 
+            onClick={handlePrint} 
+            className="bg-green-700 hover:bg-green-800 text-white px-6 py-3 rounded-lg shadow-lg text-lg font-semibold"
+            style={{ zIndex: 60 }}
+          >
+            🖨️ Imprimir
+          </button>
+        </div>
+
+        {/* INFORMAÇÕES DO BOLETO FLUTUANTES */}
+        {boleto && !loading && (
+          <div className="absolute top-4 left-4 bg-black bg-opacity-80 text-white p-4 rounded-lg z-50 max-w-md">
+            <div className="text-sm space-y-1">
+              <div><strong>Nº:</strong> {boleto.numero_controle || boleto.numeroControle || boleto.id}</div>
+              <div><strong>Valor:</strong> R$ {Number(boleto.valor_brl || boleto.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+              <div><strong>Status:</strong> {boleto.status}</div>
             </div>
           </div>
+        )}
 
-          {loading && (
-            <div className="w-full h-[70vh] flex items-center justify-center text-green-800">Carregando...</div>
-          )}
-          {error && (
-            <div className="w-full h-[70vh] flex items-center justify-center text-red-700">Erro: {error}</div>
-          )}
-          {!loading && !error && renderViewer()}
-
-          {!loading && boleto && (
-            <div className="mt-4 grid grid-cols-2 gap-4 bg-green-50 p-4 rounded-lg border border-green-200">
-              <div><span className="font-semibold text-green-800">Nº Boleto:</span> {boleto.numero_controle || boleto.numeroControle || boleto.id}</div>
-              <div><span className="font-semibold text-green-800">Valor:</span> R$ {Number(boleto.valor_brl || boleto.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
-              <div><span className="font-semibold text-green-800">Status:</span> {boleto.status}</div>
-              <div><span className="font-semibold text-green-800">Vencimento:</span> {boleto.vencimento ? new Date(boleto.vencimento).toLocaleDateString('pt-BR') : '--'}</div>
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+        {/* CONTEÚDO DO COMPROVANTE */}
+        {renderContent()}
+      </div>
+    </>
   );
 }
-
-

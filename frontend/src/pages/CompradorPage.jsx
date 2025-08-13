@@ -37,6 +37,7 @@ const CompradorPage = () => {
   const [copiedCodigoBarras, setCopiedCodigoBarras] = useState(false);
   const [showComprovanteModal, setShowComprovanteModal] = useState(false);
   const [selectedComprovante, setSelectedComprovante] = useState(null);
+  // Removido viewer lateral por simplicidade/performance
 
   // Hooks para conexão Web3
   const wallet = useWalletConnection();
@@ -87,11 +88,14 @@ const CompradorPage = () => {
   const fetchMeusBoletos = async () => {
     if (!user?.uid) return;
     try {
-      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}`));
+      // Enviar também a carteira (se conectada) para o backend identificar boletos reservados/comprados pelo usuário
+      const walletQuery = wallet?.address ? `?wallet=${encodeURIComponent(wallet.address)}` : '';
+      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}${walletQuery}`));
       if (!res.ok) throw new Error('Erro ao buscar boletos do usuário');
       const data = await res.json();
+      const lista = Array.isArray(data) ? data : (data?.data || []);
       
-      const boletosMapeados = data.data.map(boleto => ({
+      const boletosMapeados = lista.map(boleto => ({
         ...boleto,
         numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
         valor: boleto.valor_brl || boleto.valor || 0,
@@ -202,7 +206,8 @@ const CompradorPage = () => {
       }
 
       // Depois, chamar o backend para reservar o boleto
-      const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/reservar`), {
+      const resourcePath = `/boletos/controle/${encodeURIComponent(selectedBoleto.numero_controle)}/reservar`;
+      const response = await fetch(buildApiUrl(resourcePath), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -387,54 +392,16 @@ const CompradorPage = () => {
     reader.readAsDataURL(file);
   };
 
-  // Função para abrir modal do comprovante
+  // Abrir comprovante em página dedicada simples (iframe/img tela cheia)
   const handleVisualizarComprovante = (boleto) => {
-    console.log('🔍 Visualizando comprovante:', boleto);
-    
-    // Se for URL de exemplo, mostrar alerta
-    if (boleto.comprovanteUrl && boleto.comprovanteUrl.includes('exemplo.com')) {
-      setAlertInfo({
-        type: 'destructive',
-        title: 'URL de Exemplo Detectada',
-        description: 'Este comprovante contém uma URL de exemplo. Entre em contato com o suporte.'
-      });
-      setTimeout(() => setAlertInfo(null), 5000);
-      return;
-    }
-
-    // Verificar se é base64 válido
-    if (boleto.comprovanteUrl && boleto.comprovanteUrl.startsWith('data:')) {
-      const base64Data = boleto.comprovanteUrl.split(',')[1];
-      if (!base64Data || base64Data.length < 100) {
-        setAlertInfo({
-          type: 'destructive',
-          title: 'Comprovante inválido',
-          description: 'O arquivo do comprovante parece estar corrompido ou incompleto.'
-        });
-        setTimeout(() => setAlertInfo(null), 3000);
-        return;
-      }
-    }
-
-    // Verificar se é URL válida
-    if (boleto.comprovanteUrl && boleto.comprovanteUrl.startsWith('http')) {
-      try {
-        new URL(boleto.comprovanteUrl);
-      } catch (e) {
-        setAlertInfo({
-          type: 'destructive',
-          title: 'URL inválida',
-          description: 'A URL do comprovante não é válida.'
-        });
-        setTimeout(() => setAlertInfo(null), 3000);
-        return;
-      }
-    }
-    
-    setSelectedComprovante(boleto);
-    setShowComprovanteModal(true);
-    console.log('✅ Modal de comprovante aberto');
+    try {
+      const ident = boleto.numeroBoleto || boleto.numero_controle || boleto.id;
+      const ret = encodeURIComponent('/app/comprador/meusBoletos');
+      navigate(`/app/comprador/comprovante/${ident}?from=${ret}`);
+    } catch {}
   };
+
+  // openComprovantePage removido — única forma é página dedicada
 
   // Função para pagar boleto
   const handlePagarBoleto = (boleto) => {
@@ -471,11 +438,13 @@ const CompradorPage = () => {
 
   useEffect(() => {
     // Buscar boletos disponíveis do backend
-    fetch(buildApiUrl('/boletos'))
-      .then(res => res.json())
-            .then(data => {
+      const ac = new AbortController();
+      fetch(buildApiUrl('/boletos'), { signal: ac.signal })
+        .then(res => res.json())
+      .then(data => {
         console.log('📦 Dados recebidos da API:', data);
-        const boletosMapeados = (data.data || []).map(boleto => {
+        const lista = Array.isArray(data) ? data : (data?.data || []);
+        const boletosMapeados = lista.map(boleto => {
           console.log('🔍 Boleto original:', boleto);
           console.log('📅 Vencimento original:', boleto.vencimento);
           console.log('💰 Valor USDT original:', boleto.valor_usdt);
@@ -494,10 +463,11 @@ const CompradorPage = () => {
         console.log('🎯 Boletos mapeados:', boletosMapeados);
         setBoletosDisponiveis(boletosMapeados);
       })
-      .catch((error) => {
+        .catch((error) => {
         console.error('❌ Erro ao buscar boletos:', error);
         setBoletosDisponiveis([]);
-      });
+        });
+      return () => ac.abort();
   }, []);
 
   useEffect(() => {
@@ -509,15 +479,11 @@ const CompradorPage = () => {
   useEffect(() => {
     let interval;
     if (activeTab === 'meusBoletos' || activeTab === 'historico') {
-      fetchMeusBoletos(); // Busca inicial imediata
-      interval = setInterval(() => {
-        fetchMeusBoletos();
-      }, 5000); // Atualiza a cada 5 segundos
+      fetchMeusBoletos();
+      interval = setInterval(() => { fetchMeusBoletos(); }, 12000);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [activeTab, user]);
+    return () => { if (interval) clearInterval(interval); };
+  }, [activeTab, user?.uid, wallet?.address]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -670,99 +636,76 @@ const CompradorPage = () => {
               </Card>
             </TabsContent>
             <TabsContent value="meusBoletos">
-              <Card>
-                <CardHeader className="bg-green-800 text-white">
-                  <CardTitle className="text-xl">MEUS BOLETOS</CardTitle>
-                  <CardDescription className="text-white">Boletos que você comprou e pagou</CardDescription>
-                </CardHeader>
-                <CardContent className="p-6">
-                  {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').length === 0 ? (
-                    <p className="text-center text-gray-500 py-8">
-                      Você ainda não comprou nenhum boleto.
-                    </p>
-                  ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
-                        <thead className="bg-lime-600 text-white">
-                          <tr>
-                            <th className="py-3 px-4 text-left">Nº Boleto</th>
-                            <th className="py-3 px-4 text-left">Valor (R$)</th>
-                            <th className="py-3 px-4 text-left">Valor Líquido (USDT)</th>
-                            <th className="py-3 px-4 text-left">Taxa Serviço</th>
-                            <th className="py-3 px-4 text-left">Data Compra</th>
-                            <th className="py-3 px-4 text-left">Status</th>
-                            <th className="py-3 px-4 text-left">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').map((boleto) => (
-                            <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
-                              <td className="py-3 px-4">{boleto.numeroBoleto}</td>
-                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                              <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
-                              <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
-                              <td className="py-3 px-4">{boleto.dataCompra ? new Date(boleto.dataCompra).toLocaleDateString('pt-BR') + ' ' + new Date(boleto.dataCompra).toLocaleTimeString('pt-BR') : '--'}</td>
-                              <td className="py-3 px-4">
-                                <StatusBadge status={boleto.status} />
-                              </td>
-                              <td className="py-3 px-6 w-44 flex gap-2">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-bold transition-colors duration-200">
-                                      Ações
-                                    </button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent className="min-w-48">
-                                    <DropdownMenuItem 
-                                      onClick={() => handlePagarBoleto(boleto)}
-                                      disabled={boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO'}
-                                      className={`text-sm font-medium ${boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
-                                    >
-                                      <FaCreditCard className="mr-2 text-sm" />
-                                      Pagar Boleto
-                                    </DropdownMenuItem>
-                                    
-                                    <DropdownMenuItem 
-                                      onClick={() => {
-                                        setSelectedComprovante(null);
-                                        setSelectedBoleto(boleto);
-                                        setEtapaCompra(3);
-                                        setShowModal(true);
-                                      }}
-                                      disabled={boleto.comprovanteUrl || boleto.status === 'BAIXADO'}
-                                      className={`text-sm font-medium ${boleto.comprovanteUrl || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
-                                    >
-                                      <FaUpload className="mr-2 text-sm" />
-                                      Enviar Comprovante
-                                    </DropdownMenuItem>
-                                    
-                                                                          <DropdownMenuItem 
-                                        onClick={() => handleVisualizarComprovante(boleto)}
-                                        disabled={!boleto.comprovanteUrl && boleto.status !== 'AGUARDANDO BAIXA'}
-                                        className={`text-sm font-medium ${(!boleto.comprovanteUrl && boleto.status !== 'AGUARDANDO BAIXA') ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}
-                                      >
-                                        <FaUpload className="mr-2 text-sm" />
-                                        Visualizar Comprovante
-                                      </DropdownMenuItem>
-                                    
-                                    <DropdownMenuItem 
-                                      onClick={() => handleDisputa(boleto)}
-                                      className="text-sm font-medium text-gray-700 hover:bg-gray-100"
-                                    >
-                                      <FaExclamationTriangle className="mr-2 text-sm" />
-                                      Disputa
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </td>
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                {/* Lista */}
+                <Card>
+                  <CardHeader className="bg-green-800 text-white">
+                    <CardTitle className="text-xl">MEUS BOLETOS</CardTitle>
+                    <CardDescription className="text-white">Boletos que você comprou e pagou</CardDescription>
+                  </CardHeader>
+                  <CardContent className="p-4">
+                    {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').length === 0 ? (
+                      <p className="text-center text-gray-500 py-8">
+                        Você ainda não comprou nenhum boleto.
+                      </p>
+                    ) : (
+                      <div className="overflow-x-auto">
+                        <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+                          <thead className="bg-lime-600 text-white">
+                            <tr>
+                              <th className="py-3 px-4 text-left">Nº Boleto</th>
+                              <th className="py-3 px-4 text-left">Valor (R$)</th>
+                              <th className="py-3 px-4 text-left">Valor Líquido (USDT)</th>
+                              <th className="py-3 px-4 text-left">Taxa Serviço</th>
+                              <th className="py-3 px-4 text-left">Data Compra</th>
+                              <th className="py-3 px-4 text-left">Status</th>
+                              <th className="py-3 px-4 text-left">Ações</th>
                             </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+                          </thead>
+                          <tbody>
+                            {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').map((boleto) => (
+                              <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
+                                <td className="py-3 px-4">{boleto.numeroBoleto}</td>
+                                <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                                <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
+                                <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
+                                <td className="py-3 px-4">{boleto.dataCompra ? new Date(boleto.dataCompra).toLocaleDateString('pt-BR') + ' ' + new Date(boleto.dataCompra).toLocaleTimeString('pt-BR') : '--'}</td>
+                                <td className="py-3 px-4"><StatusBadge status={boleto.status} /></td>
+                                <td className="py-3 px-6 w-44 flex gap-2">
+                                  <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                      <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-bold transition-colors duration-200">Ações</button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent className="min-w-48">
+                                      <DropdownMenuItem onClick={() => handlePagarBoleto(boleto)} disabled={boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                        <FaCreditCard className="mr-2 text-sm" />
+                                        Pagar Boleto
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => { setSelectedBoleto(boleto); setEtapaCompra(3); setShowModal(true); }} disabled={boleto.comprovanteUrl || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.comprovanteUrl || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                        <FaUpload className="mr-2 text-sm" />
+                                        Enviar Comprovante
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleVisualizarComprovante(boleto)} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                        <FaUpload className="mr-2 text-sm" /> Visualizar Comprovante
+                                      </DropdownMenuItem>
+                                      <DropdownMenuItem onClick={() => handleDisputa(boleto)} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                        <FaExclamationTriangle className="mr-2 text-sm" />
+                                        Disputa
+                                      </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                  </DropdownMenu>
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+
+                {/* Viewer lateral removido para simplificar e melhorar performance */}
+              </div>
             </TabsContent>
             <TabsContent value="historico">
               <Card>

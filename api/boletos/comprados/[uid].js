@@ -15,6 +15,8 @@ const dbName = process.env.DB_NAME || 'neondb';
 const pool = new Pool({
   connectionString: `postgresql://${dbUser}:${dbPass}@${dbHost}/${dbName}?sslmode=require&channel_binding=require`,
   ssl: { rejectUnauthorized: false },
+  connectionTimeoutMillis: 5000,
+  idleTimeoutMillis: 10000,
 });
 
 module.exports = async (req, res) => {
@@ -30,15 +32,20 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'GET') {
-      // Observação: a coluna comprador_id não existe neste schema.
-      // Para compatibilidade imediata, retornamos boletos do próprio usuário
-      // (vendedor) e qualquer boleto não disponível que ele possua.
-      const result = await pool.query(
-        `SELECT * FROM boletos
-         WHERE user_id = $1
-         ORDER BY criado_em DESC`,
-        [uid]
-      );
+      // Novo: também permite filtrar por carteira do comprador (wallet)
+      // Explicação leiga: "Meus Boletos" do comprador vai enviar sua carteira.
+      // Aqui devolvemos boletos criados por ele (se ele for vendedor)
+      // OU boletos que ele reservou/comprou (onde sua carteira aparece em wallet_address).
+      const wallet = url.searchParams.get('wallet');
+      let sql = `SELECT * FROM boletos WHERE user_id = $1`;
+      const params = [uid];
+      if (wallet) {
+        sql = `SELECT * FROM boletos WHERE user_id = $1 OR wallet_address = $2`;
+        params.push(wallet);
+      }
+      sql += ' ORDER BY criado_em DESC LIMIT 100';
+
+      const result = await pool.query({ text: sql, values: params, statement_timeout: 8000 });
       return res.status(200).json({ success: true, data: result.rows, count: result.rowCount });
     }
 

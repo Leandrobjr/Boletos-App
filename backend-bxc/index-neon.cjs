@@ -34,6 +34,8 @@ app.use((req, res, next) => {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, PATCH, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
+  res.header('Cross-Origin-Opener-Policy', 'same-origin');
+  res.header('Cross-Origin-Embedder-Policy', 'require-corp');
   
   if (req.method === 'OPTIONS') {
     res.sendStatus(200);
@@ -72,6 +74,11 @@ try {
     },
     connectionTimeoutMillis: 10000,
     idleTimeoutMillis: 30000
+  });
+  // Aplicar timeouts no nível da sessão para evitar travamentos em consultas longas
+  pool.on('connect', (client) => {
+    client.query("SET statement_timeout = '8000ms'").catch(() => {});
+    client.query("SET idle_in_transaction_session_timeout = '8000ms'").catch(() => {});
   });
   console.log('✅ Pool de conexão criado com sucesso');
 } catch (error) {
@@ -226,7 +233,13 @@ app.get('/boletos', async (req, res) => {
 app.get('/boletos/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const boleto = await getQuery('SELECT * FROM boletos WHERE id = $1', [id]);
+    // Garantir ID inteiro para evitar erros de casting no Postgres
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || Math.abs(numericId) > 2147483647) {
+      return res.status(400).json({ error: 'ID inválido. Use /boletos/controle/:numero_controle para buscar por número de controle.' });
+    }
+
+    const boleto = await getQuery('SELECT * FROM boletos WHERE id = $1', [numericId]);
     if (!boleto) {
       return res.status(404).json({ error: 'Boleto não encontrado' });
     }
@@ -241,24 +254,365 @@ app.get('/boletos/:id', async (req, res) => {
   }
 });
 
-app.post('/boletos', async (req, res) => {
-  const { user_id, cpf_cnpj, codigo_barras, valor_brl, vencimento, instituicao } = req.body;
+// Utilitário: obter boleto por id (numérico) ou numero_controle (string)
+async function getBoletoByAnyId(idOrControl) {
+  if (idOrControl == null) return null;
+  const asString = String(idOrControl);
+  const asNumber = Number(idOrControl);
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  // Caso 1: ID inteiro (SERIAL)
+  if (Number.isInteger(asNumber) && Math.abs(asNumber) <= 2147483647) {
+    return await getQuery('SELECT * FROM boletos WHERE id = $1', [asNumber]);
+  }
+
+  // Caso 2: UUID (id UUID em alguns ambientes) → comparar como texto
+  if (uuidRegex.test(asString)) {
+    const byUuid = await getQuery('SELECT * FROM boletos WHERE id::text = $1', [asString]);
+    if (byUuid) return byUuid;
+  }
+
+  // Caso 3: numero_controle (string/num longo)
+  return await getQuery('SELECT * FROM boletos WHERE numero_controle = $1 OR CAST(numero_controle AS TEXT) = $1', [asString]);
+}
+
+// PATCH reservar boleto (por id interno ou numero_controle)
+app.patch('/boletos/:id/reservar', async (req, res) => {
   try {
-    // Gerar número de controle único
-    const result = await pool.query('SELECT COUNT(*) as count FROM boletos');
-    const numeroControle = (result.rows[0].count + 1).toString().padStart(6, '0');
-    
-    const boleto = await getQuery(
-      `INSERT INTO boletos (user_id, cpf_cnpj, codigo_barras, valor_brl, vencimento, instituicao, numero_controle)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING *`,
-      [user_id, cpf_cnpj, codigo_barras, valor_brl, vencimento, instituicao, numeroControle]
+    const idParam = req.params.id;
+    const { user_id, wallet_address, tx_hash } = req.body || {};
+    if (!user_id || !wallet_address) {
+      return res.status(400).json({ error: 'user_id e wallet_address são obrigatórios' });
+    }
+
+    const boleto = await getBoletoByAnyId(idParam);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+    const normalized = (mapStatus(boleto.status) || '').toUpperCase();
+    if (normalized !== 'DISPONIVEL') {
+      return res.status(400).json({ error: 'Boleto não disponível', status: boleto.status });
+    }
+
+    const updated = await getQuery(
+      'UPDATE boletos SET status = $1, wallet_address = $2, tx_hash = $3 WHERE id = $4 RETURNING *',
+      ['AGUARDANDO PAGAMENTO', wallet_address, tx_hash || null, boleto.id]
     );
-    
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro reservar boleto:', e);
+    res.status(500).json({ error: 'Erro ao reservar boleto', details: e.message });
+  }
+});
+
+// Rotas explícitas por numero_controle
+app.patch('/boletos/controle/:numero_controle/reservar', async (req, res) => {
+  try {
+    const numeroControle = String(req.params.numero_controle);
+    const { user_id, wallet_address, tx_hash } = req.body || {};
+    if (!user_id || !wallet_address) return res.status(400).json({ error: 'user_id e wallet_address são obrigatórios' });
+    const boleto = await getQuery('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+    const normalized = (mapStatus(boleto.status) || '').toUpperCase();
+    if (normalized !== 'DISPONIVEL') return res.status(400).json({ error: 'Boleto não disponível', status: boleto.status });
+    const updated = await getQuery(
+      'UPDATE boletos SET status = $1, wallet_address = $2, tx_hash = $3 WHERE id = $4 RETURNING *',
+      ['AGUARDANDO PAGAMENTO', wallet_address, tx_hash || null, boleto.id]
+    );
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro reservar por numero_controle:', e);
+    res.status(500).json({ error: 'Erro ao reservar boleto', details: e.message });
+  }
+});
+
+app.patch('/boletos/controle/:numero_controle/liberar', async (req, res) => {
+  try {
+    const numeroControle = String(req.params.numero_controle);
+    const boleto = await getQuery('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+    const updated = await getQuery(
+      'UPDATE boletos SET status = $1, wallet_address = NULL, tx_hash = NULL WHERE id = $2 RETURNING *',
+      ['DISPONIVEL', boleto.id]
+    );
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro liberar por numero_controle:', e);
+    res.status(500).json({ error: 'Erro ao liberar boleto', details: e.message });
+  }
+});
+
+app.patch('/boletos/controle/:numero_controle/comprovante', async (req, res) => {
+  try {
+    const numeroControle = String(req.params.numero_controle);
+    const { comprovante_url } = req.body || {};
+    if (!comprovante_url) return res.status(400).json({ error: 'comprovante_url é obrigatório' });
+    const boleto = await getQuery('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+    const updated = await getQuery(
+      'UPDATE boletos SET comprovante_url = $1, status = $2 WHERE id = $3 RETURNING *',
+      [comprovante_url, 'AGUARDANDO BAIXA', boleto.id]
+    );
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro comprovante por numero_controle:', e);
+    res.status(500).json({ error: 'Erro ao salvar comprovante', details: e.message });
+  }
+});
+
+// PATCH baixar boleto (por id interno ou numero_controle)
+app.patch('/boletos/:id/baixar', async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const boleto = await getBoletoByAnyId(idParam);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+
+    // Opcional: aceitar tx_hash no corpo
+    const { tx_hash } = req.body || {};
+
+    const updated = await getQuery(
+      'UPDATE boletos SET status = $1, tx_hash = COALESCE($2, tx_hash) WHERE id = $3 RETURNING *',
+      ['BAIXADO', tx_hash || null, boleto.id]
+    );
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro baixar boleto:', e);
+    res.status(500).json({ error: 'Erro ao baixar boleto', details: e.message });
+  }
+});
+
+// PATCH baixar boleto por numero_controle
+app.patch('/boletos/controle/:numero_controle/baixar', async (req, res) => {
+  try {
+    const numeroControle = String(req.params.numero_controle);
+    const boleto = await getQuery('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+
+    const { tx_hash } = req.body || {};
+
+    const updated = await getQuery(
+      'UPDATE boletos SET status = $1, tx_hash = COALESCE($2, tx_hash) WHERE id = $3 RETURNING *',
+      ['BAIXADO', tx_hash || null, boleto.id]
+    );
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro baixar por numero_controle:', e);
+    res.status(500).json({ error: 'Erro ao baixar boleto', details: e.message });
+  }
+});
+// PATCH liberar boleto (por id interno ou numero_controle)
+app.patch('/boletos/:id/liberar', async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const boleto = await getBoletoByAnyId(idParam);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+
+    const updated = await getQuery(
+      'UPDATE boletos SET status = $1, wallet_address = NULL, tx_hash = NULL WHERE id = $2 RETURNING *',
+      ['DISPONIVEL', boleto.id]
+    );
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro liberar boleto:', e);
+    res.status(500).json({ error: 'Erro ao liberar boleto', details: e.message });
+  }
+});
+
+// PATCH enviar comprovante (por id interno ou numero_controle)
+app.patch('/boletos/:id/comprovante', async (req, res) => {
+  try {
+    const idParam = req.params.id;
+    const { comprovante_url } = req.body || {};
+    if (!comprovante_url) return res.status(400).json({ error: 'comprovante_url é obrigatório' });
+    const boleto = await getBoletoByAnyId(idParam);
+    if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
+
+    const updated = await getQuery(
+      'UPDATE boletos SET comprovante_url = $1, status = $2 WHERE id = $3 RETURNING *',
+      [comprovante_url, 'AGUARDANDO BAIXA', boleto.id]
+    );
+    return res.json({ success: true, data: updated });
+  } catch (e) {
+    console.error('Erro salvar comprovante:', e);
+    res.status(500).json({ error: 'Erro ao salvar comprovante', details: e.message });
+  }
+});
+// Busca por número de controle (texto/longo)
+app.get('/boletos/controle/:numero_controle', async (req, res) => {
+  const { numero_controle } = req.params;
+  try {
+    const boleto = await getQuery('SELECT * FROM boletos WHERE numero_controle = $1', [String(numero_controle)]);
+    if (!boleto) {
+      return res.status(404).json({ error: 'Boleto não encontrado (numero_controle)' });
+    }
     const boletoMapeado = {
       ...boleto,
       status: mapStatus(boleto.status)
     };
-    
+    res.json(boletoMapeado);
+  } catch (error) {
+    console.error('Erro ao buscar boleto por numero_controle:', error);
+    res.status(500).json({ error: 'Erro ao buscar boleto por numero_controle', details: error.message });
+  }
+});
+
+// Stream seguro do comprovante em PDF para permitir embed no navegador
+app.get('/boletos/:id/comprovante', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const numericId = Number(id);
+    if (!Number.isInteger(numericId) || Math.abs(numericId) > 2147483647) {
+      return res.status(400).json({ error: 'ID inválido' });
+    }
+    const row = await getQuery('SELECT comprovante_url FROM boletos WHERE id = $1', [numericId]);
+    if (!row || !row.comprovante_url) return res.status(404).json({ error: 'Comprovante não encontrado' });
+    await streamComprovanteFromSource(row.comprovante_url, res, `comprovante-${numericId}.pdf`);
+  } catch (error) {
+    console.error('Erro ao streamar comprovante por id:', error);
+    res.status(500).json({ error: 'Erro ao obter comprovante', details: error.message });
+  }
+});
+
+app.get('/boletos/controle/:numero_controle/comprovante', async (req, res) => {
+  const { numero_controle } = req.params;
+  try {
+    const row = await getQuery('SELECT comprovante_url FROM boletos WHERE numero_controle = $1', [String(numero_controle)]);
+    if (!row || !row.comprovante_url) return res.status(404).json({ error: 'Comprovante não encontrado' });
+    await streamComprovanteFromSource(row.comprovante_url, res, `comprovante-${String(numero_controle)}.pdf`);
+  } catch (error) {
+    console.error('Erro ao streamar comprovante por numero_controle:', error);
+    res.status(500).json({ error: 'Erro ao obter comprovante', details: error.message });
+  }
+});
+
+/**
+ * Faz stream do comprovante para o cliente, normalizando headers para permitir embed
+ */
+async function streamComprovanteFromSource(sourceUrl, res, filenameHint) {
+  try {
+    // Headers de segurança e embed
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Content-Security-Policy', "frame-ancestors 'self' http://localhost:3000 http://127.0.0.1:3000 http://localhost:5173 http://127.0.0.1:5173 https://boletos-app-mocha.vercel.app https://bxc-boletos-app.vercel.app");
+    res.setHeader('Cache-Control', 'private, max-age=600');
+
+    if (typeof sourceUrl === 'string' && sourceUrl.startsWith('data:application/pdf')) {
+      // data: URL → converter para Buffer e devolver como PDF
+      const base64 = sourceUrl.split(',')[1] || '';
+      const buffer = Buffer.from(base64, 'base64');
+      res.setHeader('Content-Type', 'application/pdf');
+      res.setHeader('Content-Disposition', `inline; filename="${filenameHint || 'comprovante'}.pdf"`);
+      res.end(buffer);
+      return;
+    }
+
+    // Se for imagem (PNG/JPEG) apenas repassar como imagem (iframe não exibe imagem; usado para download)
+    if (typeof sourceUrl === 'string' && sourceUrl.startsWith('data:image/')) {
+      const [meta, data] = sourceUrl.split(',');
+      const mime = meta.split(';')[0].replace('data:', '') || 'image/png';
+      const buffer = Buffer.from(data || '', 'base64');
+      res.setHeader('Content-Type', mime);
+      res.setHeader('Content-Disposition', `inline; filename="${filenameHint || 'comprovante'}.${mime.includes('jpeg') ? 'jpg' : 'png'}"`);
+      res.end(buffer);
+      return;
+    }
+
+    // http(s) → baixar do upstream e streamar
+    const upstream = await fetch(sourceUrl);
+    if (!upstream.ok) {
+      res.status(upstream.status).json({ error: `Falha ao baixar fonte do comprovante (${upstream.status})` });
+      return;
+    }
+    const contentType = upstream.headers.get('content-type') || 'application/pdf';
+    const len = upstream.headers.get('content-length');
+    res.setHeader('Content-Type', contentType.startsWith('application/pdf') ? contentType : 'application/pdf');
+    if (len) res.setHeader('Content-Length', len);
+    res.setHeader('Content-Disposition', `inline; filename="${filenameHint || 'comprovante'}.pdf"`);
+
+    const readable = upstream.body;
+    readable.pipe(res);
+    readable.on('error', (err) => {
+      console.error('Erro no stream do comprovante:', err);
+      if (!res.headersSent) res.status(500).end('Erro no stream');
+    });
+  } catch (error) {
+    console.error('Erro geral no streamComprovanteFromSource:', error);
+    if (!res.headersSent) res.status(500).json({ error: 'Erro interno ao processar comprovante' });
+  }
+}
+
+// Proxy simples para Coingecko (evita CORS no frontend)
+app.get('/api/proxy/coingecko', async (req, res) => {
+  try {
+    const ticker = req.query.ticker || 'tether';
+    const vs = req.query.vs || 'brl';
+    const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ticker)}&vs_currencies=${encodeURIComponent(vs)}`;
+    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    if (!r.ok) {
+      return res.status(r.status).json({ error: `Falha Coingecko ${r.status}` });
+    }
+    const data = await r.json();
+    const price = data?.[ticker]?.[vs];
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.json({ price });
+  } catch (e) {
+    res.status(500).json({ error: 'Proxy Coingecko falhou', details: e.message });
+  }
+});
+
+app.post('/boletos', async (req, res) => {
+  try {
+    // Aceitar múltiplos formatos de payload (compatibilidade)
+    const payload = req.body || {};
+    const user_id = payload.user_id || payload.uid || payload.userId || null;
+    const cpf_cnpj = payload.cpf_cnpj || payload.cpfCnpj || null;
+    const codigo_barras = payload.codigo_barras || payload.codigoBarras || null;
+    const valor_brl = payload.valor_brl != null ? Number(payload.valor_brl) : (payload.valor != null ? Number(payload.valor) : null);
+    const valor_usdt = payload.valor_usdt != null ? Number(payload.valor_usdt) : null;
+    const instituicao = payload.instituicao || null;
+    const status = (payload.status || 'pendente').toString().toLowerCase();
+    const vencimento = payload.vencimento ? new Date(payload.vencimento) : null;
+
+    if (!cpf_cnpj || !codigo_barras || !valor_brl || !vencimento || !instituicao) {
+      return res.status(400).json({
+        error: 'Dados obrigatórios ausentes',
+        required: ['cpf_cnpj', 'codigo_barras', 'valor_brl', 'vencimento', 'instituicao']
+      });
+    }
+
+    // Normalizar número de controle: usar informado ou gerar pelo banco
+    let numeroControleInformado = payload.numero_controle || payload.numeroControle || null;
+    if (numeroControleInformado) {
+      numeroControleInformado = String(numeroControleInformado).replace(/\D/g, '').padStart(3, '0');
+    }
+
+    let numeroControle = numeroControleInformado;
+    if (!numeroControle) {
+      // Usa maior numero_controle + 1 (seguro mesmo com gaps)
+      const result = await pool.query("SELECT COALESCE(MAX(CAST(NULLIF(numero_controle, '') AS INTEGER)), 0) AS max_nc FROM boletos");
+      const next = (Number(result.rows[0].max_nc) + 1) || 1;
+      numeroControle = String(next).padStart(3, '0');
+    }
+
+    const insertSql = `
+      INSERT INTO boletos (
+        user_id, cpf_cnpj, codigo_barras, valor_brl, valor_usdt, vencimento, instituicao, status, numero_controle
+      ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)
+      RETURNING *
+    `;
+
+    const boleto = await getQuery(insertSql, [
+      user_id,
+      cpf_cnpj,
+      codigo_barras,
+      Number(valor_brl),
+      valor_usdt != null ? Number(valor_usdt) : null,
+      vencimento.toISOString().slice(0, 10),
+      instituicao,
+      status,
+      numeroControle
+    ]);
+
+    const boletoMapeado = { ...boleto, status: mapStatus(boleto.status) };
     res.status(201).json(boletoMapeado);
   } catch (error) {
     console.error('Erro ao criar boleto:', error);
@@ -283,11 +637,17 @@ app.get('/boletos/usuario/:user_id', async (req, res) => {
 
 app.get('/boletos/comprados/:user_id', async (req, res) => {
   const { user_id } = req.params;
+  const wallet = req.query.wallet;
   try {
-    const boletos = await allQuery(
-      'SELECT * FROM boletos WHERE user_id = $1 AND status IN ($2, $3) ORDER BY criado_em DESC',
-      [user_id, 'pago', 'reservado']
-    );
+    let sql = 'SELECT * FROM boletos WHERE user_id = $1';
+    const params = [user_id];
+    if (wallet) {
+      sql = 'SELECT * FROM boletos WHERE user_id = $1 OR wallet_address = $2';
+      params.push(wallet);
+    }
+    sql += ' ORDER BY criado_em DESC';
+
+    const boletos = await allQuery(sql, params);
     const boletosMapeados = boletos.map(boleto => ({
       ...boleto,
       status: mapStatus(boleto.status)

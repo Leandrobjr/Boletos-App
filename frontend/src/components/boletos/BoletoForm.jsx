@@ -83,9 +83,13 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
     setCotLoading(true);
     setFeedback("");
     try {
-      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=brl');
+      const resp = await fetch(buildApiUrl('/api/proxy/coingecko?ticker=tether&vs=brl'));
       const data = await resp.json();
-      setCotacao(data.tether.brl);
+      if (data && data.price != null) {
+        setCotacao(Number(data.price));
+      } else {
+        throw new Error('Cotação indisponível');
+      }
     } catch (e) {
       setFeedback("Erro ao buscar cotação do USDT. Tente novamente.");
     }

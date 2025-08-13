@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { buildApiUrl } from '../config/apiConfig';
 
 // Hook para conversão BRL <-> USDT com cotação online Coingecko
 export function useUSDTConversion() {
@@ -6,15 +7,15 @@ export function useUSDTConversion() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Busca cotação online na Coingecko
+  // Busca cotação online via proxy backend (evita CORS)
   const fetchTaxaConversao = async () => {
     setLoading(true);
     setError(null);
     try {
-      const resp = await fetch('https://api.coingecko.com/api/v3/simple/price?ids=tether&vs_currencies=brl');
+      const resp = await fetch(buildApiUrl('/api/proxy/coingecko?ticker=tether&vs=brl'));
       const data = await resp.json();
-      if (data && data.tether && data.tether.brl) {
-        setTaxaConversao(data.tether.brl);
+      if (data && data.price != null) {
+        setTaxaConversao(Number(data.price));
       } else {
         setError('Cotação não encontrada');
       }

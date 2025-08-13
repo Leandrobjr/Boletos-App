@@ -100,6 +100,7 @@ function AppRoutes() {
         <Route path="ui" element={<UIShowcasePage />} />
         <Route path="confirmacao/:id" element={<ConfirmacaoCompra />} />
         <Route path="vendedor/comprovante/:id" element={<ComprovantePage />} />
+        <Route path="comprador/comprovante/:id" element={<ComprovantePage />} />
       </Route>
     </Routes>
   );

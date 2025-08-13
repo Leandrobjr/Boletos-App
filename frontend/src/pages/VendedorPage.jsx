@@ -754,7 +754,8 @@ function VendedorPage() {
       }
 
       // Depois, chamar o backend para baixar o boleto
-      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/baixar`), {
+      const identBaixar = boleto.id || boleto.numeroControle || boleto.numero_controle;
+      const response = await fetch(buildApiUrl(`/boletos/${identBaixar}/baixar`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -1032,12 +1033,10 @@ function VendedorPage() {
                                       {boleto.comprovante_url && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            const ident = boleto.id || boleto.numeroControle || boleto.numero_controle;
-                                            if (ident) {
-                                              navigate(`/app/vendedor/comprovante/${ident}`);
-                                            } else {
-                                              handleVisualizarBoleto(boleto);
-                                            }
+                                            // Preferir numero_controle quando existir, pois ComprovantePage busca pelo GET /boletos/:id
+                                            const ident = boleto.numeroControle || boleto.numero_controle || boleto.id;
+                                            const ret = encodeURIComponent('/app/vendedor/listar');
+                                            navigate(`/app/vendedor/comprovante/${ident}?from=${ret}`);
                                           }}
                                         >
                                           Visualizar Comprovante
