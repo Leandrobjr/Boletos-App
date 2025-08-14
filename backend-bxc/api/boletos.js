@@ -27,13 +27,21 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       // Verificar se é busca por número de controle via query parameter
-      const url = new URL(req.url, `http://${req.headers.host}`);
-      const numero_controle = url.searchParams.get('numero_controle');
+      // Usar req.query (Vercel parse) e fallback para URL parsing manual
+      let numero_controle = req.query?.numero_controle;
+      
+      if (!numero_controle) {
+        try {
+          const url = new URL(req.url, `http://${req.headers.host}`);
+          numero_controle = url.searchParams.get('numero_controle');
+        } catch (e) {
+          console.log(`❌ Erro ao fazer parse da URL: ${e.message}`);
+        }
+      }
       
       console.log(`🔍 DEBUG URL: ${req.url}`);
       console.log(`🔍 DEBUG Host: ${req.headers.host}`);
-      console.log(`🔍 DEBUG Full URL: ${url.toString()}`);
-      console.log(`🔍 DEBUG Search Params:`, Object.fromEntries(url.searchParams));
+      console.log(`🔍 DEBUG req.query:`, req.query);
       console.log(`🔍 DEBUG numero_controle extraído: "${numero_controle}"`);
       
       if (numero_controle) {
