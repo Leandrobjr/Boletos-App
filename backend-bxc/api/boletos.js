@@ -26,7 +26,33 @@ module.exports = async (req, res) => {
     console.log('🔍 Request Headers:', req.headers);
 
     if (req.method === 'GET') {
-      // Buscar todos os boletos
+      // Verificar se é busca por número de controle via query parameter
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const numero_controle = url.searchParams.get('numero_controle');
+      
+      if (numero_controle) {
+        console.log(`🔍 Buscando boleto por numero_controle: ${numero_controle}`);
+        
+        // Buscar boleto específico por número de controle
+        const result = await pool.query('SELECT * FROM boletos WHERE numero_controle = $1', [String(numero_controle)]);
+        
+        if (result.rowCount === 0) {
+          console.log(`❌ Boleto não encontrado: ${numero_controle}`);
+          return res.status(404).json({
+            error: 'Boleto não encontrado',
+            message: `Nenhum boleto encontrado com número de controle: ${numero_controle}`,
+            numero_controle: numero_controle
+          });
+        }
+        
+        console.log(`✅ Boleto encontrado: ${numero_controle}`);
+        return res.status(200).json({
+          success: true,
+          data: result.rows[0]
+        });
+      }
+      
+      // Buscar todos os boletos (comportamento original)
       const result = await pool.query('SELECT * FROM boletos ORDER BY criado_em DESC');
       
       res.status(200).json({

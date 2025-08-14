@@ -7,7 +7,7 @@
     },
     {
       "source": "/api/boletos/controle/([^/]+)",
-      "destination": "/api/boletos/controle?numero_controle=$1"
+      "destination": "/api/boletos?numero_controle=$1"
     },
     {
       "source": "/api/(.*)",
