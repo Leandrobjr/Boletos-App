@@ -27,24 +27,42 @@ module.exports = async (req, res) => {
 
     if (req.method === 'GET') {
       // Verificar se é busca por número de controle via query parameter
-      // Usar req.query (Vercel parse) e fallback para URL parsing manual
-      let numero_controle = req.query?.numero_controle;
+      // Múltiplas estratégias para detectar o query parameter
+      let numero_controle = null;
       
+      // Estratégia 1: req.query (Vercel auto-parse)
+      if (req.query && req.query.numero_controle) {
+        numero_controle = req.query.numero_controle;
+        console.log(`✅ Encontrado via req.query: ${numero_controle}`);
+      }
+      
+      // Estratégia 2: Parse manual da URL
+      if (!numero_controle && req.url && req.url.includes('numero_controle=')) {
+        const match = req.url.match(/numero_controle=([^&]*)/);
+        if (match) {
+          numero_controle = decodeURIComponent(match[1]);
+          console.log(`✅ Encontrado via regex: ${numero_controle}`);
+        }
+      }
+      
+      // Estratégia 3: URL objeto
       if (!numero_controle) {
         try {
-          const url = new URL(req.url, `http://${req.headers.host}`);
+          const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
           numero_controle = url.searchParams.get('numero_controle');
+          if (numero_controle) {
+            console.log(`✅ Encontrado via URL object: ${numero_controle}`);
+          }
         } catch (e) {
           console.log(`❌ Erro ao fazer parse da URL: ${e.message}`);
         }
       }
       
       console.log(`🔍 DEBUG URL: ${req.url}`);
-      console.log(`🔍 DEBUG Host: ${req.headers.host}`);
       console.log(`🔍 DEBUG req.query:`, req.query);
-      console.log(`🔍 DEBUG numero_controle extraído: "${numero_controle}"`);
+      console.log(`🔍 DEBUG numero_controle FINAL: "${numero_controle}"`);
       
-      if (numero_controle) {
+      if (numero_controle && numero_controle.trim().length > 0) {
         console.log(`🔍 Buscando boleto por numero_controle: ${numero_controle}`);
         
         // Buscar boleto específico por número de controle
