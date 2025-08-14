@@ -21,12 +21,18 @@ export default function ComprovantePage() {
         // Determinar rota correta: ID numérico INT32 vs numero_controle (string/long number)
         const numeric = Number(id);
         const isValidInt32 = Number.isInteger(numeric) && Math.abs(numeric) <= 2147483647;
-        const primaryEndpoint = isValidInt32 ? `/boletos/${numeric}` : `/boletos/controle/${encodeURIComponent(id)}`;
-
-        let res = await fetch(buildApiUrl(primaryEndpoint));
-        // Fallback: se tentou ID e deu 400/404, tenta como numero_controle
-        if (!res.ok && isValidInt32 && (res.status === 400 || res.status === 404)) {
-          res = await fetch(buildApiUrl(`/boletos/controle/${encodeURIComponent(id)}`));
+        
+        let res;
+        if (isValidInt32) {
+          // Tentar primeiro como ID numérico
+          res = await fetch(buildApiUrl(`/boletos/${numeric}`));
+          // Fallback: se deu 400/404, tentar como numero_controle via query parameter
+          if (!res.ok && (res.status === 400 || res.status === 404)) {
+            res = await fetch(buildApiUrl(`/boletos?numero_controle=${encodeURIComponent(id)}`));
+          }
+        } else {
+          // Para números longos, usar diretamente query parameter
+          res = await fetch(buildApiUrl(`/boletos?numero_controle=${encodeURIComponent(id)}`));
         }
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();

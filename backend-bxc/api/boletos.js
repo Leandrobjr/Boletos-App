@@ -30,6 +30,12 @@ module.exports = async (req, res) => {
       const url = new URL(req.url, `http://${req.headers.host}`);
       const numero_controle = url.searchParams.get('numero_controle');
       
+      console.log(`🔍 DEBUG URL: ${req.url}`);
+      console.log(`🔍 DEBUG Host: ${req.headers.host}`);
+      console.log(`🔍 DEBUG Full URL: ${url.toString()}`);
+      console.log(`🔍 DEBUG Search Params:`, Object.fromEntries(url.searchParams));
+      console.log(`🔍 DEBUG numero_controle extraído: "${numero_controle}"`);
+      
       if (numero_controle) {
         console.log(`🔍 Buscando boleto por numero_controle: ${numero_controle}`);
         
