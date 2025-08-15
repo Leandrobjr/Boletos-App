@@ -480,8 +480,13 @@ function VendedorPage() {
     
     try {
       // Definir estado de processando
+      console.log('🔧 DEBUG - Iniciando baixa para boleto:', boletoId);
       setBoletoBaixandoId(boletoId);
-      setStatusBaixa(prev => ({ ...prev, [boletoId]: 'processando' }));
+      setStatusBaixa(prev => {
+        const newState = { ...prev, [boletoId]: 'processando' };
+        console.log('🔧 DEBUG - Estado statusBaixa atualizado:', newState);
+        return newState;
+      });
       
       // Verificar se a carteira está conectada
       if (!wallet.isConnected || !wallet.address) {
@@ -1150,7 +1155,11 @@ function VendedorPage() {
                                             const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
                                             const status = statusBaixa[boletoId];
                                             
+                                            // Debug log
+                                            console.log('🔧 DEBUG - Renderizando botão:', { boletoId, status, statusBaixa });
+                                            
                                             if (status === 'processando') {
+                                              console.log('🔧 DEBUG - Renderizando estado PROCESSANDO');
                                               return (
                                                 <div className="flex items-center gap-2">
                                                   <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-900"></div>
@@ -1158,6 +1167,7 @@ function VendedorPage() {
                                                 </div>
                                               );
                                             } else if (status === 'sucesso') {
+                                              console.log('🔧 DEBUG - Renderizando estado SUCESSO');
                                               return (
                                                 <div className="flex items-center gap-2">
                                                   <span className="text-green-600">✓</span>
@@ -1165,6 +1175,7 @@ function VendedorPage() {
                                                 </div>
                                               );
                                             } else {
+                                              console.log('🔧 DEBUG - Renderizando estado PADRÃO');
                                               return 'Baixar boleto';
                                             }
                                           })()}
