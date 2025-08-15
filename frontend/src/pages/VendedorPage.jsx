@@ -493,11 +493,26 @@ function VendedorPage() {
         setBoletoParaBaixar(boleto);
         setProcessandoBaixa(true);
       
-      // Abrir modal de conexão automaticamente
-      try {
-        if (openConnectModal && typeof openConnectModal === 'function') {
-          openConnectModal();
-        } else {
+        // Abrir modal de conexão automaticamente
+        try {
+          if (openConnectModal && typeof openConnectModal === 'function') {
+            openConnectModal();
+          } else {
+            // Limpar estados de loading
+            setBoletoBaixandoId(null);
+            setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+            
+            setAlertInfo({
+              type: 'destructive',
+              title: 'Erro de conexão',
+              description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
+            });
+            setTimeout(() => setAlertInfo(null), 3000);
+            return;
+          }
+        } catch (error) {
+          console.error('Erro ao abrir modal de conexão:', error);
+          
           // Limpar estados de loading
           setBoletoBaixandoId(null);
           setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
@@ -505,31 +520,30 @@ function VendedorPage() {
           setAlertInfo({
             type: 'destructive',
             title: 'Erro de conexão',
-            description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
+            description: 'Erro ao abrir modal. Tente conectar a carteira manualmente.'
           });
           setTimeout(() => setAlertInfo(null), 3000);
           return;
         }
-      } catch (error) {
-        console.error('Erro ao abrir modal de conexão:', error);
-        
-        // Limpar estados de loading
-        setBoletoBaixandoId(null);
-        setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
-        
-        setAlertInfo({
-          type: 'destructive',
-          title: 'Erro de conexão',
-          description: 'Erro ao abrir modal. Tente conectar a carteira manualmente.'
-        });
-        setTimeout(() => setAlertInfo(null), 3000);
         return;
       }
-      return;
-    }
 
-    // Se a carteira já está conectada, processar diretamente
-    await processarBaixaBoleto(boleto);
+      // Se a carteira já está conectada, processar diretamente
+      await processarBaixaBoleto(boleto);
+    } catch (error) {
+      console.error('Erro ao processar baixa:', error);
+      
+      // Limpar estados de loading
+      setBoletoBaixandoId(null);
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+      
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Erro ao baixar boleto',
+        description: 'Ocorreu um erro ao processar a baixa. Tente novamente.'
+      });
+      setTimeout(() => setAlertInfo(null), 5000);
+    }
   };
 
   // Função para abrir disputa
