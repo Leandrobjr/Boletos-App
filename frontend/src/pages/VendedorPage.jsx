@@ -470,19 +470,33 @@ function VendedorPage() {
     }
   };
 
+  // Estado para controlar qual boleto está sendo baixado
+  const [boletoBaixandoId, setBoletoBaixandoId] = useState(null);
+  const [statusBaixa, setStatusBaixa] = useState({}); // { [boletoId]: 'processando' | 'sucesso' | null }
+
   // Função para baixar pagamento
   const handleBaixarPagamento = async (boleto) => {
+    const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
     
-    // Verificar se a carteira está conectada
-    if (!wallet.isConnected || !wallet.address) {
-      setBoletoParaBaixar(boleto);
-      setProcessandoBaixa(true);
+    try {
+      // Definir estado de processando
+      setBoletoBaixandoId(boletoId);
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: 'processando' }));
+      
+      // Verificar se a carteira está conectada
+      if (!wallet.isConnected || !wallet.address) {
+        setBoletoParaBaixar(boleto);
+        setProcessandoBaixa(true);
       
       // Abrir modal de conexão automaticamente
       try {
         if (openConnectModal && typeof openConnectModal === 'function') {
           openConnectModal();
         } else {
+          // Limpar estados de loading
+          setBoletoBaixandoId(null);
+          setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+          
           setAlertInfo({
             type: 'destructive',
             title: 'Erro de conexão',
@@ -493,6 +507,11 @@ function VendedorPage() {
         }
       } catch (error) {
         console.error('Erro ao abrir modal de conexão:', error);
+        
+        // Limpar estados de loading
+        setBoletoBaixandoId(null);
+        setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+        
         setAlertInfo({
           type: 'destructive',
           title: 'Erro de conexão',
@@ -783,8 +802,22 @@ function VendedorPage() {
       // Atualizar a lista de boletos
       await fetchBoletos();
 
+      // Definir estado de sucesso
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: 'sucesso' }));
+      
+      // Limpar estados após 3 segundos
+      setTimeout(() => {
+        setBoletoBaixandoId(null);
+        setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+      }, 3000);
+
     } catch (error) {
       console.error('Erro ao baixar boleto:', error);
+      
+      // Limpar estados de loading
+      setBoletoBaixandoId(null);
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+      
       setAlertInfo({
         type: 'destructive',
         title: 'Erro ao baixar boleto',
@@ -1099,10 +1132,42 @@ function VendedorPage() {
                                       {boleto.status === 'AGUARDANDO BAIXA' && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            handleBaixarPagamento(boleto);
+                                            const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
+                                            if (statusBaixa[boletoId] !== 'processando') {
+                                              handleBaixarPagamento(boleto);
+                                            }
                                           }}
+                                          disabled={statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'processando'}
+                                          className={`${
+                                            statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'processando' 
+                                              ? 'opacity-60 cursor-not-allowed' 
+                                              : statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'sucesso'
+                                              ? 'text-green-600 font-semibold'
+                                              : ''
+                                          }`}
                                         >
-                                          Baixar boleto
+                                          {(() => {
+                                            const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
+                                            const status = statusBaixa[boletoId];
+                                            
+                                            if (status === 'processando') {
+                                              return (
+                                                <div className="flex items-center gap-2">
+                                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-900"></div>
+                                                  Processando...
+                                                </div>
+                                              );
+                                            } else if (status === 'sucesso') {
+                                              return (
+                                                <div className="flex items-center gap-2">
+                                                  <span className="text-green-600">✓</span>
+                                                  Boleto Baixado
+                                                </div>
+                                              );
+                                            } else {
+                                              return 'Baixar boleto';
+                                            }
+                                          })()}
                                         </DropdownMenuItem>
                                       )}
                                       
