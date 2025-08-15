@@ -1033,16 +1033,62 @@ function VendedorPage() {
                                       {boleto.comprovante_url && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            // Preferir numero_controle quando existir, pois ComprovantePage busca pelo GET /boletos/:id
-                                            const ident = boleto.numeroControle || boleto.numero_controle || boleto.id;
-                                            const ret = encodeURIComponent('/app/vendedor/listar');
-                                            const comprovanteUrl = `/app/vendedor/comprovante/${ident}?from=${ret}`;
+                                            console.log('🖱️ VENDEDOR - Visualizar Comprovante:', boleto);
                                             
-                                            // Construir URL absoluta para garantir funcionamento correto em nova aba
-                                            const fullUrl = new URL(comprovanteUrl, window.location.origin).href;
-                                            
-                                            // Abrir em nova aba
-                                            window.open(fullUrl, '_blank', 'noopener,noreferrer');
+                                            try {
+                                              const ident = boleto.numeroControle || boleto.numero_controle || boleto.id;
+                                              
+                                              // SOLUÇÃO 1: Usar URL direta para o comprovante (backend proxy)
+                                              const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl;
+                                              
+                                              if (comprovanteUrl) {
+                                                console.log('✅ VENDEDOR - Abrindo comprovante direto:', comprovanteUrl);
+                                                
+                                                // Se for base64, criar blob URL para melhor performance
+                                                if (comprovanteUrl.startsWith('data:')) {
+                                                  try {
+                                                    // Converter base64 para blob
+                                                    const [header, base64Data] = comprovanteUrl.split(',');
+                                                    const byteCharacters = atob(base64Data);
+                                                    const byteNumbers = new Array(byteCharacters.length);
+                                                    for (let i = 0; i < byteCharacters.length; i++) {
+                                                      byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                                    }
+                                                    const byteArray = new Uint8Array(byteNumbers);
+                                                    const blob = new Blob([byteArray], { type: 'application/pdf' });
+                                                    const blobUrl = URL.createObjectURL(blob);
+                                                    
+                                                    console.log('✅ VENDEDOR - Criado blob URL para PDF:', blobUrl);
+                                                    window.open(blobUrl, '_blank', 'noopener,noreferrer');
+                                                    
+                                                    // Limpar blob URL após 30 segundos
+                                                    setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                                                    return;
+                                                  } catch (blobError) {
+                                                    console.warn('⚠️ VENDEDOR - Erro ao criar blob, usando base64 direto:', blobError);
+                                                    window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
+                                                    return;
+                                                  }
+                                                } else {
+                                                  // URL externa direta
+                                                  window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
+                                                  return;
+                                                }
+                                              }
+                                              
+                                              // SOLUÇÃO 2: Fallback - proxy via backend para garantir funcionamento
+                                              const backendUrl = import.meta.env.PROD 
+                                                ? 'https://boletos-backend-290725.vercel.app'
+                                                : 'http://localhost:3001';
+                                              
+                                              const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
+                                              console.log('✅ VENDEDOR - Usando proxy backend:', proxyUrl);
+                                              window.open(proxyUrl, '_blank', 'noopener,noreferrer');
+                                              
+                                            } catch (error) {
+                                              console.error('❌ VENDEDOR - Erro ao abrir comprovante:', error);
+                                              alert('Erro ao abrir comprovante. Tente novamente.');
+                                            }
                                           }}
                                         >
                                           Visualizar Comprovante
