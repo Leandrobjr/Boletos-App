@@ -738,6 +738,7 @@ function VendedorPage() {
 
   // Função separada para processar a baixa do boleto
   const processarBaixaBoleto = async (boleto) => {
+    const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
     
     // Verificar se está na rede correta
     if (wallet.chainId !== 80002) {
@@ -747,6 +748,10 @@ function VendedorPage() {
         description: 'Para usar o BoletoXCrypto, você precisa estar na rede Polygon Amoy. Troque de rede na sua carteira.'
       });
       setTimeout(() => setAlertInfo(null), 5000);
+      
+      // Limpar estados de loading
+      setBoletoBaixandoId(null);
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
       return;
     }
 
@@ -758,6 +763,10 @@ function VendedorPage() {
         description: 'Só é possível baixar boletos com status "AGUARDANDO BAIXA".'
       });
       setTimeout(() => setAlertInfo(null), 3000);
+      
+      // Limpar estados de loading
+      setBoletoBaixandoId(null);
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
       return;
     }
 
@@ -769,6 +778,10 @@ function VendedorPage() {
         description: 'Endereço da carteira do comprador não encontrado.'
       });
       setTimeout(() => setAlertInfo(null), 3000);
+      
+      // Limpar estados de loading
+      setBoletoBaixandoId(null);
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
       return;
     }
 
