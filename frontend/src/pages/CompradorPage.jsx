@@ -719,7 +719,10 @@ const CompradorPage = () => {
                                         <FaUpload className="mr-2 text-sm" />
                                         Enviar Comprovante
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => handleVisualizarComprovante(boleto)} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                      <DropdownMenuItem onClick={() => {
+                                        console.log('🖱️ CLICK DROPDOWN - Visualizar Comprovante:', boleto);
+                                        handleVisualizarComprovante(boleto);
+                                      }} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
                                         <FaUpload className="mr-2 text-sm" /> Visualizar Comprovante
                                       </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => handleDisputa(boleto)} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
@@ -784,7 +787,10 @@ const CompradorPage = () => {
                               <td className="py-3 px-4">
                                 {(boleto.comprovanteUrl || boleto.status === 'AGUARDANDO BAIXA') ? (
                                   <button
-                                    onClick={() => handleVisualizarComprovante(boleto)}
+                                    onClick={() => {
+                                      console.log('🖱️ CLICK BOTÃO DIRETO - Visualizar Comprovante:', boleto);
+                                      handleVisualizarComprovante(boleto);
+                                    }}
                                     className="bg-green-700 hover:bg-green-800 text-white py-1 px-3 rounded flex items-center justify-center gap-2 text-sm font-semibold transition-colors duration-200"
                                     title="Visualizar Comprovante"
                                   >
