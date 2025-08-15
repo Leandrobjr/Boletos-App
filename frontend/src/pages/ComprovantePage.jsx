@@ -103,8 +103,12 @@ export default function ComprovantePage() {
     
     if (loading) {
       return (
-        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-75">
-          <div className="text-white text-xl">Carregando comprovante...</div>
+        <div className="absolute inset-0 flex items-center justify-center bg-black bg-opacity-90">
+          <div className="text-center text-white">
+            <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-white mx-auto mb-4"></div>
+            <div className="text-2xl font-semibold mb-2">Carregando comprovante...</div>
+            <div className="text-lg text-gray-300">Aguarde um momento</div>
+          </div>
         </div>
       );
     }

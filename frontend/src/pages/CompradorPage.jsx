@@ -392,12 +392,15 @@ const CompradorPage = () => {
     reader.readAsDataURL(file);
   };
 
-  // Abrir comprovante em página dedicada simples (iframe/img tela cheia)
+  // Abrir comprovante em nova aba (mantém "Meus Boletos" intacta)
   const handleVisualizarComprovante = (boleto) => {
     try {
       const ident = boleto.numeroBoleto || boleto.numero_controle || boleto.id;
       const ret = encodeURIComponent('/app/comprador/meusBoletos');
-      navigate(`/app/comprador/comprovante/${ident}?from=${ret}`);
+      const comprovanteUrl = `/app/comprador/comprovante/${ident}?from=${ret}`;
+      
+      // Abrir em nova aba
+      window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
     } catch {}
   };
 

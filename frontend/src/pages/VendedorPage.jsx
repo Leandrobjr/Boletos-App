@@ -1036,7 +1036,10 @@ function VendedorPage() {
                                             // Preferir numero_controle quando existir, pois ComprovantePage busca pelo GET /boletos/:id
                                             const ident = boleto.numeroControle || boleto.numero_controle || boleto.id;
                                             const ret = encodeURIComponent('/app/vendedor/listar');
-                                            navigate(`/app/vendedor/comprovante/${ident}?from=${ret}`);
+                                            const comprovanteUrl = `/app/vendedor/comprovante/${ident}?from=${ret}`;
+                                            
+                                            // Abrir em nova aba
+                                            window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
                                           }}
                                         >
                                           Visualizar Comprovante
