@@ -559,6 +559,69 @@ app.get('/api/proxy/coingecko', async (req, res) => {
   }
 });
 
+// Proxy para comprovantes - serve diretamente o arquivo para nova aba
+app.get('/api/proxy/comprovante/:id', async (req, res) => {
+  try {
+    console.log('🔍 Proxy comprovante solicitado para ID:', req.params.id);
+    
+    const { id } = req.params;
+    const boleto = await getBoletoByAnyId(id);
+    
+    if (!boleto) {
+      console.log('❌ Boleto não encontrado para ID:', id);
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Comprovante não encontrado</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1>🔍 Comprovante não encontrado</h1>
+          <p>O boleto solicitado não foi localizado.</p>
+          <button onclick="window.close()">Fechar</button>
+        </body>
+        </html>
+      `);
+    }
+    
+    if (!boleto.comprovante_url) {
+      console.log('❌ Boleto sem comprovante:', id);
+      return res.status(404).send(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Comprovante não disponível</title></head>
+        <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+          <h1>📄 Comprovante não disponível</h1>
+          <p>Este boleto ainda não possui comprovante de pagamento.</p>
+          <button onclick="window.close()">Fechar</button>
+        </body>
+        </html>
+      `);
+    }
+    
+    console.log('✅ Servindo comprovante via proxy:', boleto.comprovante_url.substring(0, 100) + '...');
+    
+    // Usar a função existente para stream do comprovante
+    await streamComprovanteFromSource(
+      boleto.comprovante_url, 
+      res, 
+      `comprovante-${boleto.numero_controle || boleto.id}.pdf`
+    );
+    
+  } catch (error) {
+    console.error('❌ Erro no proxy de comprovante:', error);
+    res.status(500).send(`
+      <!DOCTYPE html>
+      <html>
+      <head><title>Erro no comprovante</title></head>
+      <body style="font-family: Arial, sans-serif; text-align: center; padding: 50px;">
+        <h1>⚠️ Erro ao carregar comprovante</h1>
+        <p>Ocorreu um erro interno. Tente novamente.</p>
+        <button onclick="window.close()">Fechar</button>
+      </body>
+      </html>
+    `);
+  }
+});
+
 app.post('/boletos', async (req, res) => {
   try {
     // Aceitar múltiplos formatos de payload (compatibilidade)

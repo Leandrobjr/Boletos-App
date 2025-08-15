@@ -392,29 +392,63 @@ const CompradorPage = () => {
     reader.readAsDataURL(file);
   };
 
-  // Abrir comprovante em nova aba (mantém "Meus Boletos" intacta)
+    // Abrir comprovante em nova aba (solução profissional definitiva)
   const handleVisualizarComprovante = (boleto) => {
     try {
+      console.log('🖱️ EXECUTANDO handleVisualizarComprovante:', boleto);
+      
       const ident = boleto.numeroBoleto || boleto.numero_controle || boleto.id;
-      const ret = encodeURIComponent('/app/comprador/meusBoletos');
-      const comprovanteUrl = `/app/comprador/comprovante/${ident}?from=${ret}`;
       
-      // Construir URL absoluta para garantir funcionamento correto em nova aba
-      const fullUrl = new URL(comprovanteUrl, window.location.origin).href;
+      // SOLUÇÃO 1: Usar URL direta para o comprovante (backend proxy)
+      const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl;
       
-      // Debug: Log das URLs
-      console.log('🔍 DEBUG Comprovante:', {
-        boleto: boleto,
-        ident: ident,
-        comprovanteUrl: comprovanteUrl,
-        fullUrl: fullUrl,
-        origin: window.location.origin
-      });
+      if (comprovanteUrl) {
+        console.log('✅ Abrindo comprovante direto:', comprovanteUrl);
+        
+        // Se for base64, criar blob URL para melhor performance
+        if (comprovanteUrl.startsWith('data:')) {
+          try {
+            // Converter base64 para blob
+            const [header, base64Data] = comprovanteUrl.split(',');
+            const byteCharacters = atob(base64Data);
+            const byteNumbers = new Array(byteCharacters.length);
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i);
+            }
+            const byteArray = new Uint8Array(byteNumbers);
+            const blob = new Blob([byteArray], { type: 'application/pdf' });
+            const blobUrl = URL.createObjectURL(blob);
+            
+            console.log('✅ Criado blob URL para PDF:', blobUrl);
+            window.open(blobUrl, '_blank', 'noopener,noreferrer');
+            
+            // Limpar blob URL após 30 segundos
+            setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+            return;
+          } catch (blobError) {
+            console.warn('⚠️ Erro ao criar blob, usando base64 direto:', blobError);
+            window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
+            return;
+          }
+        } else {
+          // URL externa direta
+          window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
+          return;
+        }
+      }
       
-      // Abrir em nova aba
-      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+      // SOLUÇÃO 2: Fallback - proxy via backend para garantir funcionamento
+      const backendUrl = import.meta.env.PROD 
+        ? 'https://boletos-backend-290725.vercel.app'
+        : 'http://localhost:3001';
+      
+      const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
+      console.log('✅ Usando proxy backend:', proxyUrl);
+      window.open(proxyUrl, '_blank', 'noopener,noreferrer');
+      
     } catch (error) {
       console.error('❌ Erro ao abrir comprovante:', error);
+      alert('Erro ao abrir comprovante. Tente novamente.');
     }
   };
 
