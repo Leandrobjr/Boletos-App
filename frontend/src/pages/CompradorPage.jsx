@@ -715,7 +715,7 @@ const CompradorPage = () => {
                                         <FaCreditCard className="mr-2 text-sm" />
                                         Pagar Boleto
                                       </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => { setSelectedBoleto(boleto); setEtapaCompra(3); setShowModal(true); }} disabled={boleto.comprovanteUrl || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.comprovanteUrl || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                      <DropdownMenuItem onClick={() => { setSelectedBoleto(boleto); setEtapaCompra(3); setShowModal(true); }} disabled={boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
                                         <FaUpload className="mr-2 text-sm" />
                                         Enviar Comprovante
                                       </DropdownMenuItem>
@@ -785,7 +785,7 @@ const CompradorPage = () => {
                               <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
                               <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
                               <td className="py-3 px-4">
-                                {(boleto.comprovanteUrl || boleto.status === 'AGUARDANDO BAIXA') ? (
+                                {(boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'AGUARDANDO BAIXA') ? (
                                   <button
                                     onClick={() => {
                                       console.log('🖱️ CLICK BOTÃO DIRETO - Visualizar Comprovante:', boleto);
