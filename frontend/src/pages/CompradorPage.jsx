@@ -492,15 +492,32 @@ const CompradorPage = () => {
     // eslint-disable-next-line
   }, [tab]);
 
-  // Polling para atualização automática de boletos
+  // Polling para atualização automática de boletos (controle do intervalo)
   useEffect(() => {
     let interval;
-    if (activeTab === 'meusBoletos' || activeTab === 'historico') {
+    
+    const startPolling = () => {
+      // Buscar uma vez imediatamente
       fetchMeusBoletos();
-      interval = setInterval(() => { fetchMeusBoletos(); }, 12000);
+      
+      // Depois iniciar polling de 7 segundos
+      interval = setInterval(() => {
+        console.log('🔄 Polling automático: fetchMeusBoletos');
+        fetchMeusBoletos();
+      }, 7000);
+    };
+    
+    if (activeTab === 'meusBoletos' || activeTab === 'historico') {
+      startPolling();
     }
-    return () => { if (interval) clearInterval(interval); };
-  }, [activeTab, user?.uid, wallet?.address]);
+    
+    return () => {
+      if (interval) {
+        console.log('🛑 Limpando interval de polling');
+        clearInterval(interval);
+      }
+    };
+  }, [activeTab, user?.uid]); // Removido wallet?.address para evitar múltiplos intervals
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
