@@ -399,9 +399,23 @@ const CompradorPage = () => {
       const ret = encodeURIComponent('/app/comprador/meusBoletos');
       const comprovanteUrl = `/app/comprador/comprovante/${ident}?from=${ret}`;
       
+      // Construir URL absoluta para garantir funcionamento correto em nova aba
+      const fullUrl = new URL(comprovanteUrl, window.location.origin).href;
+      
+      // Debug: Log das URLs
+      console.log('🔍 DEBUG Comprovante:', {
+        boleto: boleto,
+        ident: ident,
+        comprovanteUrl: comprovanteUrl,
+        fullUrl: fullUrl,
+        origin: window.location.origin
+      });
+      
       // Abrir em nova aba
-      window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
-    } catch {}
+      window.open(fullUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('❌ Erro ao abrir comprovante:', error);
+    }
   };
 
   // openComprovantePage removido — única forma é página dedicada

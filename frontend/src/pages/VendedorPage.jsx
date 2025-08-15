@@ -1038,8 +1038,11 @@ function VendedorPage() {
                                             const ret = encodeURIComponent('/app/vendedor/listar');
                                             const comprovanteUrl = `/app/vendedor/comprovante/${ident}?from=${ret}`;
                                             
+                                            // Construir URL absoluta para garantir funcionamento correto em nova aba
+                                            const fullUrl = new URL(comprovanteUrl, window.location.origin).href;
+                                            
                                             // Abrir em nova aba
-                                            window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
+                                            window.open(fullUrl, '_blank', 'noopener,noreferrer');
                                           }}
                                         >
                                           Visualizar Comprovante
