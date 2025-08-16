@@ -1025,7 +1025,23 @@ function VendedorPage() {
                         <div className="flex flex-col gap-1">
                           <label htmlFor="valorUSDT" className="font-semibold text-green-900">Valor (USDT)</label>
                           <Input id="valorUSDT" name="valorUSDT" type="text" value={formData.valorUSDT} readOnly className="w-48 bg-gray-100" />
-                          <span className="text-xs text-gray-500 mt-1">Cotação atualizada: 1 USDT = {taxaConversao ? taxaConversao : '--'} BRL</span>
+                          <div className="flex items-center justify-between mt-1">
+                            <span className="text-xs text-gray-500">Cotação atualizada: 1 USDT = {taxaConversao ? taxaConversao : '--'} BRL</span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                console.log('🔄 REFRESH manual da cotação...');
+                                fetchTaxaConversao();
+                              }}
+                              className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors ml-2"
+                              title="Atualizar cotação"
+                            >
+                              🔄 Refresh
+                            </button>
+                          </div>
+                          {!cotacaoValida && (
+                            <p className="text-xs text-red-600 mt-1">⚠️ Cotação indisponível - clique em Refresh ou aguarde</p>
+                          )}
                         </div>
                       )}
                     </div>

@@ -52,7 +52,17 @@ export function useUSDTConversion() {
 
   useEffect(() => {
     fetchTaxaConversao();
-  }, []);
+    
+    // Retry automático a cada 30 segundos se a primeira tentativa falhar
+    const retryInterval = setInterval(() => {
+      if (!taxaConversao && !loading) {
+        console.log('🔄 RETRY automático da conversão USDT...');
+        fetchTaxaConversao();
+      }
+    }, 30000);
+    
+    return () => clearInterval(retryInterval);
+  }, [taxaConversao, loading]);
 
   // Conversão BRL -> USDT com fallback
   const brlToUsdt = (valorBrl) => {

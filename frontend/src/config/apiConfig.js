@@ -65,7 +65,13 @@ const API_CONFIG = {
 export const buildApiUrl = (endpoint) => {
   // REFORÇAR: Sempre usar a URL base correta
   const baseUrl = getCorrectApiUrl();
-  const finalUrl = `${baseUrl}${endpoint}`;
+  let finalUrl = `${baseUrl}${endpoint}`;
+  
+  // CORREÇÃO AUTOMÁTICA: Garantir que não há duplicação de /api
+  if (finalUrl.includes('/api/api')) {
+    finalUrl = finalUrl.replace('/api/api', '/api');
+    console.log('🔧 CORREÇÃO AUTOMÁTICA - Removida duplicação /api/api');
+  }
   
   console.log('🔗 CONSTRUINDO URL:', {
     baseUrl,
@@ -81,6 +87,12 @@ export const buildApiUrl = (endpoint) => {
     const correctedUrl = finalUrl.replace(/.*bxc-boletos-app\.vercel\.app/, 'https://boletos-backend-290725.vercel.app/api');
     console.log('🔧 URL CORRIGIDA PARA:', correctedUrl);
     return correctedUrl;
+  }
+  
+  // VALIDAÇÃO FINAL: Garantir HTTPS em produção
+  if (!finalUrl.includes('localhost') && !finalUrl.startsWith('https://')) {
+    finalUrl = finalUrl.replace('http://', 'https://');
+    console.log('🔒 FORÇANDO HTTPS:', finalUrl);
   }
   
   return finalUrl;
