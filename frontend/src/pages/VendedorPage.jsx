@@ -234,9 +234,33 @@ function VendedorPage() {
   const valorNum = Number(parseValorBRL(formData.valor));
   const valorValido = isFinite(valorNum) && valorNum > 0;
   const cotacaoValida = isFinite(taxaConversaoNum) && taxaConversaoNum > 0;
+  
+  // DEBUG: Log completo da conversão
+  console.log('🔍 CONVERSÃO DEBUG:', {
+    taxaConversaoOriginal: taxaConversao,
+    taxaConversaoNum,
+    valorFormulario: formData.valor,
+    valorNum,
+    valorValido,
+    cotacaoValida,
+    timestamp: new Date().toISOString()
+  });
+  
   let valorUsdt = 0;
   if (cotacaoValida && valorValido) {
     valorUsdt = Number((valorNum / taxaConversaoNum).toFixed(2));
+    console.log('✅ CONVERSÃO CALCULADA:', {
+      valorBRL: valorNum,
+      taxaUSDT: taxaConversaoNum,
+      valorUSDT: valorUsdt,
+      calculo: `${valorNum} / ${taxaConversaoNum} = ${valorUsdt}`
+    });
+  } else {
+    console.log('❌ CONVERSÃO INVÁLIDA:', {
+      cotacaoValida,
+      valorValido,
+      motivo: !cotacaoValida ? 'Taxa inválida' : 'Valor inválido'
+    });
   }
 
   // Função para calcular valor líquido (95% do valor USDT)
@@ -246,9 +270,24 @@ function VendedorPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    console.log('🚀 INICIANDO handleSubmit...');
+    
     setSuccess(false);
     setButtonError(false);
     setButtonMessage('Cadastrando...');
+    
+    // DEBUG: Log de todos os valores antes da validação
+    console.log('📋 VALORES PARA VALIDAÇÃO:', {
+      formData,
+      valorNum,
+      valorUsdt,
+      valorValido,
+      cotacaoValida,
+      taxaConversao,
+      userUid: user?.uid,
+      walletConnected: wallet.isConnected,
+      walletAddress: wallet.address
+    });
     
     let errors = {};
     if (formData.cpfCnpj.length < 11) errors.cpfCnpj = 'CPF/CNPJ deve ter pelo menos 11 dígitos';
@@ -268,7 +307,11 @@ function VendedorPage() {
     if (!cotacaoValida) errors.cotacao = 'Cotação indisponível. Tente novamente em instantes.';
     if (!isFinite(valorUsdt) || valorUsdt <= 0) errors.usdt = 'Conversão para USDT inválida.';
     
+    // DEBUG: Log dos erros encontrados
+    console.log('🔍 ERROS DE VALIDAÇÃO:', errors);
+    
     if (Object.keys(errors).length > 0) {
+      console.error('❌ VALIDAÇÃO FALHOU:', Object.values(errors)[0]);
       setButtonError(true);
       setButtonMessage(Object.values(errors)[0]);
       setAlertInfo({
@@ -278,6 +321,8 @@ function VendedorPage() {
       });
       return;
     }
+    
+    console.log('✅ VALIDAÇÃO PASSOU - Prosseguindo com cadastro...');
     const boletoObj = {
       user_id: user.uid,
       cpf_cnpj: formData.cpfCnpj,
@@ -288,11 +333,23 @@ function VendedorPage() {
       instituicao: formData.instituicao,
       numero_controle: Date.now().toString()
     };
+    
+    console.log('📦 OBJETO BOLETO PARA ENVIO:', boletoObj);
+    
     try {
-      const resp = await fetch(buildApiUrl('/boletos'), {
+      const apiUrl = buildApiUrl('/boletos');
+      console.log('🔗 URL DA API:', apiUrl);
+      
+      const resp = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(boletoObj)
+      });
+      
+      console.log('📡 RESPOSTA DA API:', {
+        status: resp.status,
+        statusText: resp.statusText,
+        ok: resp.ok
       });
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
