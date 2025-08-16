@@ -835,12 +835,22 @@ function VendedorPage() {
       await fetchBoletos();
 
       // Definir estado de sucesso
-      setStatusBaixa(prev => ({ ...prev, [boletoId]: 'sucesso' }));
+      console.log('🔧 DEBUG - Definindo estado de SUCESSO para boletoId:', boletoId);
+      setStatusBaixa(prev => {
+        const newState = { ...prev, [boletoId]: 'sucesso' };
+        console.log('🔧 DEBUG - Novo estado statusBaixa (sucesso):', newState);
+        return newState;
+      });
       
       // Limpar estados após 3 segundos
       setTimeout(() => {
+        console.log('🔧 DEBUG - Limpando estados após 3 segundos');
         setBoletoBaixandoId(null);
-        setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+        setStatusBaixa(prev => {
+          const newState = { ...prev, [boletoId]: null };
+          console.log('🔧 DEBUG - Estado statusBaixa limpo:', newState);
+          return newState;
+        });
       }, 3000);
 
     } catch (error) {
