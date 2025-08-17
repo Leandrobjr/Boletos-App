@@ -74,25 +74,18 @@ function VendedorPage() {
   // Função para buscar boletos do backend
   const fetchBoletos = async () => {
     if (!user?.uid) return;
-    console.log('🔍 UID do usuário no frontend:', user.uid);
-    const url = buildApiUrl(`/boletos/usuario/${user.uid}`);
-    console.log('🔗 URL da requisição:', url);
     try {
-      const res = await fetch(url);
+      const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}`));
       if (!res.ok) {
         throw new Error(`Erro ${res.status}: ${res.statusText}`);
       }
       const data = await res.json();
-      
-      console.log('📦 Dados retornados pela API:', data);
       
       // Verificar se data tem a propriedade 'data' (array de boletos)
       const boletosArray = data.data || data;
       
       const boletosMapeados = boletosArray.map(boleto => {
         const statusMapeado = mapStatus(boleto.status);
-        console.log('🔍 Boleto original (Vendedor):', boleto);
-        console.log('💰 Valor USDT original (Vendedor):', boleto.valor_usdt);
         
         return {
           ...boleto,
@@ -120,9 +113,26 @@ function VendedorPage() {
     }
   }, [showComprovanteModal, selectedComprovante]);
 
+  // Cache de boletos para evitar requisições desnecessárias
+  const [lastFetchTime, setLastFetchTime] = useState(0);
+  const CACHE_DURATION = 30000; // 30 segundos de cache
+
+  // Função otimizada para buscar boletos com cache
+  const fetchBoletosOptimized = async (forceRefresh = false) => {
+    if (!user?.uid) return;
+    
+    const now = Date.now();
+    if (!forceRefresh && now - lastFetchTime < CACHE_DURATION) {
+      return; // Usar cache
+    }
+    
+    await fetchBoletos();
+    setLastFetchTime(now);
+  };
+
   useEffect(() => {
-    if (user?.uid) fetchBoletos();
-  }, [user]);
+    if (user?.uid) fetchBoletosOptimized();
+  }, [user?.uid]);
 
   // Monitorar boletos para destravamento automático
   useEffect(() => {
@@ -235,32 +245,9 @@ function VendedorPage() {
   const valorValido = isFinite(valorNum) && valorNum > 0;
   const cotacaoValida = isFinite(taxaConversaoNum) && taxaConversaoNum > 0;
   
-  // DEBUG: Log completo da conversão
-  console.log('🔍 CONVERSÃO DEBUG:', {
-    taxaConversaoOriginal: taxaConversao,
-    taxaConversaoNum,
-    valorFormulario: formData.valor,
-    valorNum,
-    valorValido,
-    cotacaoValida,
-    timestamp: new Date().toISOString()
-  });
-  
   let valorUsdt = 0;
   if (cotacaoValida && valorValido) {
     valorUsdt = Number((valorNum / taxaConversaoNum).toFixed(2));
-    console.log('✅ CONVERSÃO CALCULADA:', {
-      valorBRL: valorNum,
-      taxaUSDT: taxaConversaoNum,
-      valorUSDT: valorUsdt,
-      calculo: `${valorNum} / ${taxaConversaoNum} = ${valorUsdt}`
-    });
-  } else {
-    console.log('❌ CONVERSÃO INVÁLIDA:', {
-      cotacaoValida,
-      valorValido,
-      motivo: !cotacaoValida ? 'Taxa inválida' : 'Valor inválido'
-    });
   }
 
   // Função para calcular valor líquido (95% do valor USDT)
@@ -270,24 +257,10 @@ function VendedorPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('🚀 INICIANDO handleSubmit...');
     
     setSuccess(false);
     setButtonError(false);
     setButtonMessage('Cadastrando...');
-    
-    // DEBUG: Log de todos os valores antes da validação
-    console.log('📋 VALORES PARA VALIDAÇÃO:', {
-      formData,
-      valorNum,
-      valorUsdt,
-      valorValido,
-      cotacaoValida,
-      taxaConversao,
-      userUid: user?.uid,
-      walletConnected: wallet.isConnected,
-      walletAddress: wallet.address
-    });
     
     let errors = {};
     if (formData.cpfCnpj.length < 11) errors.cpfCnpj = 'CPF/CNPJ deve ter pelo menos 11 dígitos';
@@ -307,11 +280,7 @@ function VendedorPage() {
     if (!cotacaoValida) errors.cotacao = 'Cotação indisponível. Tente novamente em instantes.';
     if (!isFinite(valorUsdt) || valorUsdt <= 0) errors.usdt = 'Conversão para USDT inválida.';
     
-    // DEBUG: Log dos erros encontrados
-    console.log('🔍 ERROS DE VALIDAÇÃO:', errors);
-    
     if (Object.keys(errors).length > 0) {
-      console.error('❌ VALIDAÇÃO FALHOU:', Object.values(errors)[0]);
       setButtonError(true);
       setButtonMessage(Object.values(errors)[0]);
       setAlertInfo({
@@ -321,8 +290,6 @@ function VendedorPage() {
       });
       return;
     }
-    
-    console.log('✅ VALIDAÇÃO PASSOU - Prosseguindo com cadastro...');
     const boletoObj = {
       user_id: user.uid,
       cpf_cnpj: formData.cpfCnpj,
@@ -334,22 +301,11 @@ function VendedorPage() {
       numero_controle: Date.now().toString()
     };
     
-    console.log('📦 OBJETO BOLETO PARA ENVIO:', boletoObj);
-    
     try {
-      const apiUrl = buildApiUrl('/boletos');
-      console.log('🔗 URL DA API:', apiUrl);
-      
-      const resp = await fetch(apiUrl, {
+      const resp = await fetch(buildApiUrl('/boletos'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(boletoObj)
-      });
-      
-      console.log('📡 RESPOSTA DA API:', {
-        status: resp.status,
-        statusText: resp.statusText,
-        ok: resp.ok
       });
       if (!resp.ok) {
         const errorData = await resp.json().catch(() => ({}));
@@ -371,7 +327,7 @@ function VendedorPage() {
         title: 'Cadastro realizado',
         message: 'Boleto cadastrado e USDT travado com sucesso!'
       });
-      fetchBoletos();
+      fetchBoletosOptimized(true); // Forçar refresh após cadastro
       // Botão permanece desabilitado e com mensagem de sucesso
       setButtonError(false);
     } catch (error) {
@@ -508,7 +464,7 @@ function VendedorPage() {
       const result = await resp.json();
       
       // Atualizar a lista de boletos
-      await fetchBoletos();
+      await fetchBoletosOptimized(true);
       
       setAlertInfo({
         type: 'success',
@@ -627,7 +583,7 @@ function VendedorPage() {
             description: 'A disputa foi aberta com sucesso. O suporte entrará em contato.'
           });
           // Recarregar os boletos para atualizar o status
-          fetchBoletos();
+          fetchBoletosOptimized(true);
         } else {
           throw new Error('Erro ao abrir disputa');
         }
@@ -694,7 +650,7 @@ function VendedorPage() {
             description: `Boleto ${boleto.numeroControle} foi destravado após 65 minutos sem pagamento.`
           });
           // Recarregar os boletos
-          fetchBoletos();
+          fetchBoletosOptimized(true);
         } else {
           throw new Error('Erro ao atualizar status no backend');
         }
@@ -889,7 +845,7 @@ function VendedorPage() {
       setTimeout(() => setAlertInfo(null), 5000);
 
       // Atualizar a lista de boletos
-      await fetchBoletos();
+      await fetchBoletosOptimized(true);
 
       // Definir estado de sucesso
       console.log('🔧 DEBUG - Definindo estado de SUCESSO para boletoId:', boletoId);

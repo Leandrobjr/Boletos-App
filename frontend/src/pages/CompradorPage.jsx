@@ -493,25 +493,16 @@ const CompradorPage = () => {
       fetch(buildApiUrl('/boletos'), { signal: ac.signal })
         .then(res => res.json())
       .then(data => {
-        console.log('📦 Dados recebidos da API:', data);
         const lista = Array.isArray(data) ? data : (data?.data || []);
-        const boletosMapeados = lista.map(boleto => {
-          console.log('🔍 Boleto original:', boleto);
-          console.log('📅 Vencimento original:', boleto.vencimento);
-          console.log('💰 Valor USDT original:', boleto.valor_usdt);
-          console.log('💰 Valor BRL original:', boleto.valor_brl);
-          
-          return {
-            ...boleto,
-            numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
-            valor: boleto.valor_brl || boleto.valor,
-            valor_usdt: boleto.valor_usdt || boleto.valor_usdt_convertido || 0,
-            dataVencimento: boleto.vencimento,
-            beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
-            status: mapStatus(boleto.status)
-          };
-        });
-        console.log('🎯 Boletos mapeados:', boletosMapeados);
+        const boletosMapeados = lista.map(boleto => ({
+          ...boleto,
+          numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+          valor: boleto.valor_brl || boleto.valor,
+          valor_usdt: boleto.valor_usdt || boleto.valor_usdt_convertido || 0,
+          dataVencimento: boleto.vencimento,
+          beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
+          status: mapStatus(boleto.status)
+        }));
         setBoletosDisponiveis(boletosMapeados);
       })
         .catch((error) => {
@@ -534,11 +525,10 @@ const CompradorPage = () => {
       // Buscar uma vez imediatamente
       fetchMeusBoletos();
       
-      // Depois iniciar polling de 7 segundos
+      // Polling otimizado - 15 segundos para reduzir carga
       interval = setInterval(() => {
-        console.log('🔄 Polling automático: fetchMeusBoletos');
         fetchMeusBoletos();
-      }, 7000);
+      }, 15000);
     };
     
     if (activeTab === 'meusBoletos' || activeTab === 'historico') {
@@ -547,7 +537,6 @@ const CompradorPage = () => {
     
     return () => {
       if (interval) {
-        console.log('🛑 Limpando interval de polling');
         clearInterval(interval);
       }
     };

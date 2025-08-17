@@ -9,41 +9,24 @@ export function useUSDTConversion() {
 
   // Busca cotação online via proxy backend (evita CORS)
   const fetchTaxaConversao = async () => {
-    console.log('🚀 INICIANDO busca de conversão USDT...');
     setLoading(true);
     setError(null);
     try {
-      const url = buildApiUrl('/proxy/coingecko?ticker=tether&vs=brl');
-      console.log('🔗 URL de conversão:', url);
-      
-      const resp = await fetch(url);
-      console.log('📡 Resposta da API:', {
-        status: resp.status,
-        statusText: resp.statusText,
-        ok: resp.ok
-      });
+      const resp = await fetch(buildApiUrl('/proxy/coingecko?ticker=tether&vs=brl'));
       
       if (!resp.ok) {
         throw new Error(`Erro HTTP ${resp.status}: ${resp.statusText}`);
       }
       
       const data = await resp.json();
-      console.log('📦 Dados recebidos:', data);
       
       if (data && data.price != null) {
         const preco = Number(data.price);
-        console.log('✅ CONVERSÃO USDT carregada:', {
-          precoOriginal: data.price,
-          precoNumerico: preco,
-          timestamp: new Date().toISOString()
-        });
         setTaxaConversao(preco);
       } else {
-        console.error('❌ Dados inválidos recebidos:', data);
         setError('Cotação não encontrada');
       }
     } catch (err) {
-      console.error('💥 ERRO na conversão USDT:', err);
       setError(`Erro ao buscar taxa de conversão: ${err.message}`);
     } finally {
       setLoading(false);
@@ -53,13 +36,12 @@ export function useUSDTConversion() {
   useEffect(() => {
     fetchTaxaConversao();
     
-    // Retry automático a cada 30 segundos se a primeira tentativa falhar
+    // Retry automático a cada 60 segundos se a primeira tentativa falhar
     const retryInterval = setInterval(() => {
       if (!taxaConversao && !loading) {
-        console.log('🔄 RETRY automático da conversão USDT...');
         fetchTaxaConversao();
       }
-    }, 30000);
+    }, 60000);
     
     return () => clearInterval(retryInterval);
   }, [taxaConversao, loading]);
@@ -67,10 +49,8 @@ export function useUSDTConversion() {
   // Conversão BRL -> USDT com fallback
   const brlToUsdt = (valorBrl) => {
     if (!taxaConversao) {
-      console.log('⚠️ Taxa de conversão não disponível, tentando fallback...');
       // Fallback: última cotação conhecida ou cotação aproximada
       const fallbackRate = 5.5; // Aproximação quando API falha
-      console.log('🔄 Usando taxa fallback:', fallbackRate);
       return (Number(valorBrl) / fallbackRate).toFixed(2);
     }
     return (Number(valorBrl) / taxaConversao).toFixed(2);
