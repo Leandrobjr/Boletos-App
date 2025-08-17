@@ -87,6 +87,8 @@ const CompradorPage = () => {
   // Função para buscar boletos do usuário autenticado
   const fetchMeusBoletos = async () => {
     if (!user?.uid) return;
+    
+    setLoadingMeusBoletos(true);
     try {
       // Enviar também a carteira (se conectada) para o backend identificar boletos reservados/comprados pelo usuário
       const walletQuery = wallet?.address ? `?wallet=${encodeURIComponent(wallet.address)}` : '';
@@ -109,6 +111,8 @@ const CompradorPage = () => {
     } catch (error) {
       console.error('Erro ao buscar boletos:', error);
       setMeusBoletos([]);
+    } finally {
+      setLoadingMeusBoletos(false);
     }
   };
 
@@ -487,30 +491,62 @@ const CompradorPage = () => {
     };
   }, [tempoRestante]);
 
-  useEffect(() => {
-    // Buscar boletos disponíveis do backend
-      const ac = new AbortController();
-      fetch(buildApiUrl('/boletos'), { signal: ac.signal })
-        .then(res => res.json())
-      .then(data => {
-        const lista = Array.isArray(data) ? data : (data?.data || []);
-        const boletosMapeados = lista.map(boleto => ({
+    // Estados para loading
+  const [loadingBoletos, setLoadingBoletos] = useState(false);
+  const [loadingMeusBoletos, setLoadingMeusBoletos] = useState(false);
+
+  // Cache para boletos disponíveis
+  const [boletosCache, setBoletosCache] = useState(null);
+  const [cacheTime, setCacheTime] = useState(0);
+  const CACHE_DURATION = 60000; // 1 minuto
+
+  // Função otimizada para buscar boletos disponíveis
+  const fetchBoletosDisponiveis = async () => {
+    // Verificar cache primeiro
+    const now = Date.now();
+    if (boletosCache && (now - cacheTime) < CACHE_DURATION) {
+      setBoletosDisponiveis(boletosCache);
+      return;
+    }
+
+    setLoadingBoletos(true);
+    try {
+      const res = await fetch(buildApiUrl('/boletos'));
+      if (!res.ok) throw new Error('Erro ao buscar boletos');
+      
+      const data = await res.json();
+      const lista = Array.isArray(data) ? data : (data?.data || []);
+      
+      // Filtrar apenas boletos DISPONÍVEIS para reduzir processamento
+      const boletosDisponiveis = lista
+        .filter(boleto => mapStatus(boleto.status) === 'DISPONIVEL')
+        .map(boleto => ({
           ...boleto,
           numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
           valor: boleto.valor_brl || boleto.valor,
           valor_usdt: boleto.valor_usdt || boleto.valor_usdt_convertido || 0,
           dataVencimento: boleto.vencimento,
           beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
-          status: mapStatus(boleto.status)
+          status: 'DISPONIVEL'
         }));
-        setBoletosDisponiveis(boletosMapeados);
-      })
-        .catch((error) => {
-        console.error('❌ Erro ao buscar boletos:', error);
-        setBoletosDisponiveis([]);
-        });
-      return () => ac.abort();
-  }, []);
+      
+      setBoletosDisponiveis(boletosDisponiveis);
+      setBoletosCache(boletosDisponiveis);
+      setCacheTime(now);
+    } catch (error) {
+      console.error('❌ Erro ao buscar boletos:', error);
+      setBoletosDisponiveis([]);
+    } finally {
+      setLoadingBoletos(false);
+    }
+  };
+
+  useEffect(() => {
+    // Carregamento lazy - só carregar quando necessário
+    if (activeTab === 'livroOrdens') {
+      fetchBoletosDisponiveis();
+    }
+  }, [activeTab]);
 
   useEffect(() => {
     if (tab && tab !== activeTab) setActiveTab(tab);
@@ -522,16 +558,25 @@ const CompradorPage = () => {
     let interval;
     
     const startPolling = () => {
-      // Buscar uma vez imediatamente
-      fetchMeusBoletos();
-      
-      // Polling otimizado - 15 segundos para reduzir carga
-      interval = setInterval(() => {
+      // Buscar uma vez imediatamente apenas se ainda não temos dados
+      if (meusBoletos.length === 0) {
         fetchMeusBoletos();
-      }, 15000);
+      }
+      
+      // Polling mais inteligente - só atualizar se necessário
+      interval = setInterval(() => {
+        // Só fazer polling se a aba está ativa e há boletos com status que podem mudar
+        const hasActiveTransactions = meusBoletos.some(boleto => 
+          ['AGUARDANDO PAGAMENTO', 'AGUARDANDO BAIXA'].includes(boleto.status)
+        );
+        
+        if (hasActiveTransactions) {
+          fetchMeusBoletos();
+        }
+      }, 20000); // Aumentado para 20s
     };
     
-    if (activeTab === 'meusBoletos' || activeTab === 'historico') {
+    if ((activeTab === 'meusBoletos' || activeTab === 'historico') && user?.uid) {
       startPolling();
     }
     
@@ -540,7 +585,7 @@ const CompradorPage = () => {
         clearInterval(interval);
       }
     };
-  }, [activeTab, user?.uid]); // Removido wallet?.address para evitar múltiplos intervals
+  }, [activeTab, user?.uid, meusBoletos.length]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
@@ -606,21 +651,34 @@ const CompradorPage = () => {
                     Nesta seção você pode visualizar todos os boletos disponíveis para compra de USDT. 
                     Selecione um boleto e clique em "Selecionar" para prosseguir com a transação.
                   </p>
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
-                      <thead className="bg-lime-600 text-white">
-                        <tr>
-                          <th className="py-3 px-4 text-left">Nº Boleto</th>
-                          <th className="py-3 px-4 text-left">Valor (R$)</th>
-                          <th className="py-3 px-4 text-left">Valor (USDT)</th>
-                          <th className="py-3 px-4 text-left">Data Venc/to</th>
-                          <th className="py-3 px-4 text-left">Beneficiário</th>
-                          <th className="py-3 px-4 text-left">Status</th>
-                          <th className="py-3 px-4 text-left">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {boletosDisponiveis.map((boleto) => (
+                  {loadingBoletos ? (
+                    <div className="text-center py-12">
+                      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
+                      <p className="text-gray-600 text-lg">Carregando boletos disponíveis...</p>
+                      <p className="text-gray-500 text-sm mt-2">Aguarde enquanto buscamos as melhores ofertas</p>
+                    </div>
+                  ) : boletosDisponiveis.length === 0 ? (
+                    <div className="text-center py-12 text-gray-500">
+                      <FaFileInvoiceDollar className="mx-auto text-6xl mb-4 text-gray-300" />
+                      <h3 className="text-xl font-semibold mb-2">Nenhum boleto disponível</h3>
+                      <p>Não há boletos para compra no momento. Tente novamente mais tarde.</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+                        <thead className="bg-lime-600 text-white">
+                          <tr>
+                            <th className="py-3 px-4 text-left">Nº Boleto</th>
+                            <th className="py-3 px-4 text-left">Valor (R$)</th>
+                            <th className="py-3 px-4 text-left">Valor (USDT)</th>
+                            <th className="py-3 px-4 text-left">Data Venc/to</th>
+                            <th className="py-3 px-4 text-left">Beneficiário</th>
+                            <th className="py-3 px-4 text-left">Status</th>
+                            <th className="py-3 px-4 text-left">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {boletosDisponiveis.map((boleto) => (
                           <tr 
                             key={boleto.id} 
                             className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-100' : ''}`}
@@ -686,9 +744,10 @@ const CompradorPage = () => {
                             </td>
                           </tr>
                         )}
-                      </tbody>
-                    </table>
-                  </div>
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -701,10 +760,17 @@ const CompradorPage = () => {
                     <CardDescription className="text-white">Boletos que você comprou e pagou</CardDescription>
                   </CardHeader>
                   <CardContent className="p-4">
-                    {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').length === 0 ? (
-                      <p className="text-center text-gray-500 py-8">
-                        Você ainda não comprou nenhum boleto.
-                      </p>
+                    {loadingMeusBoletos ? (
+                      <div className="text-center py-12">
+                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                        <p className="text-gray-600">Carregando seus boletos...</p>
+                      </div>
+                    ) : meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').length === 0 ? (
+                      <div className="text-center text-gray-500 py-12">
+                        <FaHistory className="mx-auto text-5xl mb-4 text-gray-300" />
+                        <h3 className="text-lg font-semibold mb-2">Nenhum boleto comprado</h3>
+                        <p>Você ainda não comprou nenhum boleto.</p>
+                      </div>
                     ) : (
                       <div className="overflow-x-auto">
                         <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
