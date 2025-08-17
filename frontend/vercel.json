@@ -1,5 +1,11 @@
 {
   "version": 2,
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://boletos-backend-290725.vercel.app/api/$1"
+    }
+  ],
   "routes": [
     { "src": "/[^.]+", "dest": "/" }
   ]

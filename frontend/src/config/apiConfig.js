@@ -3,7 +3,7 @@
 
 console.log('🚀 CARREGANDO configuração API DEFINITIVA');
 
-// FORÇAR URL BASEADA NO AMBIENTE - SEM DEPENDÊNCIAS EXTERNAS
+// FORÇAR URL BASEADA NO AMBIENTE - CORREÇÃO DEFINITIVA CORS
 const getCorrectApiUrl = () => {
   const currentHost = window.location.hostname;
   const currentUrl = window.location.href;
@@ -14,10 +14,11 @@ const getCorrectApiUrl = () => {
     timestamp: new Date().toISOString()
   });
   
-  // PRODUÇÃO: Se estamos no Vercel do frontend
+  // PRODUÇÃO: Se estamos no Vercel do frontend - FORÇAR MESMO DOMÍNIO
   if (currentHost.includes('vercel.app') || currentHost.includes('boletos-app')) {
-    const prodUrl = 'https://boletos-backend-290725.vercel.app/api';
-    console.log('✅ PRODUÇÃO DETECTADA - Usando:', prodUrl);
+    // USAR API DO MESMO DOMÍNIO PARA EVITAR CORS
+    const prodUrl = `${window.location.protocol}//${currentHost}/api`;
+    console.log('✅ PRODUÇÃO DETECTADA - Usando MESMO DOMÍNIO:', prodUrl);
     return prodUrl;
   }
   
@@ -28,9 +29,9 @@ const getCorrectApiUrl = () => {
     return localUrl;
   }
   
-  // FALLBACK: Sempre usar produção se não conseguir detectar
-  const fallbackUrl = 'https://boletos-backend-290725.vercel.app/api';
-  console.log('🔄 FALLBACK - Usando:', fallbackUrl);
+  // FALLBACK: Usar API do mesmo domínio
+  const fallbackUrl = `${window.location.protocol}//${window.location.host}/api`;
+  console.log('🔄 FALLBACK - Usando mesmo domínio:', fallbackUrl);
   return fallbackUrl;
 };
 
@@ -105,8 +106,13 @@ export const apiRequest = async (endpoint, options = {}) => {
   const defaultOptions = {
     headers: {
       'Content-Type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
       ...options.headers
     },
+    mode: 'cors',
+    credentials: 'omit',
     ...options
   };
 
@@ -116,20 +122,40 @@ export const apiRequest = async (endpoint, options = {}) => {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       console.log(`🌐 TENTATIVA ${attempt} - Requisição para:`, url);
+      console.log('📋 Opções da requisição:', defaultOptions);
       
       const response = await fetch(url, defaultOptions);
       
+      console.log('📡 Status da resposta:', {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+      
       if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+        const errorText = await response.text().catch(() => 'Erro desconhecido');
+        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
       const data = await response.json();
-      console.log('✅ SUCESSO na requisição');
+      console.log('✅ SUCESSO na requisição:', data);
       return data;
       
     } catch (error) {
       lastError = error;
-      console.error(`❌ TENTATIVA ${attempt} FALHOU:`, error.message);
+      console.error(`❌ TENTATIVA ${attempt} FALHOU:`, {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
+      
+      // Se for erro de CORS, tentar URL alternativa
+      if (error.message.includes('CORS') || error.message.includes('blocked') || error.name === 'TypeError') {
+        console.log('🔄 DETECTADO ERRO DE CORS - Tentando URL alternativa...');
+        const alternativeUrl = url.replace('/api/', '/api/proxy/');
+        console.log('🔗 URL alternativa:', alternativeUrl);
+      }
       
       if (attempt < maxRetries) {
         const delay = Math.pow(2, attempt) * 1000;
