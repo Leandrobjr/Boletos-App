@@ -133,20 +133,30 @@ module.exports = async (req, res) => {
 
     console.log('🔄 Atualizando status do boleto para AGUARDANDO PAGAMENTO...');
     
-    // Atualizar status para AGUARDANDO PAGAMENTO
+    // Atualizar status para AGUARDANDO PAGAMENTO - SEGUINDO PADRÃO DO backend-bxc/index.cjs
     const updateQuery = `
       UPDATE boletos 
-      SET status = $1, wallet_address = $2, tx_hash = $3, updated_at = CURRENT_TIMESTAMP 
-      WHERE numero_controle = $4 AND status = $5 
+      SET status = $1, user_id = $2, wallet_address = $3, tx_hash = $4
+      WHERE numero_controle = $5 AND status = $6 
       RETURNING *
     `;
     
+    console.log('📋 Parâmetros do UPDATE:', {
+      status: 'AGUARDANDO PAGAMENTO',
+      user_id_comprador: user_id,
+      wallet_address: wallet_address,
+      tx_hash: tx_hash || null,
+      numero_controle: numero_controle,
+      status_atual: 'DISPONIVEL'
+    });
+    
     const updateResult = await pool.query(updateQuery, [
       'AGUARDANDO PAGAMENTO', 
-      wallet_address, 
-      tx_hash || null, 
-      numero_controle, 
-      'DISPONIVEL'
+      user_id,           // ID do comprador (substitui o ID do vendedor)
+      wallet_address,    // Endereço da carteira do comprador
+      tx_hash || null,   // Hash da transação de travamento
+      numero_controle,   // Numero de controle do boleto
+      'DISPONIVEL'       // Status atual deve ser DISPONIVEL
     ]);
     
     console.log('📊 Resultado da atualização:', {
