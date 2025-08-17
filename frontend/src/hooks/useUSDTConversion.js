@@ -13,7 +13,7 @@ export function useUSDTConversion() {
     setLoading(true);
     setError(null);
     try {
-      const url = buildApiUrl('/api/proxy/coingecko?ticker=tether&vs=brl');
+      const url = buildApiUrl('/proxy/coingecko?ticker=tether&vs=brl');
       console.log('🔗 URL de conversão:', url);
       
       const resp = await fetch(url);
