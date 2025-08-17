@@ -7,8 +7,44 @@ export function useUSDTConversion() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Cache localStorage para evitar requisições excessivas
+  const getCachedRate = () => {
+    try {
+      const cached = localStorage.getItem('usdt_rate_cache');
+      if (cached) {
+        const { rate, timestamp } = JSON.parse(cached);
+        const now = Date.now();
+        // Cache válido por 10 minutos
+        if (now - timestamp < 600000) {
+          return rate;
+        }
+      }
+    } catch (e) {
+      console.error('Erro ao ler cache:', e);
+    }
+    return null;
+  };
+
+  const setCachedRate = (rate) => {
+    try {
+      localStorage.setItem('usdt_rate_cache', JSON.stringify({
+        rate,
+        timestamp: Date.now()
+      }));
+    } catch (e) {
+      console.error('Erro ao salvar cache:', e);
+    }
+  };
+
   // Busca cotação online via proxy backend (evita CORS)
   const fetchTaxaConversao = async () => {
+    // Verificar cache primeiro
+    const cachedRate = getCachedRate();
+    if (cachedRate) {
+      setTaxaConversao(cachedRate);
+      return;
+    }
+
     setLoading(true);
     setError(null);
     try {
@@ -23,6 +59,7 @@ export function useUSDTConversion() {
       if (data && data.price != null) {
         const preco = Number(data.price);
         setTaxaConversao(preco);
+        setCachedRate(preco); // Salvar no cache
       } else {
         setError('Cotação não encontrada');
       }
@@ -34,17 +71,23 @@ export function useUSDTConversion() {
   };
 
   useEffect(() => {
-    fetchTaxaConversao();
+    // Inicializar com cache se disponível
+    const cachedRate = getCachedRate();
+    if (cachedRate) {
+      setTaxaConversao(cachedRate);
+    } else {
+      fetchTaxaConversao();
+    }
     
-    // Retry automático a cada 60 segundos se a primeira tentativa falhar
+    // Retry automático muito reduzido - apenas a cada 5 minutos se falhar
     const retryInterval = setInterval(() => {
       if (!taxaConversao && !loading) {
         fetchTaxaConversao();
       }
-    }, 60000);
+    }, 300000); // 5 minutos
     
     return () => clearInterval(retryInterval);
-  }, [taxaConversao, loading]);
+  }, []); // Remover dependências para evitar loops
 
   // Conversão BRL -> USDT com fallback
   const brlToUsdt = (valorBrl) => {

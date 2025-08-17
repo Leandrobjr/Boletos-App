@@ -37,9 +37,9 @@ module.exports = async (req, res) => {
       // Aqui devolvemos boletos criados por ele (se ele for vendedor)
       // OU boletos que ele reservou/comprou (onde sua carteira aparece em wallet_address).
       const wallet = url.searchParams.get('wallet');
-      // Buscar apenas campos necessários para melhor performance
+      // Buscar campos necessários incluindo codigo_barras (FIX)
       let sql = `
-        SELECT id, numero_controle, cpf_cnpj, valor_brl, valor_usdt, vencimento, 
+        SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, vencimento, 
                instituicao, status, criado_em, comprovante_url, wallet_address 
         FROM boletos 
         WHERE user_id = $1
@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
       const params = [uid];
       if (wallet) {
         sql = `
-          SELECT id, numero_controle, cpf_cnpj, valor_brl, valor_usdt, vencimento, 
+          SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, vencimento, 
                  instituicao, status, criado_em, comprovante_url, wallet_address 
           FROM boletos 
           WHERE user_id = $1 OR wallet_address = $2

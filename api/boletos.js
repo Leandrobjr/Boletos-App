@@ -56,9 +56,9 @@ module.exports = async (req, res) => {
         });
       }
       
-      // Buscar apenas boletos DISPONÍVEIS (otimização para livro de ordens)
+      // Buscar apenas boletos DISPONÍVEIS incluindo codigo_barras (FIX)
       const result = await pool.query(`
-        SELECT id, numero_controle, cpf_cnpj, valor_brl, valor_usdt, vencimento, instituicao, status, criado_em 
+        SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, vencimento, instituicao, status, criado_em 
         FROM boletos 
         WHERE status IN ('DISPONIVEL', 'pendente')
         ORDER BY criado_em DESC 

@@ -100,6 +100,7 @@ const CompradorPage = () => {
       const boletosMapeados = lista.map(boleto => ({
         ...boleto,
         numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+        codigoBarras: boleto.codigo_barras || boleto.codigoBarras, // FIX: mapeamento correto
         valor: boleto.valor_brl || boleto.valor || 0,
         valor_usdt: boleto.valor_usdt || 0,
         dataCompra: boleto.criado_em || boleto.dataCompra,
@@ -523,6 +524,7 @@ const CompradorPage = () => {
         .map(boleto => ({
           ...boleto,
           numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+          codigoBarras: boleto.codigo_barras || boleto.codigoBarras, // FIX: mapeamento correto
           valor: boleto.valor_brl || boleto.valor,
           valor_usdt: boleto.valor_usdt || boleto.valor_usdt_convertido || 0,
           dataVencimento: boleto.vencimento,
