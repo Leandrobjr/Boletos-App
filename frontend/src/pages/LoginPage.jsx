@@ -48,188 +48,259 @@ function LoginPage() {
   };
 
   return (
-    <main className="flex-1 flex items-center justify-center p-4 bg-muted min-h-screen">
-      <Card className="mx-auto w-full p-0" style={{maxWidth: '400px', minWidth: 280, minHeight: '600px'}}>
-        <CardHeader className="text-center">
-          <CardTitle className="text-greenPrimary bitcoin-font text-3xl md:text-4xl">BoletoXCrypto</CardTitle>
-          <p className="text-grayMedium mt-2 text-lg md:text-xl">Acesse sua conta para continuar</p>
-        </CardHeader>
-        <CardContent className="p-6 pt-0 flex flex-col items-center">
-          <form onSubmit={handleSubmit} className="space-y-5 w-full max-w-md mx-auto">
-            <div className="w-full flex justify-center">
-              <Input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-                autoComplete="email"
-                className="w-full max-w-[280px] text-lg py-3"
-              />
+    <div className="min-h-screen bg-gradient-to-br from-green-50 via-lime-50 to-green-100 flex items-center justify-center p-4">
+      {/* Background decorativo */}
+      <div className="absolute inset-0 overflow-hidden">
+        <div className="absolute -top-4 -right-4 w-72 h-72 bg-lime-200 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute -bottom-4 -left-4 w-96 h-96 bg-green-200 rounded-full opacity-20 blur-3xl"></div>
+      </div>
+      
+      {/* Modal central */}
+      <div className="relative z-10 w-full max-w-md">
+        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+          {/* Header com gradiente */}
+          <CardHeader className="bg-gradient-to-r from-green-800 to-lime-600 text-white text-center rounded-t-lg p-8">
+            <div className="mb-4">
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                <FaLock className="text-2xl text-white" />
+              </div>
+              <CardTitle className="text-2xl md:text-3xl font-bold">BoletoXCrypto</CardTitle>
+              <p className="text-green-100 mt-2 text-sm md:text-base">Acesse sua conta para continuar</p>
             </div>
-            <div className="w-full flex justify-center">
-              <Input
-                id="password"
-                type="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                placeholder="********"
-                required
-                autoComplete="current-password"
-                className="w-full max-w-[280px] text-lg py-3"
-              />
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="remember-me"
-                  type="checkbox"
-                  className="h-4 w-4 text-primary focus:ring-primary border-gray-300 rounded"
+          </CardHeader>
+          
+          <CardContent className="p-8">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              {/* Campo Email */}
+              <div className="space-y-2">
+                <label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center">
+                  <FaEnvelope className="mr-2 text-green-600" />
+                  Email
+                </label>
+                <Input
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="seu@email.com"
+                  required
+                  autoComplete="email"
+                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500"
                 />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">Lembrar-me</label>
               </div>
-              <div className="text-sm">
-                <a href="#" className="text-primary hover:underline">Esqueceu a senha?</a>
+              
+              {/* Campo Senha */}
+              <div className="space-y-2">
+                <label htmlFor="password" className="text-sm font-medium text-gray-700 flex items-center">
+                  <FaLock className="mr-2 text-green-600" />
+                  Senha
+                </label>
+                <Input
+                  id="password"
+                  type="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  autoComplete="current-password"
+                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                />
               </div>
-            </div>
-            <div className="w-full flex justify-center">
-              <Button type="submit" fullWidth variant="primary" disabled={loading} leftIcon={<FaLock className="mr-2 text-xl" />} className="w-full text-lg py-4 max-w-[280px]">{loading ? 'Conectando...' : 'Acessar com senha'}</Button>
-            </div>
-          </form>
-          <div className="mt-6 flex flex-col gap-2 w-full flex justify-center items-center">
-            <LoginButton fullWidth onClick={handleGoogleLogin} className="w-full text-lg py-4 max-w-[280px]" />
-          </div>
-          <div className="mt-6 text-center">
-            <p className="text-base text-gray-600">
-              Não tem uma conta?{' '}
-              <Link to="/cadastro" className="text-primary font-medium hover:underline text-lg">Cadastre-se agora</Link>
-            </p>
-          </div>
-        </CardContent>
-      </Card>
-      {/* Modal de cadastro completo para login via Google */}
-      {showGoogleForm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md p-6 relative">
-            <button 
-              onClick={() => setShowGoogleForm(false)}
-              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
-            >
-              &times;
-            </button>
+              
+              {/* Lembrar-me e Esqueceu senha */}
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center">
+                  <input
+                    id="remember-me"
+                    name="remember-me"
+                    type="checkbox"
+                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                  />
+                  <label htmlFor="remember-me" className="ml-2 text-gray-600">Lembrar-me</label>
+                </div>
+                <a href="#" className="text-green-600 hover:text-green-800 font-medium">
+                  Esqueceu a senha?
+                </a>
+              </div>
+              
+              {/* Botão Login */}
+              <Button 
+                type="submit" 
+                disabled={loading}
+                className="w-full h-12 bg-gradient-to-r from-green-800 to-lime-600 hover:from-green-900 hover:to-lime-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02]"
+              >
+                {loading ? (
+                  <div className="flex items-center justify-center">
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    Conectando...
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center">
+                    <FaLock className="mr-2" />
+                    Acessar com senha
+                  </div>
+                )}
+              </Button>
+            </form>
             
-            <div className="text-center mb-6">
-              <h2 className="text-xl font-bold text-greenDark">Complete seu cadastro</h2>
-              <p className="text-grayMedium mt-2 flex items-center justify-center">
-                <FaExclamationTriangle className="text-yellow-500 mr-2" />
-                É necessário completar seu cadastro para continuar
+            {/* Divider */}
+            <div className="relative my-8">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-4 bg-white text-gray-500">ou</span>
+              </div>
+            </div>
+            
+            {/* Botão Google */}
+            <div className="space-y-4">
+              <LoginButton 
+                onClick={handleGoogleLogin} 
+                className="w-full h-12 border-2 border-gray-300 hover:border-green-500 bg-white hover:bg-green-50 text-gray-700 hover:text-green-800 font-semibold rounded-lg transition-all duration-200"
+              />
+            </div>
+            
+            {/* Link Cadastro */}
+            <div className="mt-8 text-center">
+              <p className="text-gray-600">
+                Não tem uma conta?{' '}
+                <Link 
+                  to="/cadastro" 
+                  className="text-green-600 hover:text-green-800 font-semibold hover:underline transition-colors"
+                >
+                  Cadastre-se agora
+                </Link>
               </p>
             </div>
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+      {/* Modal de cadastro completo para login via Google */}
+      {showGoogleForm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
+          <Card className="w-full max-w-md border-0 shadow-2xl bg-white">
+            {/* Header do modal */}
+            <CardHeader className="bg-gradient-to-r from-green-800 to-lime-600 text-white rounded-t-lg relative">
+              <button 
+                onClick={() => setShowGoogleForm(false)}
+                className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+              >
+                ×
+              </button>
+              
+              <div className="text-center">
+                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
+                  <FaUser className="text-xl text-white" />
+                </div>
+                <CardTitle className="text-xl font-bold">Complete seu cadastro</CardTitle>
+                <p className="text-green-100 mt-2 text-sm flex items-center justify-center">
+                  <FaExclamationTriangle className="text-yellow-300 mr-2" />
+                  É necessário completar seu cadastro para continuar
+                </p>
+              </div>
+            </CardHeader>
             
-            <form onSubmit={(e) => {
-              e.preventDefault();
-              handleGoogleLogin();
-              setShowGoogleForm(false);
-            }} className="space-y-4">
-              {/* Nome completo */}
-              <div>
-                <label htmlFor="nome" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome completo
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaUser className="text-gray-400" />
-                  </div>
+            <CardContent className="p-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                handleGoogleLogin();
+                setShowGoogleForm(false);
+              }} className="space-y-4">
+                {/* Nome completo */}
+                <div className="space-y-2">
+                  <label htmlFor="nome" className="text-sm font-medium text-gray-700 flex items-center">
+                    <FaUser className="mr-2 text-green-600" />
+                    Nome completo
+                  </label>
                   <Input
                     id="nome"
                     type="text"
                     value={googleUserData.nome}
                     onChange={(e) => setGoogleUserData({...googleUserData, nome: e.target.value})}
-                    className="pl-10"
+                    className="h-11 border-gray-300 focus:border-green-500 focus:ring-green-500"
                     placeholder="Seu nome completo"
                     required
                   />
                 </div>
-              </div>
-              
-              {/* CPF/CNPJ */}
-              <div>
-                <label htmlFor="cpfCnpj" className="block text-sm font-medium text-gray-700 mb-1">
-                  CPF/CNPJ
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaIdCard className="text-gray-400" />
-                  </div>
+                
+                {/* CPF/CNPJ */}
+                <div className="space-y-2">
+                  <label htmlFor="cpfCnpj" className="text-sm font-medium text-gray-700 flex items-center">
+                    <FaIdCard className="mr-2 text-green-600" />
+                    CPF/CNPJ
+                  </label>
                   <Input
                     id="cpfCnpj"
                     type="text"
                     value={googleUserData.cpfCnpj}
                     onChange={(e) => setGoogleUserData({...googleUserData, cpfCnpj: e.target.value})}
-                    className="pl-10"
+                    className="h-11 border-gray-300 focus:border-green-500 focus:ring-green-500"
                     placeholder="000.000.000-00 ou 00.000.000/0001-00"
                     required
                   />
                 </div>
-              </div>
-              
-              {/* Telefone */}
-              <div>
-                <label htmlFor="telefone" className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefone
-                </label>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                    <FaPhone className="text-gray-400" />
-                  </div>
+                
+                {/* Telefone */}
+                <div className="space-y-2">
+                  <label htmlFor="telefone" className="text-sm font-medium text-gray-700 flex items-center">
+                    <FaPhone className="mr-2 text-green-600" />
+                    Telefone
+                  </label>
                   <Input
                     id="telefone"
                     type="tel"
                     value={googleUserData.telefone}
                     onChange={(e) => setGoogleUserData({...googleUserData, telefone: e.target.value})}
-                    className="pl-10"
+                    className="h-11 border-gray-300 focus:border-green-500 focus:ring-green-500"
                     placeholder="(11) 99999-9999"
                     required
                   />
                 </div>
-              </div>
-              
-              {/* Endereço */}
-              <div>
-                <label htmlFor="endereco" className="block text-sm font-medium text-gray-700 mb-1">
-                  Endereço completo
-                </label>
-                <textarea
-                  id="endereco"
-                  value={googleUserData.endereco}
-                  onChange={(e) => setGoogleUserData({...googleUserData, endereco: e.target.value})}
-                  className="form-input"
-                  rows="3"
-                  placeholder="Rua, número, bairro, cidade, estado, CEP"
-                  required
-                />
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  type="button"
-                  onClick={() => setShowGoogleForm(false)}
-                  className="flex-1 btn-secondary"
-                >
-                  Cancelar
-                </button>
-                <button
-                  type="submit"
-                  className="flex-1 btn-primary"
-                  disabled={loading}
-                >
-                  {loading ? 'Completando...' : 'Completar cadastro'}
-                </button>
-              </div>
-            </form>
-          </div>
+                
+                {/* Endereço */}
+                <div className="space-y-2">
+                  <label htmlFor="endereco" className="text-sm font-medium text-gray-700">
+                    Endereço completo
+                  </label>
+                  <textarea
+                    id="endereco"
+                    value={googleUserData.endereco}
+                    onChange={(e) => setGoogleUserData({...googleUserData, endereco: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500 resize-none"
+                    rows="3"
+                    placeholder="Rua, número, bairro, cidade, estado, CEP"
+                    required
+                  />
+                </div>
+                
+                <div className="flex space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowGoogleForm(false)}
+                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={loading}
+                    className="flex-1 px-4 py-2 bg-gradient-to-r from-green-800 to-lime-600 hover:from-green-900 hover:to-lime-700 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50"
+                  >
+                    {loading ? (
+                      <div className="flex items-center justify-center">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        Completando...
+                      </div>
+                    ) : (
+                      'Completar cadastro'
+                    )}
+                  </button>
+                </div>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       )}
     </main>
