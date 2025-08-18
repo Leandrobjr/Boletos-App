@@ -64,7 +64,7 @@ function LoginPage() {
               <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
                 <FaLock className="text-2xl text-white" />
               </div>
-              <CardTitle className="text-2xl md:text-3xl font-bold">BoletoXCrypto</CardTitle>
+              <CardTitle className="text-2xl md:text-3xl font-bold tracking-wide">BoletoXCrypto</CardTitle>
               <p className="text-green-100 mt-2 text-sm md:text-base">Acesse sua conta para continuar</p>
             </div>
           </CardHeader>
