@@ -1,0 +1,13 @@
+Cache clear marker - Version 1.0.1
+Build: f24d9e7b
+Timestamp: 2025-01-18T17:46:00Z
+
+CRITICAL FIX: Loop infinito resolvido
+- Polling completamente desabilitado
+- Todos os console.logs removidos
+- Função valorLiquidoUSDT limpa
+
+Se ainda vê logs, force refresh:
+Ctrl + F5 (Windows)
+Cmd + Shift + R (Mac)
+Ctrl + Shift + R (Linux)
