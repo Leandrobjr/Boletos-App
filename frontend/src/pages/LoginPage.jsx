@@ -176,7 +176,7 @@ function LoginPage() {
           </CardContent>
         </Card>
       </div>
-    </div>
+      
       {/* Modal de cadastro completo para login via Google */}
       {showGoogleForm && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
@@ -303,7 +303,7 @@ function LoginPage() {
           </Card>
         </div>
       )}
-    </main>
+    </div>
   );
 }
 
