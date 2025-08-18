@@ -401,9 +401,9 @@ function VendedorPage() {
 
   // Função robusta para formatar datas (sempre DD/MM/YYYY)
   const formatarData = (data) => {
-    console.log('🔍 formatarData chamada com:', data);
+
     if (!data || data === null) {
-      console.log('❌ Data vazia ou null');
+
       return "--";
     }
     
@@ -412,7 +412,7 @@ function VendedorPage() {
       if (typeof data === "string" && /^\d{4}-\d{2}-\d{2}$/.test(data)) {
         const [ano, mes, dia] = data.split("-");
         const dataFormatada = `${dia}/${mes}/${ano}`;
-        console.log('✅ Data formatada (YYYY-MM-DD):', dataFormatada);
+
         return dataFormatada;
       }
       
@@ -423,11 +423,11 @@ function VendedorPage() {
         const mes = String(d.getMonth() + 1).padStart(2, '0');
         const ano = d.getFullYear();
         const dataFormatada = `${dia}/${mes}/${ano}`;
-        console.log('✅ Data formatada (Date):', dataFormatada);
+
         return dataFormatada;
       }
       
-      console.log('❌ Data inválida:', data);
+
       return "--";
     } catch (error) {
       console.error('❌ Erro ao formatar data:', error);
@@ -493,11 +493,11 @@ function VendedorPage() {
     
     try {
       // Definir estado de processando
-      console.log('🔧 DEBUG - Iniciando baixa para boleto:', boletoId);
+
       setBoletoBaixandoId(boletoId);
       setStatusBaixa(prev => {
         const newState = { ...prev, [boletoId]: 'processando' };
-        console.log('🔧 DEBUG - Estado statusBaixa atualizado:', newState);
+
         return newState;
       });
     
@@ -602,7 +602,7 @@ function VendedorPage() {
   // Função para destravar boleto automaticamente após 65 minutos
   const handleDestravarBoleto = async (boleto) => {
     try {
-      console.log(`Destravando boleto ${boleto.numeroControle} automaticamente após 65 minutos`);
+
       
       // Verificar se a carteira está conectada
       if (!wallet.isConnected || !wallet.address) {
@@ -694,7 +694,7 @@ function VendedorPage() {
   };
 
   const handleVisualizarBoleto = (boleto) => {
-    console.log('🔍 Visualizando boleto:', boleto);
+
     
     if (boleto.comprovante_url) {
         // Verificar se é URL de exemplo
@@ -848,20 +848,20 @@ function VendedorPage() {
       await fetchBoletosOptimized(true);
 
       // Definir estado de sucesso
-      console.log('🔧 DEBUG - Definindo estado de SUCESSO para boletoId:', boletoId);
+
       setStatusBaixa(prev => {
         const newState = { ...prev, [boletoId]: 'sucesso' };
-        console.log('🔧 DEBUG - Novo estado statusBaixa (sucesso):', newState);
+
         return newState;
       });
       
       // Limpar estados após 3 segundos
       setTimeout(() => {
-        console.log('🔧 DEBUG - Limpando estados após 3 segundos');
+
         setBoletoBaixandoId(null);
         setStatusBaixa(prev => {
           const newState = { ...prev, [boletoId]: null };
-          console.log('🔧 DEBUG - Estado statusBaixa limpo:', newState);
+
           return newState;
         });
       }, 3000);
@@ -986,7 +986,7 @@ function VendedorPage() {
                             <button
                               type="button"
                               onClick={() => {
-                                console.log('🔄 REFRESH manual da cotação...');
+
                                 fetchTaxaConversao();
                               }}
                               className="text-xs bg-green-600 text-white px-2 py-1 rounded hover:bg-green-700 transition-colors ml-2"
@@ -1100,15 +1100,15 @@ function VendedorPage() {
                                 <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? boleto.valor_brl.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                                 <td className="py-3 px-4">
                                   {(() => {
-                                    console.log('🔍 Valor USDT para exibição:', boleto.numeroControle, boleto.valor_usdt);
+
                                     if (boleto.valor_usdt !== undefined && boleto.valor_usdt !== null) {
                                       const valor = Number(boleto.valor_usdt);
                                       if (!isNaN(valor)) {
-                                        console.log('✅ Valor USDT formatado:', valor.toFixed(2));
+
                                         return `${valor.toFixed(2)} USDT`;
                                       }
                                     }
-                                    console.log('❌ Valor USDT inválido ou vazio');
+
                                     return '--';
                                   })()}
                                 </td>
@@ -1137,7 +1137,7 @@ function VendedorPage() {
                                       {boleto.comprovante_url && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-                                            console.log('🖱️ VENDEDOR - Visualizar Comprovante:', boleto);
+
                                             
                                             try {
                                               const ident = boleto.numeroControle || boleto.numero_controle || boleto.id;
@@ -1146,7 +1146,7 @@ function VendedorPage() {
                                               const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl;
                                               
                                               if (comprovanteUrl) {
-                                                console.log('✅ VENDEDOR - Abrindo comprovante direto:', comprovanteUrl);
+
                                                 
                                                 // Se for base64, criar blob URL para melhor performance
                                                 if (comprovanteUrl.startsWith('data:')) {
@@ -1162,7 +1162,7 @@ function VendedorPage() {
                                                     const blob = new Blob([byteArray], { type: 'application/pdf' });
                                                     const blobUrl = URL.createObjectURL(blob);
                                                     
-                                                    console.log('✅ VENDEDOR - Criado blob URL para PDF:', blobUrl);
+
                                                     window.open(blobUrl, '_blank', 'noopener,noreferrer');
                                                     
                                                     // Limpar blob URL após 30 segundos
@@ -1186,7 +1186,7 @@ function VendedorPage() {
                                                 : 'http://localhost:3001';
                                               
                                               const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
-                                              console.log('✅ VENDEDOR - Usando proxy backend:', proxyUrl);
+
                                               window.open(proxyUrl, '_blank', 'noopener,noreferrer');
                                               
                                             } catch (error) {
@@ -1222,10 +1222,10 @@ function VendedorPage() {
                                             const status = statusBaixa[boletoId];
                                             
                                             // Debug log
-                                            console.log('🔧 DEBUG - Renderizando botão:', { boletoId, status, statusBaixa });
+
                                             
                                             if (status === 'processando') {
-                                              console.log('🔧 DEBUG - Renderizando estado PROCESSANDO');
+
                                               return (
                                                 <div className="flex items-center gap-2">
                                                   <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-900"></div>
@@ -1233,7 +1233,7 @@ function VendedorPage() {
                                                 </div>
                                               );
                                             } else if (status === 'sucesso') {
-                                              console.log('🔧 DEBUG - Renderizando estado SUCESSO');
+
                                               return (
                                                 <div className="flex items-center gap-2">
                                                   <span className="text-green-600">✓</span>
@@ -1241,7 +1241,7 @@ function VendedorPage() {
                                                 </div>
                                               );
                                             } else {
-                                              console.log('🔧 DEBUG - Renderizando estado PADRÃO');
+
                                               return 'Baixar boleto';
                                             }
                                           })()}
