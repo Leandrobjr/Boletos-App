@@ -565,7 +565,9 @@ const CompradorPage = () => {
         fetchMeusBoletos();
       }
       
-      // Polling mais inteligente - só atualizar se necessário
+      // TEMPORARIAMENTE DESABILITADO - Polling causando erro em massa com backend 404
+      // TODO: Reabilitar quando backend estiver funcionando
+      /*
       interval = setInterval(() => {
         // Só fazer polling se a aba está ativa e há boletos com status que podem mudar
         const hasActiveTransactions = meusBoletos.some(boleto => 
@@ -576,6 +578,7 @@ const CompradorPage = () => {
         fetchMeusBoletos();
         }
       }, 20000); // Aumentado para 20s
+      */
     };
     
     if ((activeTab === 'meusBoletos' || activeTab === 'historico') && user?.uid) {
