@@ -62,8 +62,9 @@ export const buildApiUrl = (endpoint) => {
   }
   
   // VALIDAÇÃO: Garantir que a URL está correta
-  // USAR BACKEND INTEGRADO NO MESMO PROJETO (/api/) 
-  // EM VEZ DO BACKEND SEPARADO QUE ESTÁ OFFLINE
+  if (finalUrl.includes('bxc-boletos-app.vercel.app')) {
+    return finalUrl.replace(/.*bxc-boletos-app\.vercel\.app/, 'https://boletos-backend-290725.vercel.app/api');
+  }
   
   // VALIDAÇÃO FINAL: Garantir HTTPS em produção
   if (!finalUrl.includes('localhost') && !finalUrl.startsWith('https://')) {
