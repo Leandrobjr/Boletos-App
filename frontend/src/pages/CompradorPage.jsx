@@ -596,19 +596,15 @@ const CompradorPage = () => {
 
   // Função utilitária para valor líquido USDT
   function valorLiquidoUSDT(valor_usdt) {
-    console.log('🔍 valorLiquidoUSDT chamado com:', valor_usdt);
     if (valor_usdt === undefined || valor_usdt === null) {
-      console.log('❌ valor_usdt é null/undefined');
       return '--';
     }
     const valor = Number(valor_usdt);
     if (isNaN(valor)) {
-      console.log('❌ valor_usdt não é um número válido:', valor_usdt);
       return '--';
     }
     
     // O valor_usdt já vem convertido do backend, apenas formatar
-    console.log('✅ Valor USDT formatado:', valor.toFixed(2));
     return valor.toFixed(2);
   }
 
@@ -690,12 +686,9 @@ const CompradorPage = () => {
                             <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
                             <td className="py-3 px-4">
                               {(() => {
-                                console.log('🔍 Debug data vencimento:', boleto.numeroBoleto, boleto.dataVencimento);
-                                console.log('🔍 Boleto completo:', boleto);
                                 try {
                                   // Verificar se a data existe
                                   if (!boleto.dataVencimento || boleto.dataVencimento === null) {
-                                    console.log('❌ Data vencimento vazia para:', boleto.numeroBoleto);
                                     return '--';
                                   }
                                   
@@ -706,19 +699,15 @@ const CompradorPage = () => {
                                   } else if (boleto.dataVencimento instanceof Date) {
                                     data = boleto.dataVencimento;
                                   } else {
-                                    console.log('❌ Formato de data inválido para:', boleto.numeroBoleto, boleto.dataVencimento);
                                     return '--';
                                   }
                                   
                                   if (isNaN(data.getTime())) {
-                                    console.log('❌ Data inválida para:', boleto.numeroBoleto, boleto.dataVencimento);
                                     return '--';
                                   }
                                   
-                                  console.log('✅ Data válida para:', boleto.numeroBoleto, data.toLocaleDateString('pt-BR'));
                                   return data.toLocaleDateString('pt-BR');
                                 } catch (error) {
-                                  console.error('❌ Erro ao processar data:', boleto.numeroBoleto, boleto.dataVencimento, error);
                                   return '--';
                                 }
                               })()}
