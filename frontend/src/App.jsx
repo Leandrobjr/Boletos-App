@@ -9,6 +9,7 @@ import { AuthProvider, useAuth } from './components/auth/AuthProvider';
 
 // Páginas
 import LoginPage from './pages/LoginPage';
+import LoginPageTest from './pages/LoginPageTest';
 import CadastroPage from './pages/CadastroPage';
 import VendedorPage from './pages/VendedorPage';
 import CompradorPage from './pages/CompradorPage';
@@ -71,7 +72,7 @@ function AppRoutes() {
         <Route index element={<Landpage />} />
       </Route>
       <Route path="/home" element={<HomePage />} />
-      <Route path="/login" element={<LoginPage />} />
+      <Route path="/login" element={<LoginPageTest />} />
       <Route path="/teste" element={<Layout />}>
         <Route index element={<TestePage />} />
       </Route>

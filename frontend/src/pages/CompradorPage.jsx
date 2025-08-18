@@ -433,15 +433,15 @@ const CompradorPage = () => {
           } catch (blobError) {
             console.warn('⚠️ Erro ao criar blob, usando base64 direto:', blobError);
             window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
-            return;
-          }
+        return;
+      }
         } else {
           // URL externa direta
           window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
-          return;
-        }
+        return;
       }
-      
+    }
+    
       // SOLUÇÃO 2: Fallback - proxy via backend para garantir funcionamento
       const backendUrl = import.meta.env.PROD 
         ? 'https://boletos-backend-290725.vercel.app'
@@ -522,13 +522,13 @@ const CompradorPage = () => {
       const boletosDisponiveis = lista
         .filter(boleto => mapStatus(boleto.status) === 'DISPONIVEL')
         .map(boleto => ({
-          ...boleto,
-          numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+            ...boleto,
+            numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
           codigoBarras: boleto.codigo_barras || boleto.codigoBarras, // FIX: mapeamento correto
-          valor: boleto.valor_brl || boleto.valor,
+            valor: boleto.valor_brl || boleto.valor,
           valor_usdt: boleto.valor_usdt || boleto.valor_usdt_convertido || 0,
-          dataVencimento: boleto.vencimento,
-          beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
+            dataVencimento: boleto.vencimento,
+            beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
           status: 'DISPONIVEL'
         }));
       
@@ -536,8 +536,8 @@ const CompradorPage = () => {
       setBoletosCache(boletosDisponiveis);
       setCacheTime(now);
     } catch (error) {
-      console.error('❌ Erro ao buscar boletos:', error);
-      setBoletosDisponiveis([]);
+        console.error('❌ Erro ao buscar boletos:', error);
+        setBoletosDisponiveis([]);
     } finally {
       setLoadingBoletos(false);
     }
@@ -573,7 +573,7 @@ const CompradorPage = () => {
         );
         
         if (hasActiveTransactions) {
-          fetchMeusBoletos();
+        fetchMeusBoletos();
         }
       }, 20000); // Aumentado para 20s
     };
@@ -666,21 +666,21 @@ const CompradorPage = () => {
                       <p>Não há boletos para compra no momento. Tente novamente mais tarde.</p>
                     </div>
                   ) : (
-                    <div className="overflow-x-auto">
-                      <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
-                        <thead className="bg-lime-600 text-white">
-                          <tr>
-                            <th className="py-3 px-4 text-left">Nº Boleto</th>
-                            <th className="py-3 px-4 text-left">Valor (R$)</th>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+                      <thead className="bg-lime-600 text-white">
+                        <tr>
+                          <th className="py-3 px-4 text-left">Nº Boleto</th>
+                          <th className="py-3 px-4 text-left">Valor (R$)</th>
                             <th className="py-3 px-4 text-left">Valor (USDT)</th>
-                            <th className="py-3 px-4 text-left">Data Venc/to</th>
-                            <th className="py-3 px-4 text-left">Beneficiário</th>
-                            <th className="py-3 px-4 text-left">Status</th>
-                            <th className="py-3 px-4 text-left">Ações</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {boletosDisponiveis.map((boleto) => (
+                          <th className="py-3 px-4 text-left">Data Venc/to</th>
+                          <th className="py-3 px-4 text-left">Beneficiário</th>
+                          <th className="py-3 px-4 text-left">Status</th>
+                          <th className="py-3 px-4 text-left">Ações</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {boletosDisponiveis.map((boleto) => (
                           <tr 
                             key={boleto.id} 
                             className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-100' : ''}`}
@@ -746,9 +746,9 @@ const CompradorPage = () => {
                             </td>
                           </tr>
                         )}
-                        </tbody>
-                      </table>
-                    </div>
+                      </tbody>
+                    </table>
+                  </div>
                   )}
                 </CardContent>
               </Card>
@@ -756,11 +756,11 @@ const CompradorPage = () => {
             <TabsContent value="meusBoletos">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 {/* Lista */}
-                <Card>
-                  <CardHeader className="bg-green-800 text-white">
-                    <CardTitle className="text-xl">MEUS BOLETOS</CardTitle>
-                    <CardDescription className="text-white">Boletos que você comprou e pagou</CardDescription>
-                  </CardHeader>
+              <Card>
+                <CardHeader className="bg-green-800 text-white">
+                  <CardTitle className="text-xl">MEUS BOLETOS</CardTitle>
+                  <CardDescription className="text-white">Boletos que você comprou e pagou</CardDescription>
+                </CardHeader>
                   <CardContent className="p-4">
                     {loadingMeusBoletos ? (
                       <div className="text-center py-12">
@@ -773,43 +773,43 @@ const CompradorPage = () => {
                         <h3 className="text-lg font-semibold mb-2">Nenhum boleto comprado</h3>
                         <p>Você ainda não comprou nenhum boleto.</p>
                       </div>
-                    ) : (
-                      <div className="overflow-x-auto">
-                        <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
-                          <thead className="bg-lime-600 text-white">
-                            <tr>
-                              <th className="py-3 px-4 text-left">Nº Boleto</th>
-                              <th className="py-3 px-4 text-left">Valor (R$)</th>
-                              <th className="py-3 px-4 text-left">Valor Líquido (USDT)</th>
-                              <th className="py-3 px-4 text-left">Taxa Serviço</th>
-                              <th className="py-3 px-4 text-left">Data Compra</th>
-                              <th className="py-3 px-4 text-left">Status</th>
-                              <th className="py-3 px-4 text-left">Ações</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').map((boleto) => (
-                              <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
-                                <td className="py-3 px-4">{boleto.numeroBoleto}</td>
-                                <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
-                                <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
-                                <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
-                                <td className="py-3 px-4">{boleto.dataCompra ? new Date(boleto.dataCompra).toLocaleDateString('pt-BR') + ' ' + new Date(boleto.dataCompra).toLocaleTimeString('pt-BR') : '--'}</td>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+                        <thead className="bg-lime-600 text-white">
+                          <tr>
+                            <th className="py-3 px-4 text-left">Nº Boleto</th>
+                            <th className="py-3 px-4 text-left">Valor (R$)</th>
+                            <th className="py-3 px-4 text-left">Valor Líquido (USDT)</th>
+                            <th className="py-3 px-4 text-left">Taxa Serviço</th>
+                            <th className="py-3 px-4 text-left">Data Compra</th>
+                            <th className="py-3 px-4 text-left">Status</th>
+                            <th className="py-3 px-4 text-left">Ações</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').map((boleto) => (
+                            <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
+                              <td className="py-3 px-4">{boleto.numeroBoleto}</td>
+                              <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                              <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
+                              <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
+                              <td className="py-3 px-4">{boleto.dataCompra ? new Date(boleto.dataCompra).toLocaleDateString('pt-BR') + ' ' + new Date(boleto.dataCompra).toLocaleTimeString('pt-BR') : '--'}</td>
                                 <td className="py-3 px-4"><StatusBadge status={boleto.status} /></td>
-                                <td className="py-3 px-6 w-44 flex gap-2">
-                                  <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
+                              <td className="py-3 px-6 w-44 flex gap-2">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
                                       <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-bold transition-colors duration-200">Ações</button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent className="min-w-48">
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent className="min-w-48">
                                       <DropdownMenuItem onClick={() => handlePagarBoleto(boleto)} disabled={boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
-                                        <FaCreditCard className="mr-2 text-sm" />
-                                        Pagar Boleto
-                                      </DropdownMenuItem>
+                                      <FaCreditCard className="mr-2 text-sm" />
+                                      Pagar Boleto
+                                    </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => { setSelectedBoleto(boleto); setEtapaCompra(3); setShowModal(true); }} disabled={boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
-                                        <FaUpload className="mr-2 text-sm" />
-                                        Enviar Comprovante
-                                      </DropdownMenuItem>
+                                      <FaUpload className="mr-2 text-sm" />
+                                      Enviar Comprovante
+                                    </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => {
                                         console.log('🖱️ CLICK DROPDOWN - Visualizar Comprovante:', boleto);
                                         handleVisualizarComprovante(boleto);
@@ -817,20 +817,20 @@ const CompradorPage = () => {
                                         <FaUpload className="mr-2 text-sm" /> Visualizar Comprovante
                                       </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => handleDisputa(boleto)} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                        <FaExclamationTriangle className="mr-2 text-sm" />
-                                        Disputa
-                                      </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                  </DropdownMenu>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    )}
-                  </CardContent>
-                </Card>
+                                      <FaExclamationTriangle className="mr-2 text-sm" />
+                                      Disputa
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
                 {/* Viewer lateral removido para simplificar e melhorar performance */}
               </div>

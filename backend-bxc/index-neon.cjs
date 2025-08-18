@@ -217,8 +217,8 @@ app.get('/boletos', async (req, res) => {
       });
       
       return {
-        ...boleto,
-        status: mapStatus(boleto.status)
+      ...boleto,
+      status: mapStatus(boleto.status)
       };
     });
     

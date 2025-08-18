@@ -500,49 +500,49 @@ function VendedorPage() {
         console.log('🔧 DEBUG - Estado statusBaixa atualizado:', newState);
         return newState;
       });
+    
+    // Verificar se a carteira está conectada
+    if (!wallet.isConnected || !wallet.address) {
+      setBoletoParaBaixar(boleto);
+      setProcessandoBaixa(true);
       
-      // Verificar se a carteira está conectada
-      if (!wallet.isConnected || !wallet.address) {
-        setBoletoParaBaixar(boleto);
-        setProcessandoBaixa(true);
-      
-        // Abrir modal de conexão automaticamente
-        try {
-          if (openConnectModal && typeof openConnectModal === 'function') {
-            openConnectModal();
-          } else {
+      // Abrir modal de conexão automaticamente
+      try {
+        if (openConnectModal && typeof openConnectModal === 'function') {
+          openConnectModal();
+        } else {
             // Limpar estados de loading
             setBoletoBaixandoId(null);
             setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
             
-            setAlertInfo({
-              type: 'destructive',
-              title: 'Erro de conexão',
-              description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
-            });
-            setTimeout(() => setAlertInfo(null), 3000);
-            return;
-          }
-        } catch (error) {
-          console.error('Erro ao abrir modal de conexão:', error);
+          setAlertInfo({
+            type: 'destructive',
+            title: 'Erro de conexão',
+            description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
+          });
+          setTimeout(() => setAlertInfo(null), 3000);
+          return;
+        }
+      } catch (error) {
+        console.error('Erro ao abrir modal de conexão:', error);
           
           // Limpar estados de loading
           setBoletoBaixandoId(null);
           setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
           
-          setAlertInfo({
-            type: 'destructive',
-            title: 'Erro de conexão',
-            description: 'Erro ao abrir modal. Tente conectar a carteira manualmente.'
-          });
-          setTimeout(() => setAlertInfo(null), 3000);
-          return;
-        }
+        setAlertInfo({
+          type: 'destructive',
+          title: 'Erro de conexão',
+          description: 'Erro ao abrir modal. Tente conectar a carteira manualmente.'
+        });
+        setTimeout(() => setAlertInfo(null), 3000);
         return;
       }
+      return;
+    }
 
-      // Se a carteira já está conectada, processar diretamente
-      await processarBaixaBoleto(boleto);
+    // Se a carteira já está conectada, processar diretamente
+    await processarBaixaBoleto(boleto);
     } catch (error) {
       console.error('Erro ao processar baixa:', error);
       
@@ -1205,7 +1205,7 @@ function VendedorPage() {
                                           onClick={() => {
                                             const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
                                             if (statusBaixa[boletoId] !== 'processando') {
-                                              handleBaixarPagamento(boleto);
+                                            handleBaixarPagamento(boleto);
                                             }
                                           }}
                                           disabled={statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'processando'}
