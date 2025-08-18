@@ -118,11 +118,11 @@ const CompradorPage = () => {
   };
 
   const handleSelecionarBoleto = (boleto) => {
-    console.log('🔍 Selecionando boleto:', boleto);
+
     setSelectedBoleto(boleto);
     setEtapaCompra(1);
     setShowModal(true);
-    console.log('✅ Modal aberto:', { showModal: true, selectedBoleto: boleto });
+
   };
 
   const handleConectarCarteira = () => {
@@ -400,7 +400,7 @@ const CompradorPage = () => {
     // Abrir comprovante em nova aba (solução profissional definitiva)
   const handleVisualizarComprovante = (boleto) => {
     try {
-      console.log('🖱️ EXECUTANDO handleVisualizarComprovante:', boleto);
+
       
       const ident = boleto.numeroBoleto || boleto.numero_controle || boleto.id;
       
@@ -408,7 +408,7 @@ const CompradorPage = () => {
       const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl;
       
       if (comprovanteUrl) {
-        console.log('✅ Abrindo comprovante direto:', comprovanteUrl);
+
         
         // Se for base64, criar blob URL para melhor performance
         if (comprovanteUrl.startsWith('data:')) {
@@ -424,7 +424,7 @@ const CompradorPage = () => {
             const blob = new Blob([byteArray], { type: 'application/pdf' });
             const blobUrl = URL.createObjectURL(blob);
             
-            console.log('✅ Criado blob URL para PDF:', blobUrl);
+
             window.open(blobUrl, '_blank', 'noopener,noreferrer');
             
             // Limpar blob URL após 30 segundos
@@ -448,7 +448,7 @@ const CompradorPage = () => {
         : 'http://localhost:3001';
       
       const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
-      console.log('✅ Usando proxy backend:', proxyUrl);
+
       window.open(proxyUrl, '_blank', 'noopener,noreferrer');
       
     } catch (error) {
@@ -560,14 +560,14 @@ const CompradorPage = () => {
     let interval;
     
     const startPolling = () => {
+      // EMERGÊNCIA: DESABILITADO COMPLETAMENTE - Backend 404 causando loop infinito
+      // TODO: Reabilitar quando backend voltar a funcionar
+      /*
       // Buscar uma vez imediatamente apenas se ainda não temos dados
       if (meusBoletos.length === 0) {
         fetchMeusBoletos();
       }
       
-      // TEMPORARIAMENTE DESABILITADO - Polling causando erro em massa com backend 404
-      // TODO: Reabilitar quando backend estiver funcionando
-      /*
       interval = setInterval(() => {
         // Só fazer polling se a aba está ativa e há boletos com status que podem mudar
         const hasActiveTransactions = meusBoletos.some(boleto => 
@@ -803,7 +803,7 @@ const CompradorPage = () => {
                                       Enviar Comprovante
                                     </DropdownMenuItem>
                                       <DropdownMenuItem onClick={() => {
-                                        console.log('🖱️ CLICK DROPDOWN - Visualizar Comprovante:', boleto);
+
                                         handleVisualizarComprovante(boleto);
                                       }} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
                                         <FaUpload className="mr-2 text-sm" /> Visualizar Comprovante
@@ -871,7 +871,7 @@ const CompradorPage = () => {
                                 {(boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'AGUARDANDO BAIXA') ? (
                                   <button
                                     onClick={() => {
-                                      console.log('🖱️ CLICK BOTÃO DIRETO - Visualizar Comprovante:', boleto);
+
                                       handleVisualizarComprovante(boleto);
                                     }}
                                     className="bg-green-700 hover:bg-green-800 text-white py-1 px-3 rounded flex items-center justify-center gap-2 text-sm font-semibold transition-colors duration-200"
