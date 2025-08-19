@@ -1,21 +1,19 @@
-Cache clear marker - Version 2.0.0
-Build: emergency-fix-2
-Timestamp: 2025-01-18T18:30:00Z
+Cache clear marker - Version 3.0.0 FINAL
+Build: zero-polling-final  
+Timestamp: 2025-01-18T19:00:00Z
+Commit: 8e66f6a4
 
-EMERGENCY FIX v2: 
-✅ CadastroPage.jsx console.log removido
-✅ VendedorPage.jsx 100% limpo  
-✅ Cache-busting script implementado
-✅ Performance otimizada
+🚨 CRITICAL FIX APLICADO - POLLING 100% ELIMINADO:
+✅ VendedorPage: setInterval cotação REMOVIDO
+✅ useUSDTConversion: retry automático DESABILITADO  
+✅ CompradorPage: polling boletos ELIMINADO
+✅ Cache USDT aumentado para 30min
+✅ Timer destravamento: 1min → 5min
 
-RESOLVIDO: Loop infinito de 35.000+ logs
-- CadastroPage log crítico removido
-- Todas as funções de renderização limpas
-- Cache localStorage invalidado
+PROBLEMA RESOLVIDO DEFINITIVAMENTE:
+❌ Loop infinito 35.000+ requisições/segundo
+❌ Rate limit 429 CoinGecko
+❌ Polling excessivo em todas as páginas
 
-INSTRUÇÃO CACHE-BUSTING:
-1. Ctrl + F5 (hard refresh)
-2. Ou abra: /cache-bust.js
-3. Ou limpe dados do site manualmente
-
-STATUS: 🟢 APLICAÇÃO FUNCIONAL
+STATUS FINAL: 🟢 ZERO REQUISIÇÕES AUTOMÁTICAS
+INSTRUÇÃO: Ctrl + F5 para atualizar cache
