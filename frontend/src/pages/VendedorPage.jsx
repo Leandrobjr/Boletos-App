@@ -140,10 +140,10 @@ function VendedorPage() {
       // Verificar imediatamente
       verificarBoletosParaDestravar();
       
-      // Configurar verificação a cada 1 minuto
+      // Configurar verificação a cada 5 minutos (reduzido para evitar polling excessivo)
       const timer = setInterval(() => {
         verificarBoletosParaDestravar();
-      }, 60000); // 60 segundos
+      }, 300000); // 5 minutos
       
       setDestravamentoTimer(timer);
       
@@ -202,10 +202,11 @@ function VendedorPage() {
   }, [processandoBaixa, boletoParaBaixar, wallet.isConnected]);
 
   useEffect(() => {
-    // Atualiza cotação ao montar e a cada 60s
+    // Atualiza cotação apenas ao montar (sem polling automático)
     fetchTaxaConversao();
-    intervalRef.current = setInterval(fetchTaxaConversao, 60000);
-    return () => clearInterval(intervalRef.current);
+    // POLLING DESABILITADO - estava causando rate limit 429
+    // intervalRef.current = setInterval(fetchTaxaConversao, 60000);
+    // return () => clearInterval(intervalRef.current);
   }, []);
 
   useEffect(() => {

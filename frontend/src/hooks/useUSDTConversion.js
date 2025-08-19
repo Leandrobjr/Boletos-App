@@ -14,8 +14,8 @@ export function useUSDTConversion() {
       if (cached) {
         const { rate, timestamp } = JSON.parse(cached);
         const now = Date.now();
-        // Cache válido por 10 minutos
-        if (now - timestamp < 600000) {
+        // Cache válido por 30 minutos (aumentado para reduzir requisições)
+        if (now - timestamp < 1800000) {
           return rate;
         }
       }
@@ -79,14 +79,14 @@ export function useUSDTConversion() {
       fetchTaxaConversao();
     }
     
-    // Retry automático muito reduzido - apenas a cada 5 minutos se falhar
-    const retryInterval = setInterval(() => {
-      if (!taxaConversao && !loading) {
-        fetchTaxaConversao();
-      }
-    }, 300000); // 5 minutos
+    // POLLING COMPLETAMENTE DESABILITADO - estava causando rate limit 429
+    // const retryInterval = setInterval(() => {
+    //   if (!taxaConversao && !loading) {
+    //     fetchTaxaConversao();
+    //   }
+    // }, 300000); // 5 minutos
     
-    return () => clearInterval(retryInterval);
+    // return () => clearInterval(retryInterval);
   }, []); // Remover dependências para evitar loops
 
   // Conversão BRL -> USDT com fallback

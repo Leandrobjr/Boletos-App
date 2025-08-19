@@ -568,15 +568,16 @@ const CompradorPage = () => {
         fetchMeusBoletos();
       }
       
-      interval = setInterval(() => {
-        // Só fazer polling se a aba está ativa e há boletos com status que podem mudar
-        const hasActiveTransactions = meusBoletos.some(boleto => 
-          ['AGUARDANDO PAGAMENTO', 'AGUARDANDO BAIXA'].includes(boleto.status)
-        );
-        
-        if (hasActiveTransactions) {
-        fetchMeusBoletos();
-        }
+      // POLLING DESABILITADO - estava causando requisições excessivas
+      // interval = setInterval(() => {
+      //   // Só fazer polling se a aba está ativa e há boletos com status que podem mudar
+      //   const hasActiveTransactions = meusBoletos.some(boleto => 
+      //     ['AGUARDANDO PAGAMENTO', 'AGUARDANDO BAIXA'].includes(boleto.status)
+      //   );
+      //   
+      //   if (hasActiveTransactions) {
+      //     fetchMeusBoletos();
+      //   }
       }, 20000); // Aumentado para 20s
       */
     };
