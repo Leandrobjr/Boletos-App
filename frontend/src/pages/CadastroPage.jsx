@@ -1,4 +1,3 @@
-console.log("CadastroPage ATIVO")
 import React, { useState } from 'react';
 // import FooterBXC from '../components/FooterBXC';
 import { getAuth, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';

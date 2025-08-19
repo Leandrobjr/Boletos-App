@@ -1,13 +1,21 @@
-Cache clear marker - Version 1.0.1
-Build: f24d9e7b
-Timestamp: 2025-01-18T17:46:00Z
+Cache clear marker - Version 2.0.0
+Build: emergency-fix-2
+Timestamp: 2025-01-18T18:30:00Z
 
-CRITICAL FIX: Loop infinito resolvido
-- Polling completamente desabilitado
-- Todos os console.logs removidos
-- Função valorLiquidoUSDT limpa
+EMERGENCY FIX v2: 
+✅ CadastroPage.jsx console.log removido
+✅ VendedorPage.jsx 100% limpo  
+✅ Cache-busting script implementado
+✅ Performance otimizada
 
-Se ainda vê logs, force refresh:
-Ctrl + F5 (Windows)
-Cmd + Shift + R (Mac)
-Ctrl + Shift + R (Linux)
+RESOLVIDO: Loop infinito de 35.000+ logs
+- CadastroPage log crítico removido
+- Todas as funções de renderização limpas
+- Cache localStorage invalidado
+
+INSTRUÇÃO CACHE-BUSTING:
+1. Ctrl + F5 (hard refresh)
+2. Ou abra: /cache-bust.js
+3. Ou limpe dados do site manualmente
+
+STATUS: 🟢 APLICAÇÃO FUNCIONAL

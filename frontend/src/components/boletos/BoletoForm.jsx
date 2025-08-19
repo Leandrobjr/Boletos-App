@@ -52,7 +52,6 @@ function formatarMoedaFinal(valor) {
 }
 
 function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, address }) {
-  console.log('[BoletoForm] Renderizou. user:', user);
   const [valor, setValor] = useState("0,00");
   const [cotacao, setCotacao] = useState(null);
   const [usdt, setUsdt] = useState("");
@@ -76,7 +75,7 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
   const { isConnected, address } = useAccount();
 
   useEffect(() => {
-    console.log('[BoletoForm] isConnected mudou:', isConnected, 'address:', address);
+    // Monitorar mudanças de carteira conectada
   }, [isConnected, address]);
 
   async function buscarCotacao() {
@@ -245,7 +244,8 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
       numeroControle: numeroControleStr
     };
     
-    console.log('🔍 DEBUG BoletoForm - Dados sendo enviados:', {
+    // Dados sendo enviados para o backend
+    const dadosEnvio = {
       valor: valorNum,
       valor_usdt: usdt,
       cotacao: cotacao,

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   FaTrash, FaWallet, FaFileInvoiceDollar,
   FaList, FaCheck, FaHistory,
@@ -250,10 +250,10 @@ function VendedorPage() {
     valorUsdt = Number((valorNum / taxaConversaoNum).toFixed(2));
   }
 
-  // Função para calcular valor líquido (95% do valor USDT)
-  const calcularValorLiquido = (valorUsdt) => {
+  // Função para calcular valor líquido (95% do valor USDT) - Otimizada
+  const calcularValorLiquido = useCallback((valorUsdt) => {
     return valorUsdt !== undefined && valorUsdt !== null ? (Number(valorUsdt) * 0.95).toFixed(2) : '--';
-  };
+  }, []);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -399,11 +399,9 @@ function VendedorPage() {
     return `${inteiro},${centavos}`;
   };
 
-  // Função robusta para formatar datas (sempre DD/MM/YYYY)
-  const formatarData = (data) => {
-
+  // Função robusta para formatar datas (sempre DD/MM/YYYY) - Otimizada com React.useCallback
+  const formatarData = useCallback((data) => {
     if (!data || data === null) {
-
       return "--";
     }
     
@@ -433,7 +431,7 @@ function VendedorPage() {
       console.error('❌ Erro ao formatar data:', error);
       return "--";
     }
-  };
+  }, []);
 
   // Função para cancelar boleto
   const handleCancelar = async (boleto) => {
@@ -1099,18 +1097,15 @@ function VendedorPage() {
                                 <td className="py-3 px-4">{boleto.cpfCnpj || '--'}</td>
                                 <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? boleto.valor_brl.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                                 <td className="py-3 px-4">
-                                  {(() => {
-
+                                  {useMemo(() => {
                                     if (boleto.valor_usdt !== undefined && boleto.valor_usdt !== null) {
                                       const valor = Number(boleto.valor_usdt);
                                       if (!isNaN(valor)) {
-
                                         return `${valor.toFixed(2)} USDT`;
                                       }
                                     }
-
                                     return '--';
-                                  })()}
+                                  }, [boleto.valor_usdt])}
                                 </td>
                                 <td className="py-3 px-4">{formatarData(boleto.vencimento)}</td>
                                 <td className="py-3 px-4">
