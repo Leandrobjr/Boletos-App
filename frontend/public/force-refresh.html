@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>🚨 CACHE BUSTING EMERGENCY</title>
+    <style>
+        body { 
+            font-family: Arial; 
+            background: #ffebee; 
+            padding: 20px; 
+            text-align: center; 
+        }
+        .emergency { 
+            background: #f44336; 
+            color: white; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin: 20px 0; 
+        }
+        .success { 
+            background: #4caf50; 
+            color: white; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin: 10px 0; 
+        }
+        button { 
+            background: #2196f3; 
+            color: white; 
+            border: none; 
+            padding: 15px 30px; 
+            font-size: 16px; 
+            border-radius: 5px; 
+            cursor: pointer; 
+            margin: 10px; 
+        }
+        button:hover { background: #1976d2; }
+    </style>
+</head>
+<body>
+    <div class="emergency">
+        <h1>🚨 EMERGENCY CACHE CLEAR</h1>
+        <p>Loop infinito de logs detectado!</p>
+        <p>Cache do browser precisa ser limpo IMEDIATAMENTE</p>
+    </div>
+    
+    <div class="success" id="status">
+        ⏳ Aguardando ação do usuário...
+    </div>
+    
+    <button onclick="clearAllCache()">🔄 LIMPAR CACHE AGRESSIVO</button>
+    <button onclick="forceReload()">⚡ RELOAD FORÇADO</button>
+    <button onclick="goToApp()">🏠 VOLTAR À APLICAÇÃO</button>
+    
+    <script>
+        function clearAllCache() {
+            const status = document.getElementById('status');
+            status.innerHTML = '🔄 Limpando cache...';
+            
+            // Clear all storages
+            try {
+                localStorage.clear();
+                sessionStorage.clear();
+                status.innerHTML = '✅ Storage limpo...';
+            } catch (e) {
+                console.error('Erro ao limpar storage:', e);
+            }
+            
+            // Clear Service Workers
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(registrations => {
+                    registrations.forEach(registration => {
+                        registration.unregister();
+                    });
+                    status.innerHTML = '✅ Service Workers limpos...';
+                });
+            }
+            
+            // Clear Cache API
+            if ('caches' in window) {
+                caches.keys().then(cacheNames => {
+                    cacheNames.forEach(cacheName => {
+                        caches.delete(cacheName);
+                    });
+                    status.innerHTML = '✅ Cache API limpo...';
+                });
+            }
+            
+            setTimeout(() => {
+                status.innerHTML = '🎉 CACHE COMPLETAMENTE LIMPO!';
+            }, 2000);
+        }
+        
+        function forceReload() {
+            window.location.href = window.location.origin + '?cb=' + Date.now();
+        }
+        
+        function goToApp() {
+            window.location.href = '/app/vendedor/cadastrar?cb=' + Date.now();
+        }
+        
+        // Auto-clear after 3 seconds
+        setTimeout(() => {
+            clearAllCache();
+        }, 3000);
+    </script>
+</body>
+</html>

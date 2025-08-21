@@ -1,34 +1,46 @@
-// Cache Busting Script v2.0
-console.log('🔄 CACHE BUSTING ATIVO - Forçando refresh completo');
+// Cache Busting Script v3.0 AGRESSIVO
+console.log('🚨 CACHE BUSTING ULTRA AGRESSIVO - LOGS INFINITOS DETECTADOS');
 
-// 1. Clear localStorage
+// 1. Clear ALL storage types
 try {
   localStorage.clear();
-  console.log('✅ localStorage limpo');
-} catch (e) {
-  console.warn('⚠️ Erro ao limpar localStorage:', e);
-}
-
-// 2. Clear sessionStorage  
-try {
   sessionStorage.clear();
-  console.log('✅ sessionStorage limpo');
+  console.log('✅ Todos os storages limpos');
 } catch (e) {
-  console.warn('⚠️ Erro ao limpar sessionStorage:', e);
+  console.warn('⚠️ Erro ao limpar storages:', e);
 }
 
-// 3. Clear IndexedDB if available
+// 2. Clear IndexedDB
 if ('indexedDB' in window) {
   try {
     indexedDB.deleteDatabase('firebaseLocalStorageDb');
+    indexedDB.deleteDatabase('keyval-store');
     console.log('✅ IndexedDB limpo');
   } catch (e) {
     console.warn('⚠️ Erro ao limpar IndexedDB:', e);
   }
 }
 
-// 4. Force reload with no-cache
+// 3. Clear Service Worker cache
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.getRegistrations().then(registrations => {
+    registrations.forEach(registration => {
+      registration.unregister();
+    });
+  });
+}
+
+// 4. Clear browser cache via Cache API
+if ('caches' in window) {
+  caches.keys().then(cacheNames => {
+    cacheNames.forEach(cacheName => {
+      caches.delete(cacheName);
+    });
+  });
+}
+
+// 5. Force hard reload with cache bypass
 setTimeout(() => {
-  console.log('🔄 Forçando reload sem cache...');
-  location.reload(true);
-}, 1000);
+  console.log('🔄 FORÇANDO RELOAD ULTRA AGRESSIVO...');
+  window.location.href = window.location.href + '?cb=' + Date.now();
+}, 1500);
