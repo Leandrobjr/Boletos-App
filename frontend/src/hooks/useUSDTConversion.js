@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { buildApiUrl } from '../config/apiConfig';
 
 // Hook para conversão BRL <-> USDT com cotação online Coingecko
@@ -36,8 +36,8 @@ export function useUSDTConversion() {
     }
   };
 
-  // Busca cotação online via proxy backend (evita CORS)
-  const fetchTaxaConversao = async () => {
+  // Busca cotação online via proxy backend (evita CORS) - Estabilizada com useCallback
+  const fetchTaxaConversao = useCallback(async () => {
     // Verificar cache primeiro
     const cachedRate = getCachedRate();
     if (cachedRate) {
@@ -68,7 +68,7 @@ export function useUSDTConversion() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []); // useCallback sem dependências porque não usa states/props externos
 
   useEffect(() => {
     // Inicializar com cache se disponível
@@ -87,7 +87,7 @@ export function useUSDTConversion() {
     // }, 300000); // 5 minutos
     
     // return () => clearInterval(retryInterval);
-  }, []); // Remover dependências para evitar loops
+  }, [fetchTaxaConversao]); // Incluir fetchTaxaConversao estabilizada no array de dependências
 
   // Conversão BRL -> USDT com fallback
   const brlToUsdt = (valorBrl) => {

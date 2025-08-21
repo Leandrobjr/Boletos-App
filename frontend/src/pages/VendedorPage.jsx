@@ -207,7 +207,7 @@ function VendedorPage() {
     // POLLING DESABILITADO - estava causando rate limit 429
     // intervalRef.current = setInterval(fetchTaxaConversao, 60000);
     // return () => clearInterval(intervalRef.current);
-  }, []);
+  }, [fetchTaxaConversao]); // Incluir fetchTaxaConversao nas dependências
 
   useEffect(() => {
     if (tab && tab !== activeTab) setActiveTab(tab);
