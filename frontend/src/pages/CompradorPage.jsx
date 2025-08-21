@@ -776,7 +776,10 @@ const CompradorPage = () => {
                               <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                               <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
                               <td className="py-3 px-4">R$ {boleto.valor ? taxaServicoReais(boleto.valor) : '--'} ({boleto.valor_usdt ? taxaServicoUSDT(boleto.valor_usdt) + ' USDT' : '--'})</td>
-                              <td className="py-3 px-4">{boleto.dataCompra ? new Date(boleto.dataCompra).toLocaleDateString('pt-BR') + ' ' + new Date(boleto.dataCompra).toLocaleTimeString('pt-BR') : '--'}</td>
+                              <td className="py-3 px-4">{boleto.dataCompra ? (() => {
+                                const data = new Date(boleto.dataCompra);
+                                return data.toLocaleDateString('pt-BR') + ' ' + data.toLocaleTimeString('pt-BR');
+                              })() : '--'}</td>
                                 <td className="py-3 px-4"><StatusBadge status={boleto.status} /></td>
                               <td className="py-3 px-6 w-44 flex gap-2">
                                 <DropdownMenu>
@@ -845,13 +848,18 @@ const CompradorPage = () => {
                             <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
                               <td className="py-3 px-4">
                                 {boleto.dataCompra ? (
-                                  <>
-                                    {new Date(boleto.dataCompra).toLocaleDateString('pt-BR')}
-                                    <br />
-                                    <span className="text-xs text-gray-400">
-                                      {new Date(boleto.dataCompra).toLocaleTimeString('pt-BR')}
-                                    </span>
-                                  </>
+                                  {(() => {
+                                    const data = new Date(boleto.dataCompra);
+                                    return (
+                                      <>
+                                        {data.toLocaleDateString('pt-BR')}
+                                        <br />
+                                        <span className="text-xs text-gray-400">
+                                          {data.toLocaleTimeString('pt-BR')}
+                                        </span>
+                                      </>
+                                    );
+                                  })()}
                                 ) : '--'}
                               </td>
                               <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
@@ -1200,7 +1208,10 @@ const CompradorPage = () => {
                   </div>
                   <div className="text-center">
                     <div className="font-semibold text-green-700 mb-1">Data Compra</div>
-                    <div className="text-gray-800">{new Date(selectedComprovante.dataCompra).toLocaleDateString('pt-BR')}</div>
+                    <div className="text-gray-800">{(() => {
+                      const data = new Date(selectedComprovante.dataCompra);
+                      return data.toLocaleDateString('pt-BR');
+                    })()}</div>
                   </div>
                 </div>
               </div>
