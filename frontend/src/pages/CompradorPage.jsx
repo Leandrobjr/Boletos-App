@@ -503,24 +503,39 @@ const CompradorPage = () => {
 
   // Função otimizada para buscar boletos disponíveis
   const fetchBoletosDisponiveis = async () => {
+    console.log('🔍 COMPRADOR - Iniciando busca de boletos disponíveis...');
+    
     // Verificar cache primeiro
     const now = Date.now();
     if (boletosCache && (now - cacheTime) < CACHE_DURATION) {
+      console.log('📦 COMPRADOR - Usando cache de boletos:', boletosCache.length);
       setBoletosDisponiveis(boletosCache);
       return;
     }
 
     setLoadingBoletos(true);
     try {
-      const res = await fetch(buildApiUrl('/boletos'));
+      const url = buildApiUrl('/boletos');
+      console.log('🔗 COMPRADOR - URL da API:', url);
+      
+      const res = await fetch(url);
+      console.log('📡 COMPRADOR - Status da resposta:', res.status);
+      
       if (!res.ok) throw new Error('Erro ao buscar boletos');
       
       const data = await res.json();
+      console.log('📦 COMPRADOR - Dados recebidos:', data);
+      
       const lista = Array.isArray(data) ? data : (data?.data || []);
+      console.log('📋 COMPRADOR - Lista de boletos:', lista.length);
       
       // Filtrar apenas boletos DISPONÍVEIS para reduzir processamento
       const boletosDisponiveis = lista
-        .filter(boleto => mapStatus(boleto.status) === 'DISPONIVEL')
+        .filter(boleto => {
+          const statusMapeado = mapStatus(boleto.status);
+          console.log('🔍 COMPRADOR - Boleto:', boleto.numero_controle, 'Status:', boleto.status, 'Mapeado:', statusMapeado);
+          return statusMapeado === 'DISPONIVEL';
+        })
         .map(boleto => ({
             ...boleto,
             numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
@@ -532,11 +547,12 @@ const CompradorPage = () => {
           status: 'DISPONIVEL'
         }));
       
+      console.log('✅ COMPRADOR - Boletos disponíveis filtrados:', boletosDisponiveis.length);
       setBoletosDisponiveis(boletosDisponiveis);
       setBoletosCache(boletosDisponiveis);
       setCacheTime(now);
     } catch (error) {
-        console.error('❌ Erro ao buscar boletos:', error);
+        console.error('❌ COMPRADOR - Erro ao buscar boletos:', error);
         setBoletosDisponiveis([]);
     } finally {
       setLoadingBoletos(false);
@@ -545,7 +561,7 @@ const CompradorPage = () => {
 
   useEffect(() => {
     // Carregamento lazy - só carregar quando necessário
-    if (activeTab === 'livroOrdens') {
+    if (activeTab === 'comprar') {
       fetchBoletosDisponiveis();
     }
   }, [activeTab]);
