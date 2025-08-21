@@ -137,20 +137,10 @@ function VendedorPage() {
   // Monitorar boletos para destravamento automático
   useEffect(() => {
     if (boletos.length > 0) {
-      // Verificar imediatamente
+      // Verificar imediatamente apenas
       verificarBoletosParaDestravar();
       
-      // Configurar verificação a cada 5 minutos (reduzido para evitar polling excessivo)
-      const timer = setInterval(() => {
-        verificarBoletosParaDestravar();
-      }, 300000); // 5 minutos
-      
-      setDestravamentoTimer(timer);
-      
-      // Limpar timer quando componente for desmontado
-      return () => {
-        if (timer) clearInterval(timer);
-      };
+      // POLLING REMOVIDO - projeto nunca teve atualização automática
     }
   }, [boletos]);
 
@@ -489,14 +479,15 @@ function VendedorPage() {
   // Função para baixar pagamento
   const handleBaixarPagamento = async (boleto) => {
     const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
+    console.log('🚀 Iniciando baixa do boleto:', boletoId);
     
     try {
       // Definir estado de processando
-
+      console.log('⏳ Definindo estado processando para:', boletoId);
       setBoletoBaixandoId(boletoId);
       setStatusBaixa(prev => {
         const newState = { ...prev, [boletoId]: 'processando' };
-
+        console.log('🔄 Status definido como processando:', newState);
         return newState;
       });
     
@@ -847,20 +838,20 @@ function VendedorPage() {
       await fetchBoletosOptimized(true);
 
       // Definir estado de sucesso
-
+      console.log('✅ Boleto baixado com sucesso, definindo status sucesso para:', boletoId);
       setStatusBaixa(prev => {
         const newState = { ...prev, [boletoId]: 'sucesso' };
-
+        console.log('🔄 Status atualizado:', newState);
         return newState;
       });
       
       // Limpar estados após 3 segundos
       setTimeout(() => {
-
+        console.log('🧹 Limpando estados após 3 segundos para:', boletoId);
         setBoletoBaixandoId(null);
         setStatusBaixa(prev => {
           const newState = { ...prev, [boletoId]: null };
-
+          console.log('🔄 Estados limpos:', newState);
           return newState;
         });
       }, 3000);

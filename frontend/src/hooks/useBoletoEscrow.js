@@ -15,8 +15,8 @@ export function useBoletoEscrow() {
     // Por enquanto, simula a liberação
     console.log('Liberando boleto:', { boletoId, enderecoComprador, enderecoVendedor });
     
-    // Simula delay de transação
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Simula delay de transação (reduzido para teste)
+    await new Promise(resolve => setTimeout(resolve, 1000));
     
     return { 
       success: true, 
