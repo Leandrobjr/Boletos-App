@@ -4,7 +4,7 @@ import {
   FaTrash, FaWallet, FaCheck, FaShoppingCart, FaMoneyBillWave,
   FaExclamationTriangle, FaInfoCircle, FaList, FaHistory, 
   FaCreditCard, FaLock, FaArrowRight, FaUpload, FaClock, FaTimesCircle,
-  FaFilePdf, FaExternalLinkAlt
+  FaFilePdf, FaExternalLinkAlt, FaFileInvoiceDollar
 } from 'react-icons/fa';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
