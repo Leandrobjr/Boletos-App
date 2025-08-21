@@ -847,20 +847,18 @@ const CompradorPage = () => {
                           {meusBoletos.map((boleto) => (
                             <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
                               <td className="py-3 px-4">
-                                {boleto.dataCompra ? (
-                                  {(() => {
-                                    const data = new Date(boleto.dataCompra);
-                                    return (
-                                      <>
-                                        {data.toLocaleDateString('pt-BR')}
-                                        <br />
-                                        <span className="text-xs text-gray-400">
-                                          {data.toLocaleTimeString('pt-BR')}
-                                        </span>
-                                      </>
-                                    );
-                                  })()}
-                                ) : '--'}
+                                {boleto.dataCompra ? (() => {
+                                  const data = new Date(boleto.dataCompra);
+                                  return (
+                                    <>
+                                      {data.toLocaleDateString('pt-BR')}
+                                      <br />
+                                      <span className="text-xs text-gray-400">
+                                        {data.toLocaleTimeString('pt-BR')}
+                                      </span>
+                                    </>
+                                  );
+                                })() : '--'}
                               </td>
                               <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                               <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
