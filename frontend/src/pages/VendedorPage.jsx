@@ -1093,12 +1093,12 @@ function VendedorPage() {
                         ) : (
                           boletos.map((boleto, idx) => {
                             return (
-                              <tr key={boleto.numeroControle} className="border-b border-gray-200 hover:bg-lime-50">
+                              <tr key={boleto.numeroControle || boleto.id || `boleto-${idx}`} className="border-b border-gray-200 hover:bg-lime-50">
                                 <td className="py-3 px-4">{boleto.numeroControle}</td>
                                 <td className="py-3 px-4">{boleto.cpfCnpj || '--'}</td>
                                 <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? boleto.valor_brl.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                                 <td className="py-3 px-4">
-                                  {useMemo(() => {
+                                  {(() => {
                                     if (boleto.valor_usdt !== undefined && boleto.valor_usdt !== null) {
                                       const valor = Number(boleto.valor_usdt);
                                       if (!isNaN(valor)) {
@@ -1106,7 +1106,7 @@ function VendedorPage() {
                                       }
                                     }
                                     return '--';
-                                  }, [boleto.valor_usdt])}
+                                  })()}
                                 </td>
                                 <td className="py-3 px-4">{formatarData(boleto.vencimento)}</td>
                                 <td className="py-3 px-4">
