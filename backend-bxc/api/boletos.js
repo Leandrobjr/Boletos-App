@@ -84,8 +84,14 @@ module.exports = async (req, res) => {
         });
       }
       
-      // Buscar todos os boletos (comportamento original)
-      const result = await pool.query('SELECT * FROM boletos ORDER BY criado_em DESC');
+      // Buscar apenas boletos DISPONÍVEIS incluindo codigo_barras (OTIMIZADO)
+      const result = await pool.query(`
+        SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, vencimento, instituicao, status, criado_em 
+        FROM boletos 
+        WHERE status IN ('DISPONIVEL', 'pendente')
+        ORDER BY criado_em DESC 
+        LIMIT 25
+      `);
       
       res.status(200).json({
         success: true,

@@ -84,14 +84,19 @@ const CompradorPage = () => {
     }
   }, [wallet.isConnected, wallet.address, wallet.chainId, etapaCompra]);
 
-  // Função para buscar boletos do usuário autenticado (SILENCIOSA)
+  // Função para buscar boletos do usuário autenticado (OTIMIZADA)
   const fetchMeusBoletos = async () => {
     if (!user?.uid) return;
     
     try {
       // Enviar também a carteira (se conectada) para o backend identificar boletos reservados/comprados pelo usuário
       const walletQuery = wallet?.address ? `?wallet=${encodeURIComponent(wallet.address)}` : '';
-      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}${walletQuery}`));
+      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}${walletQuery}`), {
+        headers: {
+          'Cache-Control': 'max-age=30' // Cache de 30 segundos
+        }
+      });
+      
       if (!res.ok) throw new Error('Erro ao buscar boletos do usuário');
       const data = await res.json();
       const lista = Array.isArray(data) ? data : (data?.data || []);
@@ -99,7 +104,7 @@ const CompradorPage = () => {
       const boletosMapeados = lista.map(boleto => ({
         ...boleto,
         numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
-        codigoBarras: boleto.codigo_barras || boleto.codigoBarras, // FIX: mapeamento correto
+        codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
         valor: boleto.valor_brl || boleto.valor || 0,
         valor_usdt: boleto.valor_usdt || 0,
         dataCompra: boleto.criado_em || boleto.dataCompra,
@@ -108,19 +113,37 @@ const CompradorPage = () => {
       }));
       
       setMeusBoletos(boletosMapeados);
+      // Atualizar cache
+      setBoletosCache(boletosMapeados);
+      setCacheTime(Date.now());
     } catch (error) {
       console.error('Erro ao buscar boletos:', error);
       setMeusBoletos([]);
     }
   };
 
+  // Cache para boletos do usuário
+  const [boletosCache, setBoletosCache] = useState(null);
+  const [cacheTime, setCacheTime] = useState(0);
+  const CACHE_DURATION = 30000; // 30 segundos
+
   // Função para busca inicial com loading (apenas na navegação)
   const fetchMeusBoletosComLoading = async () => {
     if (!user?.uid) return;
     
+    // Verificar cache primeiro
+    const now = Date.now();
+    if (boletosCache && (now - cacheTime) < CACHE_DURATION) {
+      setMeusBoletos(boletosCache);
+      return;
+    }
+    
     setLoadingMeusBoletos(true);
     try {
       await fetchMeusBoletos();
+      // Atualizar cache
+      setBoletosCache(meusBoletos);
+      setCacheTime(now);
     } finally {
       setLoadingMeusBoletos(false);
     }
@@ -757,9 +780,10 @@ const CompradorPage = () => {
                 </CardHeader>
                   <CardContent className="p-4">
                     {loadingMeusBoletos ? (
-                      <div className="text-center py-12">
-                        <div className="animate-spin rounded-full h-10 w-10 border-b-2 border-blue-600 mx-auto mb-4"></div>
-                        <p className="text-gray-600">Carregando seus boletos...</p>
+                      <div className="text-center py-8">
+                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-3"></div>
+                        <p className="text-gray-600 text-sm">Carregando seus boletos...</p>
+                        <p className="text-gray-400 text-xs mt-1">Isso pode levar alguns segundos</p>
                       </div>
                     ) : meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').length === 0 ? (
                       <div className="text-center text-gray-500 py-12">

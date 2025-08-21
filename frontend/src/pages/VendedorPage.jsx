@@ -65,17 +65,24 @@ function VendedorPage() {
   const [showComprovanteModal, setShowComprovanteModal] = useState(false);
   const [selectedComprovante, setSelectedComprovante] = useState(null);
   const [destravamentoTimer, setDestravamentoTimer] = useState(null);
+  const [loadingBoletos, setLoadingBoletos] = useState(false);
 
   // Função para abrir o modal de conexão da carteira
   const handleWalletConnection = () => {
     if (openConnectModal) openConnectModal();
   };
 
-  // Função para buscar boletos do backend
+  // Função para buscar boletos do backend (OTIMIZADA)
   const fetchBoletos = async () => {
     if (!user?.uid) return;
+    
+    setLoadingBoletos(true);
     try {
-      const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}`));
+      const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}`), {
+        headers: {
+          'Cache-Control': 'max-age=30' // Cache de 30 segundos
+        }
+      });
       if (!res.ok) {
         throw new Error(`Erro ${res.status}: ${res.statusText}`);
       }
@@ -104,6 +111,8 @@ function VendedorPage() {
       console.error('Erro ao buscar boletos:', error);
       setBoletos([]);
       // Não mostrar alerta aqui para não poluir a interface
+    } finally {
+      setLoadingBoletos(false);
     }
   };
 
@@ -1059,29 +1068,36 @@ function VendedorPage() {
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
-                  {/* Tabela de boletos */}
-                  <div className="overflow-x-auto">
-                    <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
-                      <thead className="bg-lime-600 text-white">
-                        <tr>
-                          <th className="py-3 px-4 text-left">Nº Boleto</th>
-                          <th className="py-3 px-4 text-left">CPF/CNPJ Beneficiário</th>
-                          <th className="py-3 px-4 text-left">Valor (R$)</th>
-                          <th className="py-3 px-4 text-left">Valor (USDT)</th>
-                          <th className="py-3 px-4 text-left">Data Vencimento</th>
-                          <th className="py-3 px-4 text-left">Status</th>
-                          <th className="py-3 px-4 text-left">Comprador</th>
-                          <th className="py-3 px-6 text-left w-44">Ações</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {boletos.length === 0 ? (
+                  {/* Loading state */}
+                  {loadingBoletos ? (
+                    <div className="text-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-3"></div>
+                      <p className="text-gray-600 text-sm">Carregando seus boletos...</p>
+                      <p className="text-gray-400 text-xs mt-1">Isso pode levar alguns segundos</p>
+                    </div>
+                  ) : (
+                    <div className="overflow-x-auto">
+                      <table className="min-w-full border-collapse bg-white rounded-lg overflow-hidden">
+                        <thead className="bg-lime-600 text-white">
                           <tr>
-                            <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
-                              Nenhum boleto cadastrado.
-                            </td>
+                            <th className="py-3 px-4 text-left">Nº Boleto</th>
+                            <th className="py-3 px-4 text-left">CPF/CNPJ Beneficiário</th>
+                            <th className="py-3 px-4 text-left">Valor (R$)</th>
+                            <th className="py-3 px-4 text-left">Valor (USDT)</th>
+                            <th className="py-3 px-4 text-left">Data Vencimento</th>
+                            <th className="py-3 px-4 text-left">Status</th>
+                            <th className="py-3 px-4 text-left">Comprador</th>
+                            <th className="py-3 px-6 text-left w-44">Ações</th>
                           </tr>
-                        ) : (
+                        </thead>
+                        <tbody>
+                          {boletos.length === 0 ? (
+                            <tr>
+                              <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
+                                Nenhum boleto cadastrado.
+                              </td>
+                            </tr>
+                          ) : (
                           boletos.map((boleto, idx) => {
                             return (
                               <tr key={boleto.numeroControle || boleto.id || `boleto-${idx}`} className="border-b border-gray-200 hover:bg-lime-50">
@@ -1275,6 +1291,7 @@ function VendedorPage() {
                       </tbody>
                     </table>
                   </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
