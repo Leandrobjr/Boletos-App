@@ -560,26 +560,14 @@ const CompradorPage = () => {
     let interval;
     
     const startPolling = () => {
-      // EMERGÊNCIA: DESABILITADO COMPLETAMENTE - Backend 404 causando loop infinito
-      // TODO: Reabilitar quando backend voltar a funcionar
-      /*
-      // Buscar uma vez imediatamente apenas se ainda não temos dados
-      if (meusBoletos.length === 0) {
-        fetchMeusBoletos();
-      }
+      // Buscar uma vez imediatamente
+      fetchMeusBoletos();
       
-      // POLLING DESABILITADO - estava causando requisições excessivas
-      // interval = setInterval(() => {
-      //   // Só fazer polling se a aba está ativa e há boletos com status que podem mudar
-      //   const hasActiveTransactions = meusBoletos.some(boleto => 
-      //     ['AGUARDANDO PAGAMENTO', 'AGUARDANDO BAIXA'].includes(boleto.status)
-      //   );
-      //   
-      //   if (hasActiveTransactions) {
-      //     fetchMeusBoletos();
-      //   }
-      }, 20000); // Aumentado para 20s
-      */
+      // Depois iniciar polling de 7 segundos
+      interval = setInterval(() => {
+        console.log('🔄 Polling automático: fetchMeusBoletos');
+        fetchMeusBoletos();
+      }, 7000);
     };
     
     if ((activeTab === 'meusBoletos' || activeTab === 'historico') && user?.uid) {
@@ -588,10 +576,11 @@ const CompradorPage = () => {
     
     return () => {
       if (interval) {
+        console.log('🛑 Limpando interval de polling');
         clearInterval(interval);
       }
     };
-  }, [activeTab, user?.uid, meusBoletos.length]);
+  }, [activeTab, user?.uid]); // Removido wallet?.address e meusBoletos.length para evitar múltiplos intervals
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
