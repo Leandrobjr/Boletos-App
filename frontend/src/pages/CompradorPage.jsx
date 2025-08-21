@@ -84,7 +84,7 @@ const CompradorPage = () => {
     }
   }, [wallet.isConnected, wallet.address, wallet.chainId, etapaCompra]);
 
-  // Função para buscar boletos do usuário autenticado (OTIMIZADA)
+  // Função para buscar boletos do usuário autenticado (ULTRA OTIMIZADA)
   const fetchMeusBoletos = async () => {
     if (!user?.uid) return;
     
@@ -93,7 +93,8 @@ const CompradorPage = () => {
       const walletQuery = wallet?.address ? `?wallet=${encodeURIComponent(wallet.address)}` : '';
       const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}${walletQuery}`), {
         headers: {
-          'Cache-Control': 'max-age=30' // Cache de 30 segundos
+          'Cache-Control': 'max-age=60', // Cache de 1 minuto
+          'Pragma': 'cache'
         }
       });
       
@@ -122,10 +123,18 @@ const CompradorPage = () => {
     }
   };
 
-  // Cache para boletos do usuário
+  // Cache para boletos do usuário (OTIMIZADO)
   const [boletosCache, setBoletosCache] = useState(null);
   const [cacheTime, setCacheTime] = useState(0);
-  const CACHE_DURATION = 30000; // 30 segundos
+  const CACHE_DURATION = 60000; // 1 minuto (aumentado)
+  
+  // Preload de dados quando usuário loga
+  useEffect(() => {
+    if (user?.uid && !boletosCache) {
+      // Preload silencioso em background
+      fetchMeusBoletos();
+    }
+  }, [user?.uid]);
 
   // Função para busca inicial com loading (apenas na navegação)
   const fetchMeusBoletosComLoading = async () => {
@@ -780,10 +789,17 @@ const CompradorPage = () => {
                 </CardHeader>
                   <CardContent className="p-4">
                     {loadingMeusBoletos ? (
-                      <div className="text-center py-8">
-                        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-3"></div>
-                        <p className="text-gray-600 text-sm">Carregando seus boletos...</p>
-                        <p className="text-gray-400 text-xs mt-1">Isso pode levar alguns segundos</p>
+                      <div className="space-y-4">
+                        {/* Skeleton loading */}
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="animate-pulse">
+                            <div className="h-16 bg-gray-200 rounded-lg"></div>
+                          </div>
+                        ))}
+                        <div className="text-center py-4">
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                          <p className="text-gray-600 text-sm">Carregando seus boletos...</p>
+                        </div>
                       </div>
                     ) : meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').length === 0 ? (
                       <div className="text-center text-gray-500 py-12">

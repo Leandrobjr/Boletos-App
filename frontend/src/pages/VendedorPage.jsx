@@ -80,7 +80,8 @@ function VendedorPage() {
     try {
       const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}`), {
         headers: {
-          'Cache-Control': 'max-age=30' // Cache de 30 segundos
+          'Cache-Control': 'max-age=60', // Cache de 1 minuto
+          'Pragma': 'cache'
         }
       });
       if (!res.ok) {
@@ -122,9 +123,17 @@ function VendedorPage() {
     }
   }, [showComprovanteModal, selectedComprovante]);
 
-  // Cache de boletos para evitar requisições desnecessárias
+  // Cache de boletos para evitar requisições desnecessárias (OTIMIZADO)
   const [lastFetchTime, setLastFetchTime] = useState(0);
-  const CACHE_DURATION = 30000; // 30 segundos de cache
+  const CACHE_DURATION = 60000; // 1 minuto de cache (aumentado)
+  
+  // Preload de dados quando usuário loga
+  useEffect(() => {
+    if (user?.uid) {
+      // Preload silencioso em background
+      fetchBoletosOptimized();
+    }
+  }, [user?.uid]);
 
   // Função otimizada para buscar boletos com cache
   const fetchBoletosOptimized = async (forceRefresh = false) => {
@@ -1070,10 +1079,17 @@ function VendedorPage() {
                 <CardContent className="p-6">
                   {/* Loading state */}
                   {loadingBoletos ? (
-                    <div className="text-center py-8">
-                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-600 mx-auto mb-3"></div>
-                      <p className="text-gray-600 text-sm">Carregando seus boletos...</p>
-                      <p className="text-gray-400 text-xs mt-1">Isso pode levar alguns segundos</p>
+                    <div className="space-y-4">
+                      {/* Skeleton loading */}
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-16 bg-gray-200 rounded-lg"></div>
+                        </div>
+                      ))}
+                      <div className="text-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-600 mx-auto mb-2"></div>
+                        <p className="text-gray-600 text-sm">Carregando seus boletos...</p>
+                      </div>
                     </div>
                   ) : (
                     <div className="overflow-x-auto">

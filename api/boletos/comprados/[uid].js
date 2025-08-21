@@ -37,12 +37,12 @@ module.exports = async (req, res) => {
       // Aqui devolvemos boletos criados por ele (se ele for vendedor)
       // OU boletos que ele reservou/comprou (onde sua carteira aparece em wallet_address).
       const wallet = url.searchParams.get('wallet');
-      // Buscar campos necessários incluindo codigo_barras (OTIMIZADO)
+      // Buscar campos necessários incluindo codigo_barras (ULTRA OTIMIZADO)
       let sql = `
         SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, vencimento, 
                instituicao, status, criado_em, comprovante_url, wallet_address 
         FROM boletos 
-        WHERE user_id = $1 AND status != 'DISPONIVEL'
+        WHERE user_id = $1 AND status IN ('AGUARDANDO PAGAMENTO', 'AGUARDANDO BAIXA', 'BAIXADO')
       `;
       const params = [uid];
       if (wallet) {
@@ -50,13 +50,13 @@ module.exports = async (req, res) => {
           SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, vencimento, 
                  instituicao, status, criado_em, comprovante_url, wallet_address 
           FROM boletos 
-          WHERE (user_id = $1 OR wallet_address = $2) AND status != 'DISPONIVEL'
+          WHERE (user_id = $1 OR wallet_address = $2) AND status IN ('AGUARDANDO PAGAMENTO', 'AGUARDANDO BAIXA', 'BAIXADO')
         `;
         params.push(wallet);
       }
-      sql += ' ORDER BY criado_em DESC LIMIT 25'; // Reduzido para 25 para melhor performance
+      sql += ' ORDER BY criado_em DESC LIMIT 15'; // Reduzido para 15 para melhor performance
 
-      const result = await pool.query({ text: sql, values: params, statement_timeout: 8000 });
+      const result = await pool.query({ text: sql, values: params, statement_timeout: 5000 }); // Reduzido para 5 segundos
       return res.status(200).json({ success: true, data: result.rows, count: result.rowCount });
     }
 
