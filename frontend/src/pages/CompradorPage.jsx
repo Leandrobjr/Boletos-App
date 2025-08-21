@@ -576,16 +576,28 @@ const CompradorPage = () => {
     let interval;
     
     const startPolling = () => {
-      // Buscar uma vez imediatamente
-      fetchMeusBoletos();
-      
-      // Depois iniciar polling de 7 segundos
-      interval = setInterval(() => {
-        console.log('🔄 Polling automático: fetchMeusBoletos');
+      // Buscar uma vez imediatamente apenas se estamos na aba correta
+      if (activeTab === 'meusBoletos' || activeTab === 'historico') {
         fetchMeusBoletos();
-      }, 7000);
+        
+        // Depois iniciar polling de 15 segundos (aumentado para reduzir carga)
+        interval = setInterval(() => {
+          // Só fazer polling se ainda estamos na aba correta
+          if (activeTab === 'meusBoletos' || activeTab === 'historico') {
+            console.log('🔄 Polling automático: fetchMeusBoletos');
+            fetchMeusBoletos();
+          } else {
+            // Se mudou de aba, parar polling
+            if (interval) {
+              console.log('🛑 Parando polling - mudou de aba');
+              clearInterval(interval);
+            }
+          }
+        }, 15000); // Aumentado para 15 segundos
+      }
     };
     
+    // Só iniciar polling se estamos na aba correta e usuário está logado
     if ((activeTab === 'meusBoletos' || activeTab === 'historico') && user?.uid) {
       startPolling();
     }
