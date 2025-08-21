@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cache Clear - BXC Boletos</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            max-width: 500px;
+        }
+        .title {
+            color: #333;
+            font-size: 24px;
+            margin-bottom: 20px;
+        }
+        .status {
+            color: #666;
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        .button {
+            background: #28a745;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            transition: background 0.3s;
+        }
+        .button:hover {
+            background: #218838;
+        }
+        .button.danger {
+            background: #dc3545;
+        }
+        .button.danger:hover {
+            background: #c82333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1 class="title">🔄 Cache Clear - BXC Boletos</h1>
+        
+        <div class="status" id="status">
+            Iniciando limpeza de cache...
+        </div>
+        
+        <button class="button" onclick="clearAllCaches()">
+            🗑️ Limpar Todos os Caches
+        </button>
+        
+        <button class="button danger" onclick="forceReload()">
+            🔄 Forçar Reload Completo
+        </button>
+        
+        <button class="button" onclick="goToApp()">
+            🚀 Ir para Aplicação
+        </button>
+    </div>
+
+    <script>
+        let clearedCaches = 0;
+        let totalCaches = 0;
+
+        async function clearAllCaches() {
+            const status = document.getElementById('status');
+            status.innerHTML = '🔄 Iniciando limpeza de cache...';
+            
+            try {
+                // 1. Limpar localStorage
+                localStorage.clear();
+                console.log('✅ localStorage limpo');
+                
+                // 2. Limpar sessionStorage
+                sessionStorage.clear();
+                console.log('✅ sessionStorage limpo');
+                
+                // 3. Limpar caches do Service Worker
+                if ('caches' in window) {
+                    const cacheNames = await caches.keys();
+                    totalCaches = cacheNames.length;
+                    
+                    for (const cacheName of cacheNames) {
+                        await caches.delete(cacheName);
+                        clearedCaches++;
+                        console.log(`🗑️ Cache deletado: ${cacheName}`);
+                    }
+                }
+                
+                // 4. Unregister Service Workers
+                if ('serviceWorker' in navigator) {
+                    const registrations = await navigator.serviceWorker.getRegistrations();
+                    for (const registration of registrations) {
+                        await registration.unregister();
+                        console.log('🔄 Service Worker desregistrado');
+                    }
+                }
+                
+                // 5. Limpar IndexedDB
+                if ('indexedDB' in window) {
+                    const databases = await indexedDB.databases();
+                    for (const db of databases) {
+                        indexedDB.deleteDatabase(db.name);
+                        console.log(`🗑️ IndexedDB deletado: ${db.name}`);
+                    }
+                }
+                
+                status.innerHTML = `
+                    ✅ Cache limpo com sucesso!<br>
+                    🗑️ ${clearedCaches} caches deletados<br>
+                    🔄 Service Workers desregistrados<br>
+                    💾 localStorage/sessionStorage limpos
+                `;
+                
+            } catch (error) {
+                status.innerHTML = `❌ Erro ao limpar cache: ${error.message}`;
+                console.error('Erro ao limpar cache:', error);
+            }
+        }
+
+        function forceReload() {
+            const status = document.getElementById('status');
+            status.innerHTML = '🔄 Forçando reload completo...';
+            
+            // Força reload sem cache
+            setTimeout(() => {
+                window.location.href = 'https://boletos-app-mocha.vercel.app?cache-bust=' + Date.now();
+            }, 1000);
+        }
+
+        function goToApp() {
+            window.location.href = 'https://boletos-app-mocha.vercel.app?cache-bust=' + Date.now();
+        }
+
+        // Auto-executar limpeza
+        window.addEventListener('load', () => {
+            setTimeout(clearAllCaches, 500);
+        });
+    </script>
+</body>
+</html>
