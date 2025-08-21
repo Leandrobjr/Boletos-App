@@ -84,11 +84,10 @@ const CompradorPage = () => {
     }
   }, [wallet.isConnected, wallet.address, wallet.chainId, etapaCompra]);
 
-  // Função para buscar boletos do usuário autenticado
+  // Função para buscar boletos do usuário autenticado (SILENCIOSA)
   const fetchMeusBoletos = async () => {
     if (!user?.uid) return;
     
-    setLoadingMeusBoletos(true);
     try {
       // Enviar também a carteira (se conectada) para o backend identificar boletos reservados/comprados pelo usuário
       const walletQuery = wallet?.address ? `?wallet=${encodeURIComponent(wallet.address)}` : '';
@@ -112,6 +111,16 @@ const CompradorPage = () => {
     } catch (error) {
       console.error('Erro ao buscar boletos:', error);
       setMeusBoletos([]);
+    }
+  };
+
+  // Função para busca inicial com loading (apenas na navegação)
+  const fetchMeusBoletosComLoading = async () => {
+    if (!user?.uid) return;
+    
+    setLoadingMeusBoletos(true);
+    try {
+      await fetchMeusBoletos();
     } finally {
       setLoadingMeusBoletos(false);
     }
@@ -236,12 +245,12 @@ const CompradorPage = () => {
       });
       setTimeout(() => setAlertInfo(null), 5000);
       
-      setBoletosDisponiveis(prevBoletos =>
+            setBoletosDisponiveis(prevBoletos => 
         prevBoletos.map(b =>
           b.id === selectedBoleto.id ? { ...b, status: 'AGUARDANDO PAGAMENTO' } : b
         )
       );
-      fetchMeusBoletos();
+      fetchMeusBoletosComLoading();
     } catch (error) {
       console.error('Erro ao travar boleto:', error);
       setAlertInfo({
@@ -372,7 +381,7 @@ const CompradorPage = () => {
         
         // Aguardar um pouco antes de buscar os boletos atualizados
         setTimeout(async () => {
-          await fetchMeusBoletos();
+          await fetchMeusBoletosComLoading();
         }, 1000);
         
         setAlertInfo({
@@ -571,44 +580,19 @@ const CompradorPage = () => {
     // eslint-disable-next-line
   }, [tab]);
 
-  // Polling para atualização automática de boletos (controle do intervalo)
+  // Polling para atualização automática de boletos (SILENCIOSO)
   useEffect(() => {
     let interval;
-    
-    const startPolling = () => {
-      // Buscar uma vez imediatamente apenas se estamos na aba correta
-      if (activeTab === 'meusBoletos' || activeTab === 'historico') {
-        fetchMeusBoletos();
-        
-        // Depois iniciar polling de 15 segundos (aumentado para reduzir carga)
-        interval = setInterval(() => {
-          // Só fazer polling se ainda estamos na aba correta
-          if (activeTab === 'meusBoletos' || activeTab === 'historico') {
-            console.log('🔄 Polling automático: fetchMeusBoletos');
-            fetchMeusBoletos();
-          } else {
-            // Se mudou de aba, parar polling
-            if (interval) {
-              console.log('🛑 Parando polling - mudou de aba');
-              clearInterval(interval);
-            }
-          }
-        }, 15000); // Aumentado para 15 segundos
-      }
-    };
-    
-    // Só iniciar polling se estamos na aba correta e usuário está logado
-    if ((activeTab === 'meusBoletos' || activeTab === 'historico') && user?.uid) {
-      startPolling();
+    if (activeTab === 'meusBoletos' || activeTab === 'historico') {
+      fetchMeusBoletosComLoading(); // Busca inicial com loading
+      interval = setInterval(() => {
+        fetchMeusBoletos(); // Polling silencioso sem loading
+      }, 5000); // 5 segundos como original
     }
-    
     return () => {
-      if (interval) {
-        console.log('🛑 Limpando interval de polling');
-        clearInterval(interval);
-      }
+      if (interval) clearInterval(interval);
     };
-  }, [activeTab, user?.uid]); // Removido wallet?.address e meusBoletos.length para evitar múltiplos intervals
+  }, [activeTab, user?.uid]);
 
   const handleTabChange = (tab) => {
     setActiveTab(tab);
