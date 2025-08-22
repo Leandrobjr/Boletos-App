@@ -124,9 +124,9 @@ const CadastroPage = () => {
 
       setSuccessMessage('Conta criada com sucesso! Redirecionando...');
       
-      // Aguardar 2 segundos antes de redirecionar
+      // Aguardar 2 segundos antes de redirecionar para completar o cadastro
       setTimeout(() => {
-        navigate('/');
+        navigate('/alterar-cadastro');
       }, 2000);
 
     } catch (error) {
