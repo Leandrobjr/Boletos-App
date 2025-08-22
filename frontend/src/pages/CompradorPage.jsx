@@ -537,10 +537,7 @@ const CompradorPage = () => {
   const [loadingBoletos, setLoadingBoletos] = useState(false);
   const [loadingMeusBoletos, setLoadingMeusBoletos] = useState(false);
 
-  // Cache para boletos disponíveis
-  const [boletosCache, setBoletosCache] = useState(null);
-  const [cacheTime, setCacheTime] = useState(0);
-  const CACHE_DURATION = 60000; // 1 minuto
+  // Cache para boletos disponíveis (usando variáveis já declaradas acima)
 
   // Função otimizada para buscar boletos disponíveis
   const fetchBoletosDisponiveis = async () => {
