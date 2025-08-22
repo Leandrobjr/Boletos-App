@@ -48,31 +48,142 @@ function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-50 via-lime-50 to-green-100 flex items-center justify-center p-4">
+    <div 
+      className="min-h-screen bg-gradient-to-br from-green-50 via-lime-50 to-green-100"
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '1rem',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+    >
       {/* Background decorativo */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute -top-4 -right-4 w-72 h-72 bg-lime-200 rounded-full opacity-20 blur-3xl"></div>
-        <div className="absolute -bottom-4 -left-4 w-96 h-96 bg-green-200 rounded-full opacity-20 blur-3xl"></div>
-        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-green-300 rounded-full opacity-10 blur-2xl"></div>
+      <div 
+        style={{
+          position: 'absolute',
+          inset: 0,
+          overflow: 'hidden',
+          pointerEvents: 'none'
+        }}
+      >
+        <div 
+          style={{
+            position: 'absolute',
+            top: '-1rem',
+            right: '-1rem',
+            width: '18rem',
+            height: '18rem',
+            backgroundColor: '#d9f99d',
+            borderRadius: '50%',
+            opacity: 0.2,
+            filter: 'blur(3rem)'
+          }}
+        ></div>
+        <div 
+          style={{
+            position: 'absolute',
+            bottom: '-1rem',
+            left: '-1rem',
+            width: '24rem',
+            height: '24rem',
+            backgroundColor: '#bbf7d0',
+            borderRadius: '50%',
+            opacity: 0.2,
+            filter: 'blur(3rem)'
+          }}
+        ></div>
+        <div 
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: '16rem',
+            height: '16rem',
+            backgroundColor: '#86efac',
+            borderRadius: '50%',
+            opacity: 0.1,
+            filter: 'blur(2rem)'
+          }}
+        ></div>
       </div>
       
       {/* Container principal centralizado */}
-      <div className="relative z-10 w-full max-w-md mx-auto">
-        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
+      <div 
+        style={{
+          position: 'relative',
+          zIndex: 10,
+          width: '100%',
+          maxWidth: '28rem',
+          margin: '0 auto'
+        }}
+      >
+        <Card 
+          style={{
+            border: 'none',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            backgroundColor: 'rgba(255, 255, 255, 0.95)',
+            backdropFilter: 'blur(8px)',
+            overflow: 'hidden'
+          }}
+        >
           {/* Header com gradiente */}
-          <CardHeader className="bg-gradient-to-r from-green-800 via-green-700 to-lime-600 text-white text-center p-8 pb-6">
-            <div className="flex flex-col items-center space-y-4">
+          <CardHeader 
+            style={{
+              background: 'linear-gradient(to right, #166534, #15803d, #65a30d)',
+              color: 'white',
+              textAlign: 'center',
+              padding: '2rem',
+              paddingBottom: '1.5rem'
+            }}
+          >
+            <div 
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: '1rem'
+              }}
+            >
               {/* Ícone centralizado */}
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                <FaLock className="text-2xl text-white" />
+              <div 
+                style={{
+                  width: '4rem',
+                  height: '4rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backdropFilter: 'blur(8px)'
+                }}
+              >
+                <FaLock style={{ fontSize: '1.5rem', color: 'white' }} />
               </div>
               
               {/* Título e subtítulo */}
-              <div className="space-y-2">
-                <CardTitle className="text-3xl font-bold tracking-wide text-white">
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <CardTitle 
+                  style={{
+                    fontSize: '1.875rem',
+                    fontWeight: 'bold',
+                    letterSpacing: '0.025em',
+                    color: 'white',
+                    margin: 0
+                  }}
+                >
                   BoletoXCrypto
                 </CardTitle>
-                <p className="text-green-100 text-base font-medium">
+                <p 
+                  style={{
+                    color: '#dcfce7',
+                    fontSize: '1rem',
+                    fontWeight: '500',
+                    margin: 0
+                  }}
+                >
                   Acesse sua conta para continuar
                 </p>
               </div>
@@ -80,13 +191,27 @@ function LoginPage() {
           </CardHeader>
           
           {/* Conteúdo do formulário */}
-          <CardContent className="p-8 pt-6">
+          <CardContent 
+            style={{
+              padding: '2rem',
+              paddingTop: '1.5rem'
+            }}
+          >
             {/* Formulário de login */}
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               {/* Campo Email */}
-              <div className="space-y-3">
-                <label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center">
-                  <FaEnvelope className="mr-2 text-green-600 text-base" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <label 
+                  htmlFor="email" 
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    color: '#374151',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <FaEnvelope style={{ marginRight: '0.5rem', color: '#16a34a', fontSize: '1rem' }} />
                   Email
                 </label>
                 <Input
@@ -97,14 +222,29 @@ function LoginPage() {
                   placeholder="seu@email.com"
                   required
                   autoComplete="email"
-                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 text-base px-4"
+                  style={{
+                    height: '3rem',
+                    borderColor: '#d1d5db',
+                    fontSize: '1rem',
+                    padding: '0 1rem'
+                  }}
+                  className="focus:border-green-500 focus:ring-green-500"
                 />
               </div>
               
               {/* Campo Senha */}
-              <div className="space-y-3">
-                <label htmlFor="password" className="text-sm font-semibold text-gray-700 flex items-center">
-                  <FaLock className="mr-2 text-green-600 text-base" />
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <label 
+                  htmlFor="password" 
+                  style={{
+                    fontSize: '0.875rem',
+                    fontWeight: '600',
+                    color: '#374151',
+                    display: 'flex',
+                    alignItems: 'center'
+                  }}
+                >
+                  <FaLock style={{ marginRight: '0.5rem', color: '#16a34a', fontSize: '1rem' }} />
                   Senha
                 </label>
                 <Input
@@ -115,26 +255,58 @@ function LoginPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 text-base px-4"
+                  style={{
+                    height: '3rem',
+                    borderColor: '#d1d5db',
+                    fontSize: '1rem',
+                    padding: '0 1rem'
+                  }}
+                  className="focus:border-green-500 focus:ring-green-500"
                 />
               </div>
               
               {/* Lembrar-me e Esqueceu senha */}
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center">
+              <div 
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  fontSize: '0.875rem'
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center' }}>
                   <input
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    style={{
+                      height: '1rem',
+                      width: '1rem',
+                      color: '#16a34a',
+                      borderColor: '#d1d5db',
+                      borderRadius: '0.25rem'
+                    }}
+                    className="focus:ring-green-500"
                   />
-                  <label htmlFor="remember-me" className="ml-2 text-gray-600 font-medium">
+                  <label 
+                    htmlFor="remember-me" 
+                    style={{
+                      marginLeft: '0.5rem',
+                      color: '#6b7280',
+                      fontWeight: '500'
+                    }}
+                  >
                     Lembrar-me
                   </label>
                 </div>
                 <a 
                   href="#" 
-                  className="text-green-600 hover:text-green-800 font-semibold transition-colors duration-200"
+                  style={{
+                    color: '#16a34a',
+                    fontWeight: '600',
+                    textDecoration: 'none'
+                  }}
+                  className="hover:text-green-800 transition-colors duration-200"
                 >
                   Esqueceu a senha?
                 </a>
@@ -144,16 +316,38 @@ function LoginPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-12 bg-gradient-to-r from-green-800 to-lime-600 hover:from-green-900 hover:to-lime-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
+                style={{
+                  width: '100%',
+                  height: '3rem',
+                  background: 'linear-gradient(to right, #166534, #65a30d)',
+                  color: 'white',
+                  fontWeight: '600',
+                  borderRadius: '0.5rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                }}
+                className="hover:from-green-900 hover:to-lime-700 transform hover:scale-[1.02]"
               >
                 {loading ? (
-                  <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div 
+                      style={{
+                        animation: 'spin 1s linear infinite',
+                        borderRadius: '50%',
+                        height: '1.25rem',
+                        width: '1.25rem',
+                        border: '2px solid white',
+                        borderTop: '2px solid transparent',
+                        marginRight: '0.75rem'
+                      }}
+                    ></div>
                     Conectando...
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center">
-                    <FaLock className="mr-3 text-lg" />
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <FaLock style={{ marginRight: '0.75rem', fontSize: '1.125rem' }} />
                     Acessar com senha
                   </div>
                 )}
@@ -161,30 +355,61 @@ function LoginPage() {
             </form>
             
             {/* Divider */}
-            <div className="relative my-8">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
+            <div style={{ position: 'relative', margin: '2rem 0' }}>
+              <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
+                <div style={{ width: '100%', borderTop: '1px solid #d1d5db' }}></div>
               </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500 font-medium">ou</span>
+              <div style={{ position: 'relative', display: 'flex', justifyContent: 'center', fontSize: '0.875rem' }}>
+                <span 
+                  style={{
+                    padding: '0 1rem',
+                    backgroundColor: 'white',
+                    color: '#6b7280',
+                    fontWeight: '500'
+                  }}
+                >
+                  ou
+                </span>
               </div>
             </div>
             
             {/* Botão Google */}
-            <div className="space-y-4">
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <LoginButton 
                 onClick={handleGoogleLogin} 
-                className="w-full h-12 border-2 border-gray-300 hover:border-green-500 bg-white hover:bg-green-50 text-gray-700 hover:text-green-800 font-semibold rounded-lg transition-all duration-200 shadow-sm"
+                style={{
+                  width: '100%',
+                  height: '3rem',
+                  border: '1.5px solid #d1d5db',
+                  backgroundColor: 'white',
+                  color: '#374151',
+                  fontWeight: '600',
+                  borderRadius: '0.5rem',
+                  transition: 'all 0.2s',
+                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                }}
+                className="hover:border-green-500 hover:bg-green-50 hover:text-green-800"
               />
             </div>
             
             {/* Link Cadastro */}
-            <div className="mt-8 text-center">
-              <p className="text-gray-600 text-base">
+            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+              <p 
+                style={{
+                  color: '#6b7280',
+                  fontSize: '1rem',
+                  margin: 0
+                }}
+              >
                 Não tem uma conta?{' '}
                 <Link 
                   to="/cadastro" 
-                  className="text-green-600 hover:text-green-800 font-semibold hover:underline transition-colors duration-200"
+                  style={{
+                    color: '#16a34a',
+                    fontWeight: '600',
+                    textDecoration: 'none'
+                  }}
+                  className="hover:text-green-800 hover:underline transition-colors duration-200"
                 >
                   Cadastre-se agora
                 </Link>
@@ -196,39 +421,106 @@ function LoginPage() {
       
       {/* Modal de cadastro completo para login via Google */}
       {showGoogleForm && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-md border-0 shadow-2xl bg-white">
+        <div 
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 50
+          }}
+        >
+          <Card style={{ width: '100%', maxWidth: '28rem', border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', backgroundColor: 'white' }}>
             {/* Header do modal */}
-            <CardHeader className="bg-gradient-to-r from-green-800 to-lime-600 text-white rounded-t-lg relative">
+            <CardHeader 
+              style={{
+                background: 'linear-gradient(to right, #166534, #65a30d)',
+                color: 'white',
+                borderRadius: '0.5rem 0.5rem 0 0',
+                position: 'relative'
+              }}
+            >
               <button 
                 onClick={() => setShowGoogleForm(false)}
-                className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl font-bold w-8 h-8 flex items-center justify-center rounded-full hover:bg-white/20 transition-colors"
+                style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  color: 'rgba(255, 255, 255, 0.7)',
+                  fontSize: '1.5rem',
+                  fontWeight: 'bold',
+                  width: '2rem',
+                  height: '2rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  border: 'none',
+                  background: 'none',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                className="hover:text-white hover:bg-white/20"
               >
                 ×
               </button>
               
-              <div className="text-center">
-                <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-3">
-                  <FaUser className="text-xl text-white" />
+              <div style={{ textAlign: 'center' }}>
+                <div 
+                  style={{
+                    width: '3rem',
+                    height: '3rem',
+                    backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                    borderRadius: '50%',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: '0 auto 0.75rem'
+                  }}
+                >
+                  <FaUser style={{ fontSize: '1.25rem', color: 'white' }} />
                 </div>
-                <CardTitle className="text-xl font-bold">Complete seu cadastro</CardTitle>
-                <p className="text-green-100 mt-2 text-sm flex items-center justify-center">
-                  <FaExclamationTriangle className="text-yellow-300 mr-2" />
+                <CardTitle style={{ fontSize: '1.25rem', fontWeight: 'bold', margin: 0 }}>Complete seu cadastro</CardTitle>
+                <p 
+                  style={{
+                    color: '#dcfce7',
+                    marginTop: '0.5rem',
+                    fontSize: '0.875rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    margin: 0
+                  }}
+                >
+                  <FaExclamationTriangle style={{ color: '#fde047', marginRight: '0.5rem' }} />
                   É necessário completar seu cadastro para continuar
                 </p>
               </div>
             </CardHeader>
             
-            <CardContent className="p-6">
+            <CardContent style={{ padding: '1.5rem' }}>
               <form onSubmit={(e) => {
                 e.preventDefault();
                 handleGoogleLogin();
                 setShowGoogleForm(false);
-              }} className="space-y-4">
+              }} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                 {/* Nome completo */}
-                <div className="space-y-2">
-                  <label htmlFor="nome" className="text-sm font-medium text-gray-700 flex items-center">
-                    <FaUser className="mr-2 text-green-600" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label 
+                    htmlFor="nome" 
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <FaUser style={{ marginRight: '0.5rem', color: '#16a34a' }} />
                     Nome completo
                   </label>
                   <Input
@@ -236,16 +528,29 @@ function LoginPage() {
                     type="text"
                     value={googleUserData.nome}
                     onChange={(e) => setGoogleUserData({...googleUserData, nome: e.target.value})}
-                    className="h-11 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    style={{
+                      height: '2.75rem',
+                      borderColor: '#d1d5db'
+                    }}
+                    className="focus:border-green-500 focus:ring-green-500"
                     placeholder="Seu nome completo"
                     required
                   />
                 </div>
                 
                 {/* CPF/CNPJ */}
-                <div className="space-y-2">
-                  <label htmlFor="cpfCnpj" className="text-sm font-medium text-gray-700 flex items-center">
-                    <FaIdCard className="mr-2 text-green-600" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label 
+                    htmlFor="cpfCnpj" 
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <FaIdCard style={{ marginRight: '0.5rem', color: '#16a34a' }} />
                     CPF/CNPJ
                   </label>
                   <Input
@@ -253,16 +558,29 @@ function LoginPage() {
                     type="text"
                     value={googleUserData.cpfCnpj}
                     onChange={(e) => setGoogleUserData({...googleUserData, cpfCnpj: e.target.value})}
-                    className="h-11 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    style={{
+                      height: '2.75rem',
+                      borderColor: '#d1d5db'
+                    }}
+                    className="focus:border-green-500 focus:ring-green-500"
                     placeholder="000.000.000-00 ou 00.000.000/0001-00"
                     required
                   />
                 </div>
                 
                 {/* Telefone */}
-                <div className="space-y-2">
-                  <label htmlFor="telefone" className="text-sm font-medium text-gray-700 flex items-center">
-                    <FaPhone className="mr-2 text-green-600" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label 
+                    htmlFor="telefone" 
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      display: 'flex',
+                      alignItems: 'center'
+                    }}
+                  >
+                    <FaPhone style={{ marginRight: '0.5rem', color: '#16a34a' }} />
                     Telefone
                   </label>
                   <Input
@@ -270,44 +588,95 @@ function LoginPage() {
                     type="tel"
                     value={googleUserData.telefone}
                     onChange={(e) => setGoogleUserData({...googleUserData, telefone: e.target.value})}
-                    className="h-11 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                    style={{
+                      height: '2.75rem',
+                      borderColor: '#d1d5db'
+                    }}
+                    className="focus:border-green-500 focus:ring-green-500"
                     placeholder="(11) 99999-9999"
                     required
                   />
                 </div>
                 
                 {/* Endereço */}
-                <div className="space-y-2">
-                  <label htmlFor="endereco" className="text-sm font-medium text-gray-700">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <label 
+                    htmlFor="endereco" 
+                    style={{
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151'
+                    }}
+                  >
                     Endereço completo
                   </label>
                   <textarea
                     id="endereco"
                     value={googleUserData.endereco}
                     onChange={(e) => setGoogleUserData({...googleUserData, endereco: e.target.value})}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:border-green-500 focus:ring-green-500 resize-none"
+                    style={{
+                      width: '100%',
+                      padding: '0.5rem 0.75rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.375rem',
+                      resize: 'none',
+                      fontSize: '0.875rem'
+                    }}
+                    className="focus:border-green-500 focus:ring-green-500"
                     rows="3"
                     placeholder="Rua, número, bairro, cidade, estado, CEP"
                     required
                   />
                 </div>
                 
-                <div className="flex space-x-3 pt-4">
+                <div style={{ display: 'flex', gap: '0.75rem', paddingTop: '1rem' }}>
                   <button
                     type="button"
                     onClick={() => setShowGoogleForm(false)}
-                    className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem 1rem',
+                      border: '1px solid #d1d5db',
+                      color: '#374151',
+                      borderRadius: '0.5rem',
+                      fontWeight: '500',
+                      transition: 'colors 0.2s',
+                      background: 'white',
+                      cursor: 'pointer'
+                    }}
+                    className="hover:bg-gray-50"
                   >
                     Cancelar
                   </button>
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-green-800 to-lime-600 hover:from-green-900 hover:to-lime-700 text-white rounded-lg font-medium transition-all duration-200 disabled:opacity-50"
+                    style={{
+                      flex: 1,
+                      padding: '0.5rem 1rem',
+                      background: 'linear-gradient(to right, #166534, #65a30d)',
+                      color: 'white',
+                      borderRadius: '0.5rem',
+                      fontWeight: '500',
+                      transition: 'all 0.2s',
+                      border: 'none',
+                      cursor: 'pointer'
+                    }}
+                    className="hover:from-green-900 hover:to-lime-700 disabled:opacity-50"
                   >
                     {loading ? (
-                      <div className="flex items-center justify-center">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <div 
+                          style={{
+                            animation: 'spin 1s linear infinite',
+                            borderRadius: '50%',
+                            height: '1rem',
+                            width: '1rem',
+                            border: '2px solid white',
+                            borderTop: '2px solid transparent',
+                            marginRight: '0.5rem'
+                          }}
+                        ></div>
                         Completando...
                       </div>
                     ) : (
@@ -320,6 +689,13 @@ function LoginPage() {
           </Card>
         </div>
       )}
+      
+      <style>{`
+        @keyframes spin {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
