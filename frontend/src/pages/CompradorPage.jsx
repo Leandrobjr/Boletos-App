@@ -958,7 +958,13 @@ const CompradorPage = () => {
       {showModal && selectedBoleto && (
         <>
           <div
-            className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md z-[9998]"
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.8)',
+              backdropFilter: 'blur(8px)',
+              zIndex: 9998
+            }}
             onClick={() => {
               setShowModal(false);
               setSelectedBoleto(null);
@@ -966,22 +972,53 @@ const CompradorPage = () => {
             }}
           />
           <div
-            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-gray-800 shadow-2xl rounded-2xl border-2 border-green-600"
             style={{
-              transform: 'translate(-50%, -50%)',
               position: 'fixed',
               top: '50%',
               left: '50%',
-              pointerEvents: 'auto',
-              zIndex: 9999
+              transform: 'translate(-50%, -50%)',
+              width: '95%',
+              maxWidth: '896px',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              backgroundColor: '#ffffff',
+              color: '#1f2937',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              borderRadius: '1rem',
+              border: '2px solid #16a34a',
+              zIndex: 9999,
+              pointerEvents: 'auto'
             }}
             onClick={e => e.stopPropagation()}
           >
             {/* Header melhorado com gradiente e botão fechar destacado */}
-            <div className="px-6 pt-6 pb-4 border-b-2 border-green-600 flex items-center justify-between bg-gradient-to-r from-green-600 to-green-700 rounded-t-2xl">
-              <h2 className="text-xl font-bold text-white flex items-center gap-3">
-                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-                  <FaCreditCard className="text-white text-lg" />
+            <div style={{
+              padding: '1.5rem 1.5rem 1rem 1.5rem',
+              borderBottom: '2px solid #16a34a',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              background: 'linear-gradient(to right, #16a34a, #15803d)',
+              borderRadius: '1rem 1rem 0 0'
+            }}>
+              <h2 style={{
+                fontSize: '1.25rem',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem'
+              }}>
+                <div style={{
+                  width: '2.5rem',
+                  height: '2.5rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  borderRadius: '50%',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center'
+                }}>
+                  <FaCreditCard style={{ color: '#ffffff', fontSize: '1.125rem' }} />
                 </div>
                 Detalhes do Boleto
               </h2>
@@ -991,7 +1028,27 @@ const CompradorPage = () => {
                   setSelectedBoleto(null);
                   setEtapaCompra(0);
                 }}
-                className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-white hover:bg-opacity-30 text-white hover:text-green-800 transition-all duration-200 rounded-lg font-semibold"
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  padding: '0.5rem 1rem',
+                  backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '0.5rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseEnter={(e) => {
+                  e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.3)';
+                  e.target.style.color = '#16a34a';
+                }}
+                onMouseLeave={(e) => {
+                  e.target.style.backgroundColor = 'rgba(255, 255, 255, 0.2)';
+                  e.target.style.color = '#ffffff';
+                }}
                 title="Fechar"
                 aria-label="Fechar modal"
               >
@@ -999,33 +1056,105 @@ const CompradorPage = () => {
                 <span>Fechar</span>
               </button>
             </div>
-            <div className="px-6 py-6 space-y-4">
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="font-semibold text-gray-700">Nº Boleto:</span>
-                <span className="font-mono text-gray-800 bg-gray-50 px-3 py-1 rounded-lg">{selectedBoleto.numeroBoleto}</span>
+            <div style={{
+              padding: '1.5rem',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '1rem'
+            }}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ fontWeight: '600', color: '#374151' }}>Nº Boleto:</span>
+                <span style={{
+                  fontFamily: 'monospace',
+                  color: '#1f2937',
+                  backgroundColor: '#f9fafb',
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '0.5rem'
+                }}>{selectedBoleto.numeroBoleto}</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="font-semibold text-gray-700">Beneficiário CPF/CNPJ:</span>
-                <span className="text-gray-800">{selectedBoleto.beneficiario}</span>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ fontWeight: '600', color: '#374151' }}>Beneficiário CPF/CNPJ:</span>
+                <span style={{ color: '#1f2937' }}>{selectedBoleto.beneficiario}</span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="font-semibold text-gray-700">Valor (R$):</span>
-                <span className="text-green-700 font-bold text-lg">
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ fontWeight: '600', color: '#374151' }}>Valor (R$):</span>
+                <span style={{
+                  color: '#15803d',
+                  fontWeight: 'bold',
+                  fontSize: '1.125rem'
+                }}>
                   R$ {(selectedBoleto.valor !== undefined && selectedBoleto.valor !== null) ? selectedBoleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="font-semibold text-gray-700">Valor Líquido (USDT):</span>
-                <span className="text-blue-600 font-bold">{valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT</span>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ fontWeight: '600', color: '#374151' }}>Valor Líquido (USDT):</span>
+                <span style={{ color: '#2563eb', fontWeight: 'bold' }}>{valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT</span>
               </div>
-              <div className="flex justify-between items-center gap-2 py-2 border-b border-gray-200">
-                <span className="font-semibold text-gray-700">Código de Barras:</span>
-                <div className="flex items-center gap-2">
-                  <span className="font-mono text-[12px] bg-gray-100 p-3 rounded-lg border border-gray-300 text-gray-800 select-all overflow-x-auto whitespace-nowrap max-w-[420px] shadow-inner" style={{wordBreak:'break-all'}}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                gap: '0.5rem',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ fontWeight: '600', color: '#374151' }}>Código de Barras:</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{
+                    fontFamily: 'monospace',
+                    fontSize: '12px',
+                    backgroundColor: '#f3f4f6',
+                    padding: '0.75rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #d1d5db',
+                    color: '#1f2937',
+                    userSelect: 'all',
+                    overflowX: 'auto',
+                    whiteSpace: 'nowrap',
+                    maxWidth: '420px',
+                    boxShadow: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
+                    wordBreak: 'break-all'
+                  }}>
                     {(selectedBoleto.codigoBarras || selectedBoleto.codigo_barras || '--')}
                   </span>
                   <button
-                    className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-semibold"
+                    style={{
+                      padding: '0.25rem 0.75rem',
+                      fontSize: '0.75rem',
+                      backgroundColor: '#16a34a',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '0.5rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'background-color 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
                     onClick={() => {
                       const codigo = selectedBoleto.codigoBarras || selectedBoleto.codigo_barras || '';
                       if (codigo) {
@@ -1037,12 +1166,18 @@ const CompradorPage = () => {
                   >
                     Copiar
                   </button>
-                  {copiedCodigoBarras && <span className="text-green-600 text-xs font-semibold">Copiado!</span>}
+                  {copiedCodigoBarras && <span style={{ color: '#16a34a', fontSize: '0.75rem', fontWeight: '600' }}>Copiado!</span>}
                 </div>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="font-semibold text-gray-700">Vencimento:</span>
-                <span className="text-gray-800">
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ fontWeight: '600', color: '#374151' }}>Vencimento:</span>
+                <span style={{ color: '#1f2937' }}>
                   {(() => {
                     try {
                       if (!selectedBoleto.dataVencimento) return '--';
@@ -1055,30 +1190,79 @@ const CompradorPage = () => {
                   })()}
                 </span>
               </div>
-              <div className="flex justify-between items-center py-2 border-b border-gray-200">
-                <span className="font-semibold text-gray-700">Status:</span>
-                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
-                  selectedBoleto.status === 'DISPONIVEL' ? 'bg-green-100 text-green-800' :
-                  selectedBoleto.status === 'AGUARDANDO PAGAMENTO' ? 'bg-yellow-100 text-yellow-800' :
-                  selectedBoleto.status === 'BAIXADO' ? 'bg-blue-100 text-blue-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '0.5rem 0',
+                borderBottom: '1px solid #e5e7eb'
+              }}>
+                <span style={{ fontWeight: '600', color: '#374151' }}>Status:</span>
+                <span style={{
+                  padding: '0.25rem 0.75rem',
+                  borderRadius: '9999px',
+                  fontSize: '0.875rem',
+                  fontWeight: '600',
+                  ...(selectedBoleto.status === 'DISPONIVEL' ? {
+                    backgroundColor: '#dcfce7',
+                    color: '#166534'
+                  } : selectedBoleto.status === 'AGUARDANDO PAGAMENTO' ? {
+                    backgroundColor: '#fef3c7',
+                    color: '#92400e'
+                  } : selectedBoleto.status === 'BAIXADO' ? {
+                    backgroundColor: '#dbeafe',
+                    color: '#1e40af'
+                  } : {
+                    backgroundColor: '#f3f4f6',
+                    color: '#374151'
+                  })
+                }}>
                   {selectedBoleto.status || '--'}
                 </span>
               </div>
               {/* Etapa 1: Conectar carteira */}
               {etapaCompra === 1 && (
-                <div className="flex flex-col gap-4 mt-6">
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h3 className="text-lg font-semibold text-blue-800 mb-2 flex items-center gap-2">
-                      <FaWallet className="text-blue-600" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+                  <div style={{
+                    backgroundColor: '#eff6ff',
+                    padding: '1rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #bfdbfe'
+                  }}>
+                    <h3 style={{
+                      fontSize: '1.125rem',
+                      fontWeight: '600',
+                      color: '#1e40af',
+                      marginBottom: '0.5rem',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '0.5rem'
+                    }}>
+                      <FaWallet style={{ color: '#2563eb' }} />
                       Conectar Carteira
                     </h3>
-                    <p className="text-blue-700 text-sm">Para prosseguir com a compra, conecte sua carteira digital.</p>
+                    <p style={{ color: '#1e40af', fontSize: '0.875rem' }}>Para prosseguir com a compra, conecte sua carteira digital.</p>
                   </div>
                   <button
                     onClick={handleConectarCarteira}
-                    className="bg-green-600 hover:bg-green-700 text-white text-xl font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-3"
+                    style={{
+                      backgroundColor: '#16a34a',
+                      color: '#ffffff',
+                      fontSize: '1.25rem',
+                      fontWeight: '600',
+                      padding: '0.75rem 1.5rem',
+                      borderRadius: '0.5rem',
+                      boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                      border: 'none',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '0.75rem',
+                      transition: 'all 0.2s'
+                    }}
+                    onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
+                    onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
                   >
                     <FaWallet /> Conectar Carteira
                   </button>
@@ -1086,34 +1270,85 @@ const CompradorPage = () => {
               )}
               {/* Etapa 2: Travar boleto */}
               {etapaCompra === 2 && (
-                <div className="flex flex-col gap-4 mt-6">
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
                   {wallet.isConnected && wallet.address ? (
                     <>
-                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                        <div className="flex items-center mb-3">
-                          <FaWallet className="text-green-600 mr-2 text-lg" />
-                          <span className="font-semibold text-green-800 text-lg">Carteira Conectada</span>
+                      <div style={{
+                        backgroundColor: '#f0fdf4',
+                        padding: '1rem',
+                        borderRadius: '0.5rem',
+                        border: '1px solid #bbf7d0'
+                      }}>
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          marginBottom: '0.75rem'
+                        }}>
+                          <FaWallet style={{ color: '#16a34a', marginRight: '0.5rem', fontSize: '1.125rem' }} />
+                          <span style={{ fontWeight: '600', color: '#166534', fontSize: '1.125rem' }}>Carteira Conectada</span>
                         </div>
-                        <p className="text-sm text-green-700 break-all mb-2">Endereço: {wallet.address}</p>
-                        <p className="text-xs text-green-600">Rede: {wallet.chain?.name || 'Desconhecida'}</p>
+                        <p style={{ fontSize: '0.875rem', color: '#15803d', wordBreak: 'break-all', marginBottom: '0.5rem' }}>Endereço: {wallet.address}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#16a34a' }}>Rede: {wallet.chain?.name || 'Desconhecida'}</p>
                       </div>
                       <button
                         onClick={handleTravarBoleto}
-                        className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-3"
+                        style={{
+                          backgroundColor: '#16a34a',
+                          color: '#ffffff',
+                          fontWeight: '600',
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '0.5rem',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.75rem',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
                       >
                         <FaLock /> Reservar Boleto e Travar USDT
                       </button>
                     </>
                   ) : (
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
-                      <div className="flex items-center mb-3">
-                        <FaExclamationTriangle className="text-red-600 mr-2 text-lg" />
-                        <span className="font-semibold text-red-800 text-lg">Carteira não conectada</span>
+                    <div style={{
+                      backgroundColor: '#fef2f2',
+                      padding: '1rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid #fecaca'
+                    }}>
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        marginBottom: '0.75rem'
+                      }}>
+                        <FaExclamationTriangle style={{ color: '#dc2626', marginRight: '0.5rem', fontSize: '1.125rem' }} />
+                        <span style={{ fontWeight: '600', color: '#991b1b', fontSize: '1.125rem' }}>Carteira não conectada</span>
                       </div>
-                      <p className="text-sm text-red-700 mb-4">Você precisa conectar sua carteira para continuar.</p>
+                      <p style={{ fontSize: '0.875rem', color: '#dc2626', marginBottom: '1rem' }}>Você precisa conectar sua carteira para continuar.</p>
                       <button
                         onClick={handleConectarCarteira}
-                        className="bg-green-600 hover:bg-green-700 text-white text-lg font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-3"
+                        style={{
+                          backgroundColor: '#16a34a',
+                          color: '#ffffff',
+                          fontSize: '1.125rem',
+                          fontWeight: '600',
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '0.5rem',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.75rem',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
                       >
                         <FaWallet /> Conectar Carteira
                       </button>
@@ -1123,46 +1358,91 @@ const CompradorPage = () => {
               )}
               {/* Etapa 3: Enviar comprovante */}
               {etapaCompra === 3 && (
-                <div className="flex flex-col gap-4 mt-6">
-                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <div className="flex items-center mb-3">
-                      <FaClock className="text-yellow-600 mr-2 text-lg" />
-                      <span className="font-semibold text-yellow-800 text-lg">Tempo Restante para Pagamento</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+                  <div style={{
+                    backgroundColor: '#fffbeb',
+                    padding: '1rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #fed7aa'
+                  }}>
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      marginBottom: '0.75rem'
+                    }}>
+                      <FaClock style={{ color: '#d97706', marginRight: '0.5rem', fontSize: '1.125rem' }} />
+                      <span style={{ fontWeight: '600', color: '#92400e', fontSize: '1.125rem' }}>Tempo Restante para Pagamento</span>
                     </div>
-                    <div className="flex flex-col items-center my-4">
-                      <div className="rounded-xl bg-yellow-100 border-2 border-yellow-400 px-10 py-4 shadow-lg flex items-end gap-4">
-                        <span
-                          className="text-5xl font-extrabold text-yellow-800 tracking-widest"
-                          style={{ fontVariantNumeric: 'tabular-nums' }}
-                        >
+                    <div style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      margin: '1rem 0'
+                    }}>
+                      <div style={{
+                        borderRadius: '0.75rem',
+                        backgroundColor: '#fef3c7',
+                        border: '2px solid #f59e0b',
+                        padding: '1rem 2.5rem',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        display: 'flex',
+                        alignItems: 'flex-end',
+                        gap: '1rem'
+                      }}>
+                        <span style={{
+                          fontSize: '3rem',
+                          fontWeight: '800',
+                          color: '#92400e',
+                          letterSpacing: '0.1em',
+                          fontVariantNumeric: 'tabular-nums'
+                        }}>
                           {Math.floor(tempoRestante / 60)}:{(tempoRestante % 60).toString().padStart(2, '0')}
                         </span>
-                        <span
-                          className="text-xl font-bold text-yellow-800 mb-1"
-                          style={{ letterSpacing: '2px' }}
-                        >
+                        <span style={{
+                          fontSize: '1.25rem',
+                          fontWeight: 'bold',
+                          color: '#92400e',
+                          marginBottom: '0.25rem',
+                          letterSpacing: '0.125em'
+                        }}>
                           minutos
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-yellow-700 mt-2 text-center">
+                    <p style={{ fontSize: '0.875rem', color: '#d97706', marginTop: '0.5rem', textAlign: 'center' }}>
                       Realize o pagamento do boleto e envie o comprovante antes que o tempo acabe.
                     </p>
                   </div>
-                  <form onSubmit={handleEnviarComprovante} className="space-y-4">
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                      <Label htmlFor="comprovante" className="text-blue-800 font-semibold text-lg mb-2 block">Enviar Comprovante de Pagamento</Label>
+                  <form onSubmit={handleEnviarComprovante} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    <div style={{
+                      backgroundColor: '#eff6ff',
+                      padding: '1rem',
+                      borderRadius: '0.5rem',
+                      border: '1px solid #bfdbfe'
+                    }}>
+                      <Label htmlFor="comprovante" style={{
+                        color: '#1e40af',
+                        fontWeight: '600',
+                        fontSize: '1.125rem',
+                        marginBottom: '0.5rem',
+                        display: 'block'
+                      }}>Enviar Comprovante de Pagamento</Label>
                       <Input
                         id="comprovante"
                         type="file"
                         accept="image/*,.pdf"
                         required
                         onChange={(e) => setComprovante(e.target.files[0])}
-                        className="mt-2 border-blue-300 focus:border-blue-500 focus:ring-blue-500"
+                        style={{
+                          marginTop: '0.5rem',
+                          borderColor: '#93c5fd',
+                          borderRadius: '0.375rem'
+                        }}
+                        className="focus:border-blue-500 focus:ring-blue-500"
                       />
-                      <p className="text-blue-700 text-sm mt-2">Aceita imagens (JPG, PNG) e PDFs</p>
+                      <p style={{ color: '#1e40af', fontSize: '0.875rem', marginTop: '0.5rem' }}>Aceita imagens (JPG, PNG) e PDFs</p>
                     </div>
-                    <div className="flex justify-between gap-4">
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '1rem' }}>
                       <button
                         type="button"
                         onClick={() => {
@@ -1170,15 +1450,48 @@ const CompradorPage = () => {
                             handleCancelarCompra();
                           }
                         }}
-                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-semibold"
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#d1d5db',
+                          color: '#374151',
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '0.5rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          fontWeight: '600',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#9ca3af'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = '#d1d5db'}
                       >
-                        <FaTimesCircle className="mr-2" /> Cancelar
+                        <FaTimesCircle style={{ marginRight: '0.5rem' }} /> Cancelar
                       </button>
                       <button
                         type="submit"
-                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-semibold shadow-lg"
+                        style={{
+                          flex: 1,
+                          backgroundColor: '#16a34a',
+                          color: '#ffffff',
+                          padding: '0.75rem 1.5rem',
+                          borderRadius: '0.5rem',
+                          border: 'none',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          gap: '0.5rem',
+                          fontWeight: '600',
+                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                          transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
+                        onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
                       >
-                        <FaUpload className="mr-2" /> Enviar Comprovante
+                        <FaUpload style={{ marginRight: '0.5rem' }} /> Enviar Comprovante
                       </button>
                     </div>
                   </form>
@@ -1186,25 +1499,67 @@ const CompradorPage = () => {
               )}
               {/* Etapa 4: Pagamento confirmado */}
               {etapaCompra === 4 && (
-                <div className="flex flex-col gap-4 mt-6">
-                  <div className="bg-green-50 p-6 rounded-lg border border-green-200 text-center">
-                    <div className="flex justify-center mb-4">
-                      <div className="w-20 h-20 rounded-full bg-green-200 flex items-center justify-center shadow-lg">
-                        <FaCheck className="text-green-600 text-4xl" />
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
+                  <div style={{
+                    backgroundColor: '#f0fdf4',
+                    padding: '1.5rem',
+                    borderRadius: '0.5rem',
+                    border: '1px solid #bbf7d0',
+                    textAlign: 'center'
+                  }}>
+                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+                      <div style={{
+                        width: '5rem',
+                        height: '5rem',
+                        borderRadius: '50%',
+                        backgroundColor: '#bbf7d0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)'
+                      }}>
+                        <FaCheck style={{ color: '#16a34a', fontSize: '2.5rem' }} />
                       </div>
                     </div>
-                    <h3 className="text-2xl font-bold text-green-700 mb-3">Pagamento Confirmado!</h3>
-                    <p className="text-green-700 mb-6 text-lg">
-                      Você receberá <span className="font-bold text-blue-600">{valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT</span> em sua carteira em breve.
+                    <h3 style={{
+                      fontSize: '1.5rem',
+                      fontWeight: 'bold',
+                      color: '#15803d',
+                      marginBottom: '0.75rem'
+                    }}>Pagamento Confirmado!</h3>
+                    <p style={{
+                      color: '#15803d',
+                      marginBottom: '1.5rem',
+                      fontSize: '1.125rem'
+                    }}>
+                      Você receberá <span style={{ fontWeight: 'bold', color: '#2563eb' }}>{valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT</span> em sua carteira em breve.
                     </p>
                     <button
                       onClick={() => {
                         setShowModal(false);
                         setActiveTab('meusBoletos');
                       }}
-                      className="bg-green-600 hover:bg-green-700 text-white text-lg py-3 px-8 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 font-semibold shadow-lg mx-auto"
+                      style={{
+                        backgroundColor: '#16a34a',
+                        color: '#ffffff',
+                        fontSize: '1.125rem',
+                        padding: '0.75rem 2rem',
+                        borderRadius: '0.5rem',
+                        border: 'none',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: '0.75rem',
+                        fontWeight: '600',
+                        boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                        transition: 'all 0.2s',
+                        margin: '0 auto'
+                      }}
+                      onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
+                      onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
                     >
-                      <FaList className="mr-2" /> Ver Meus Boletos
+                      <FaList style={{ marginRight: '0.5rem' }} /> Ver Meus Boletos
                     </button>
                   </div>
                 </div>
