@@ -25,76 +25,216 @@ const CadastroPage = () => {
 
   return (
     <>
-      <main className="flex-1 flex items-center justify-center p-2 mt-2">
-        <div className="w-full max-w-[420px] bg-white rounded-2xl shadow-xl border border-green-200 overflow-hidden mx-auto flex flex-col" style={{margin: '0 auto'}}>
+      <main 
+        style={{
+          minHeight: '100vh',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1rem',
+          background: 'linear-gradient(to bottom right, #f0fdf4, #ecfdf5, #f0fdf4)'
+        }}
+      >
+        <div 
+          style={{
+            width: '100%',
+            maxWidth: '480px',
+            backgroundColor: '#ffffff',
+            borderRadius: '1rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+            border: '1px solid #bbf7d0',
+            overflow: 'hidden',
+            margin: '0 auto'
+          }}
+        >
           {/* Header */}
-          <div className="bg-gradient-to-r from-green-600 to-green-700 px-8 py-6 text-center">
-            <h1 className="text-2xl font-bold text-white mb-1">Criar Conta</h1>
-            <p className="text-green-100 text-sm">Preencha os dados para se cadastrar</p>
+          <div 
+            style={{
+              background: 'linear-gradient(to right, #16a34a, #15803d)',
+              padding: '1.5rem 2rem',
+              textAlign: 'center'
+            }}
+          >
+            <h1 
+              style={{
+                fontSize: '1.875rem',
+                fontWeight: 'bold',
+                color: '#ffffff',
+                marginBottom: '0.25rem'
+              }}
+            >
+              Criar Conta
+            </h1>
+            <p 
+              style={{
+                color: '#dcfce7',
+                fontSize: '0.875rem'
+              }}
+            >
+              Preencha os dados para se cadastrar
+            </p>
           </div>
 
           {/* Form */}
-          <div className="pt-6 pb-8 flex flex-col">
-            <form className="space-y-4 w-full px-8">
-              <div className="w-full flex flex-col gap-4">
+          <div 
+            style={{
+              padding: '1.5rem 2rem 2rem 2rem',
+              display: 'flex',
+              flexDirection: 'column'
+            }}
+          >
+            <form 
+              style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1.25rem',
+                width: '100%'
+              }}
+            >
+              <div 
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: '1.25rem',
+                  width: '100%'
+                }}
+              >
                 {/* Nome Completo */}
-                <div className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div style={{ width: '100%' }}>
+                  <label 
+                    style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
                     Nome Completo
                   </label>
                   <input
                     type="text"
-                    className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      fontSize: '1rem',
+                      transition: 'all 0.2s',
+                      boxSizing: 'border-box'
+                    }}
+                    className="focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     placeholder="Digite seu nome completo"
                     required
                   />
                 </div>
 
                 {/* Email */}
-                <div className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div style={{ width: '100%' }}>
+                  <label 
+                    style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
                     E-mail
                   </label>
                   <input
                     type="email"
-                    className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      fontSize: '1rem',
+                      transition: 'all 0.2s',
+                      boxSizing: 'border-box'
+                    }}
+                    className="focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     placeholder="seu@email.com"
                     required
                   />
                 </div>
 
                 {/* Telefone */}
-                <div className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div style={{ width: '100%' }}>
+                  <label 
+                    style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
                     Telefone Celular
                   </label>
                   <input
                     type="tel"
-                    className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem 1rem',
+                      border: '1px solid #d1d5db',
+                      borderRadius: '0.5rem',
+                      fontSize: '1rem',
+                      transition: 'all 0.2s',
+                      boxSizing: 'border-box'
+                    }}
+                    className="focus:ring-2 focus:ring-green-500 focus:border-green-500"
                     placeholder="(11) 99999-9999"
                     required
                   />
                 </div>
 
                 {/* Senha */}
-                <div className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div style={{ width: '100%' }}>
+                  <label 
+                    style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
                     Senha
                   </label>
-                  <div className="relative w-full">
+                  <div style={{ position: 'relative', width: '100%' }}>
                     <input
                       type={showPassword ? 'text' : 'password'}
-                      className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors pr-12"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem',
+                        paddingRight: '3rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0.5rem',
+                        fontSize: '1rem',
+                        transition: 'all 0.2s',
+                        boxSizing: 'border-box'
+                      }}
+                      className="focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="Mínimo 8 caracteres"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-transparent border-none p-0 m-0 focus:outline-none"
-                      style={{background: 'transparent', border: 'none', padding: 0, margin: 0}}
+                      style={{
+                        position: 'absolute',
+                        right: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                        margin: 0,
+                        cursor: 'pointer'
+                      }}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#222" strokeWidth="2" style={{display: 'block'}}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#6b7280" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                       </svg>
@@ -103,24 +243,51 @@ const CadastroPage = () => {
                 </div>
 
                 {/* Confirmar Senha */}
-                <div className="w-full">
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                <div style={{ width: '100%' }}>
+                  <label 
+                    style={{
+                      display: 'block',
+                      fontSize: '0.875rem',
+                      fontWeight: '500',
+                      color: '#374151',
+                      marginBottom: '0.5rem'
+                    }}
+                  >
                     Confirmar Senha
                   </label>
-                  <div className="relative w-full">
+                  <div style={{ position: 'relative', width: '100%' }}>
                     <input
                       type={showConfirmPassword ? 'text' : 'password'}
-                      className="w-full box-border px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500 transition-colors pr-12"
+                      style={{
+                        width: '100%',
+                        padding: '0.75rem 1rem',
+                        paddingRight: '3rem',
+                        border: '1px solid #d1d5db',
+                        borderRadius: '0.5rem',
+                        fontSize: '1rem',
+                        transition: 'all 0.2s',
+                        boxSizing: 'border-box'
+                      }}
+                      className="focus:ring-2 focus:ring-green-500 focus:border-green-500"
                       placeholder="Confirme sua senha"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 z-20 bg-transparent border-none p-0 m-0 focus:outline-none"
-                      style={{background: 'transparent', border: 'none', padding: 0, margin: 0}}
+                      style={{
+                        position: 'absolute',
+                        right: '0.75rem',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'transparent',
+                        border: 'none',
+                        padding: 0,
+                        margin: 0,
+                        cursor: 'pointer'
+                      }}
                     >
-                      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="#222" strokeWidth="2" style={{display: 'block'}}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="none" viewBox="0 0 24 24" stroke="#6b7280" strokeWidth="2">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 12s3.75-7.5 9.75-7.5 9.75 7.5 9.75 7.5-3.75 7.5-9.75 7.5S2.25 12 2.25 12z" />
                         <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 12a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0z" />
                       </svg>
@@ -129,20 +296,56 @@ const CadastroPage = () => {
                 </div>
 
                 {/* Checkbox */}
-                <div className="flex items-start space-x-3 pt-2">
+                <div 
+                  style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '0.75rem',
+                    paddingTop: '0.5rem'
+                  }}
+                >
                   <input
                     type="checkbox"
                     id="terms"
-                    className="mt-1 h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                    style={{
+                      marginTop: '0.25rem',
+                      height: '1rem',
+                      width: '1rem',
+                      color: '#16a34a',
+                      borderColor: '#d1d5db',
+                      borderRadius: '0.25rem'
+                    }}
+                    className="focus:ring-green-500"
                     required
                   />
-                  <label htmlFor="terms" className="text-sm text-gray-600">
+                  <label 
+                    htmlFor="terms" 
+                    style={{
+                      fontSize: '0.875rem',
+                      color: '#6b7280',
+                      lineHeight: '1.4'
+                    }}
+                  >
                     Concordo com os{' '}
-                    <a href="#" className="text-green-600 hover:text-green-700 underline font-medium">
+                    <a href="#" 
+                      style={{
+                        color: '#16a34a',
+                        textDecoration: 'underline',
+                        fontWeight: '500'
+                      }}
+                      className="hover:text-green-700"
+                    >
                       Termos de Serviço
                     </a>{' '}
                     e{' '}
-                    <a href="#" className="text-green-600 hover:text-green-700 underline font-medium">
+                    <a href="#" 
+                      style={{
+                        color: '#16a34a',
+                        textDecoration: 'underline',
+                        fontWeight: '500'
+                      }}
+                      className="hover:text-green-700"
+                    >
                       Política de Privacidade
                     </a>
                   </label>
@@ -151,8 +354,20 @@ const CadastroPage = () => {
                 {/* Botão Criar Conta */}
                 <button
                   type="submit"
-                  className="w-full bg-gradient-to-r from-green-600 to-green-700 text-white font-semibold py-3 px-4 rounded-lg hover:from-green-700 hover:to-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transition-all duration-200 transform hover:scale-[1.02] mt-2"
-                  style={{display: 'block', width: '100%'}}
+                  style={{
+                    width: '100%',
+                    background: 'linear-gradient(to right, #16a34a, #15803d)',
+                    color: '#ffffff',
+                    fontWeight: '600',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '0.5rem',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '1rem',
+                    transition: 'all 0.2s',
+                    marginTop: '0.5rem'
+                  }}
+                  className="hover:from-green-700 hover:to-green-800 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 transform hover:scale-[1.02]"
                 >
                   Criar Conta
                 </button>
@@ -160,23 +375,62 @@ const CadastroPage = () => {
             </form>
 
             {/* Divisor */}
-            <div className="flex items-center my-4">
-              <div className="flex-1 border-t border-gray-300"></div>
-              <span className="px-4 text-sm text-gray-500 bg-white">ou</span>
-              <div className="flex-1 border-t border-gray-300"></div>
+            <div 
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                margin: '1.5rem 0'
+              }}
+            >
+              <div style={{ flex: 1, borderTop: '1px solid #d1d5db' }}></div>
+              <span 
+                style={{
+                  padding: '0 1rem',
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
+                  backgroundColor: '#ffffff'
+                }}
+              >
+                ou
+              </span>
+              <div style={{ flex: 1, borderTop: '1px solid #d1d5db' }}></div>
             </div>
 
-            {/* Botão Google padrão Landpage */}
+            {/* Botão Google */}
             {googleError && (
-              <div className="text-red-600 text-sm text-center mb-2">{googleError}</div>
+              <div 
+                style={{
+                  color: '#dc2626',
+                  fontSize: '0.875rem',
+                  textAlign: 'center',
+                  marginBottom: '0.5rem'
+                }}
+              >
+                {googleError}
+              </div>
             )}
             <button
               type="button"
-              className="w-full max-w-[400px] flex items-center justify-center gap-3 border border-gray-300 text-gray-700 font-medium py-3 px-4 rounded-lg hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2 transition-all duration-200 mx-auto mb-2"
-              style={{height: '48px', background: '#fff'}}
+              style={{
+                width: '100%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                border: '1px solid #d1d5db',
+                color: '#374151',
+                fontWeight: '500',
+                padding: '0.75rem 1rem',
+                borderRadius: '0.5rem',
+                backgroundColor: '#ffffff',
+                cursor: 'pointer',
+                fontSize: '1rem',
+                transition: 'all 0.2s'
+              }}
+              className="hover:bg-gray-50 focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
               onClick={handleGoogleLogin}
             >
-              <svg width="20" height="20" viewBox="0 0 20 20" className="w-5 h-5" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
                 <g clipPath="url(#clip0_993_771)">
                   <path d="M19.805 10.23c0-.68-.06-1.36-.18-2.02H10v3.82h5.58c-.24 1.28-.97 2.36-2.07 3.08v2.56h3.34c1.96-1.81 3.09-4.48 3.09-7.44z" fill="#4285F4"/>
                   <path d="M10 20c2.7 0 4.97-.89 6.63-2.41l-3.34-2.56c-.93.62-2.12.99-3.29.99-2.53 0-4.68-1.71-5.44-4.01H1.09v2.62C2.82 17.98 6.13 20 10 20z" fill="#34A853"/>
@@ -189,15 +443,26 @@ const CadastroPage = () => {
                   </clipPath>
                 </defs>
               </svg>
-              <span style={{color: '#444', fontWeight: 500}}>Entrar com Google</span>
+              <span>Entrar com Google</span>
             </button>
 
             {/* Link Login */}
-            <div className="text-center mt-4">
-              <span className="text-gray-600">Já tem cadastro?</span>{' '}
+            <div 
+              style={{
+                textAlign: 'center',
+                marginTop: '1.5rem'
+              }}
+            >
+              <span style={{ color: '#6b7280' }}>Já tem cadastro?</span>{' '}
               <Link
                 to="/login"
-                className="text-green-700 hover:text-green-900 font-semibold underline cursor-pointer"
+                style={{
+                  color: '#15803d',
+                  fontWeight: '600',
+                  textDecoration: 'underline',
+                  cursor: 'pointer'
+                }}
+                className="hover:text-green-900"
               >
                 Entrar
               </Link>
