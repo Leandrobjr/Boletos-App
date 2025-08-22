@@ -50,31 +50,43 @@ function LoginPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-green-50 via-lime-50 to-green-100 flex items-center justify-center p-4">
       {/* Background decorativo */}
-      <div className="absolute inset-0 overflow-hidden">
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
         <div className="absolute -top-4 -right-4 w-72 h-72 bg-lime-200 rounded-full opacity-20 blur-3xl"></div>
         <div className="absolute -bottom-4 -left-4 w-96 h-96 bg-green-200 rounded-full opacity-20 blur-3xl"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-green-300 rounded-full opacity-10 blur-2xl"></div>
       </div>
       
-      {/* Modal central */}
-      <div className="relative z-10 w-full max-w-md">
-        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm">
+      {/* Container principal centralizado */}
+      <div className="relative z-10 w-full max-w-md mx-auto">
+        <Card className="border-0 shadow-2xl bg-white/95 backdrop-blur-sm overflow-hidden">
           {/* Header com gradiente */}
-          <CardHeader className="bg-gradient-to-r from-green-800 to-lime-600 text-white text-center rounded-t-lg p-8">
-            <div className="mb-4">
-              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+          <CardHeader className="bg-gradient-to-r from-green-800 via-green-700 to-lime-600 text-white text-center p-8 pb-6">
+            <div className="flex flex-col items-center space-y-4">
+              {/* Ícone centralizado */}
+              <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
                 <FaLock className="text-2xl text-white" />
               </div>
-              <CardTitle className="text-2xl md:text-3xl font-bold tracking-wide">BoletoXCrypto</CardTitle>
-              <p className="text-green-100 mt-2 text-sm md:text-base">Acesse sua conta para continuar</p>
+              
+              {/* Título e subtítulo */}
+              <div className="space-y-2">
+                <CardTitle className="text-3xl font-bold tracking-wide text-white">
+                  BoletoXCrypto
+                </CardTitle>
+                <p className="text-green-100 text-base font-medium">
+                  Acesse sua conta para continuar
+                </p>
+              </div>
             </div>
           </CardHeader>
           
-          <CardContent className="p-8">
+          {/* Conteúdo do formulário */}
+          <CardContent className="p-8 pt-6">
+            {/* Formulário de login */}
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Campo Email */}
-              <div className="space-y-2">
-                <label htmlFor="email" className="text-sm font-medium text-gray-700 flex items-center">
-                  <FaEnvelope className="mr-2 text-green-600" />
+              <div className="space-y-3">
+                <label htmlFor="email" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <FaEnvelope className="mr-2 text-green-600 text-base" />
                   Email
                 </label>
                 <Input
@@ -85,14 +97,14 @@ function LoginPage() {
                   placeholder="seu@email.com"
                   required
                   autoComplete="email"
-                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 text-base px-4"
                 />
               </div>
               
               {/* Campo Senha */}
-              <div className="space-y-2">
-                <label htmlFor="password" className="text-sm font-medium text-gray-700 flex items-center">
-                  <FaLock className="mr-2 text-green-600" />
+              <div className="space-y-3">
+                <label htmlFor="password" className="text-sm font-semibold text-gray-700 flex items-center">
+                  <FaLock className="mr-2 text-green-600 text-base" />
                   Senha
                 </label>
                 <Input
@@ -103,7 +115,7 @@ function LoginPage() {
                   placeholder="••••••••"
                   required
                   autoComplete="current-password"
-                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500"
+                  className="h-12 border-gray-300 focus:border-green-500 focus:ring-green-500 text-base px-4"
                 />
               </div>
               
@@ -116,9 +128,14 @@ function LoginPage() {
                     type="checkbox"
                     className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                   />
-                  <label htmlFor="remember-me" className="ml-2 text-gray-600">Lembrar-me</label>
+                  <label htmlFor="remember-me" className="ml-2 text-gray-600 font-medium">
+                    Lembrar-me
+                  </label>
                 </div>
-                <a href="#" className="text-green-600 hover:text-green-800 font-medium">
+                <a 
+                  href="#" 
+                  className="text-green-600 hover:text-green-800 font-semibold transition-colors duration-200"
+                >
                   Esqueceu a senha?
                 </a>
               </div>
@@ -127,16 +144,16 @@ function LoginPage() {
               <Button 
                 type="submit" 
                 disabled={loading}
-                className="w-full h-12 bg-gradient-to-r from-green-800 to-lime-600 hover:from-green-900 hover:to-lime-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02]"
+                className="w-full h-12 bg-gradient-to-r from-green-800 to-lime-600 hover:from-green-900 hover:to-lime-700 text-white font-semibold rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-lg"
               >
                 {loading ? (
                   <div className="flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2"></div>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-3"></div>
                     Conectando...
                   </div>
                 ) : (
                   <div className="flex items-center justify-center">
-                    <FaLock className="mr-2" />
+                    <FaLock className="mr-3 text-lg" />
                     Acessar com senha
                   </div>
                 )}
@@ -149,7 +166,7 @@ function LoginPage() {
                 <div className="w-full border-t border-gray-300"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-4 bg-white text-gray-500">ou</span>
+                <span className="px-4 bg-white text-gray-500 font-medium">ou</span>
               </div>
             </div>
             
@@ -157,17 +174,17 @@ function LoginPage() {
             <div className="space-y-4">
               <LoginButton 
                 onClick={handleGoogleLogin} 
-                className="w-full h-12 border-2 border-gray-300 hover:border-green-500 bg-white hover:bg-green-50 text-gray-700 hover:text-green-800 font-semibold rounded-lg transition-all duration-200"
+                className="w-full h-12 border-2 border-gray-300 hover:border-green-500 bg-white hover:bg-green-50 text-gray-700 hover:text-green-800 font-semibold rounded-lg transition-all duration-200 shadow-sm"
               />
             </div>
             
             {/* Link Cadastro */}
             <div className="mt-8 text-center">
-              <p className="text-gray-600">
+              <p className="text-gray-600 text-base">
                 Não tem uma conta?{' '}
                 <Link 
                   to="/cadastro" 
-                  className="text-green-600 hover:text-green-800 font-semibold hover:underline transition-colors"
+                  className="text-green-600 hover:text-green-800 font-semibold hover:underline transition-colors duration-200"
                 >
                   Cadastre-se agora
                 </Link>

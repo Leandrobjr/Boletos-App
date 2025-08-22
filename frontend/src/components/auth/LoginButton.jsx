@@ -7,7 +7,7 @@ import { useAuth } from './AuthProvider';
 /**
  * Botão de login simplificado e robusto que funciona em todos os navegadores
  */
-const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false, className = "" }) => {
+const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false, className = "", onClick }) => {
   const { login, loading, error } = useAuth();
   const [localLoading, setLocalLoading] = useState(false);
   const [localError, setLocalError] = useState(null);
@@ -119,6 +119,8 @@ const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false
       setLocalLoading(false);
     }
   };
+
+  const handleClick = onClick || handleLogin;
   
   // Tentar novamente automaticamente se houver falhas relacionadas a timing
   useEffect(() => {
@@ -135,22 +137,16 @@ const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false
   }, [localError, loginAttempts]);
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      flexDirection: 'column', 
-      alignItems: 'center', 
-      gap: '16px', 
-      width: fullWidth ? '100%' : 'auto' 
-    }}>
+    <div className="w-full">
       {localError && (
-        <Alert variant="destructive">
+        <Alert variant="destructive" className="mb-4">
           <AlertTitle>Erro</AlertTitle>
           <AlertDescription>{localError}</AlertDescription>
         </Alert>
       )}
       
       {trackingProtectionActive && !localError && (
-        <Alert>
+        <Alert className="mb-4">
           <AlertTitle>Aviso</AlertTitle>
           <AlertDescription>
             Detectamos que seu navegador está com proteção contra rastreamento ativada. Isso pode causar problemas no login.
@@ -163,48 +159,13 @@ const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false
         size="md"
         fullWidth={true}
         disabled={localLoading || loading}
-        onClick={handleLogin}
-        leftIcon={localLoading ? (
-          <div style={{
-            width: '20px',
-            height: '20px',
-            border: '2px solid #888',
-            borderTop: '2px solid transparent',
-            borderRadius: '50%',
-            animation: 'spin 1s linear infinite'
-          }}></div>
-        ) : (
-          <svg width="20" height="20" viewBox="0 0 20 20" className="w-5 h-5" fill="none" xmlns="http://www.w3.org/2000/svg" style={{marginRight: 12}}>
-            <g clipPath="url(#clip0_993_771)">
-              <path d="M19.805 10.23c0-.68-.06-1.36-.18-2.02H10v3.82h5.58c-.24 1.28-.97 2.36-2.07 3.08v2.56h3.34c1.96-1.81 3.09-4.48 3.09-7.44z" fill="#4285F4"/>
-              <path d="M10 20c2.7 0 4.97-.89 6.63-2.41l-3.34-2.56c-.93.62-2.12.99-3.29.99-2.53 0-4.68-1.71-5.44-4.01H1.09v2.62C2.82 17.98 6.13 20 10 20z" fill="#34A853"/>
-              <path d="M4.56 11.99A5.98 5.98 0 014.22 10c0-.69.12-1.36.34-1.99V5.39H1.09A9.98 9.98 0 000 10c0 1.64.39 3.19 1.09 4.61l3.47-2.62z" fill="#FBBC05"/>
-              <path d="M10 3.96c1.48 0 2.8.51 3.85 1.51l2.89-2.89C15.01.98 12.74 0 10 0 6.13 0 2.82 2.02 1.09 5.39l3.47 2.62C5.32 5.67 7.47 3.96 10 3.96z" fill="#EA4335"/>
-            </g>
-            <defs>
-              <clipPath id="clip0_993_771">
-                <rect width="20" height="20" fill="white"/>
-              </clipPath>
-            </defs>
-          </svg>
-        )}
-        className={`w-full text-base py-3 ${className}`}
+        onClick={handleClick}
+        className={`w-full h-12 flex items-center justify-center space-x-3 px-4 py-3 text-base font-semibold rounded-lg transition-all duration-200 ${className}`}
         style={{
-          backgroundColor: '#fff',
-          color: '#222',
-          border: '1.5px solid #888',
-          fontWeight: 700,
-          minHeight: 48,
-          fontSize: 17,
-          padding: '0 18px',
-          gap: 16,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          boxShadow: '0 1px 2px #0001',
-          letterSpacing: 0.2,
-          position: 'relative',
-          overflow: 'hidden',
+          backgroundColor: '#ffffff',
+          color: '#374151',
+          border: '1.5px solid #d1d5db',
+          boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
           ...(trackingProtectionActive && {
             '&::after': {
               content: '""',
@@ -219,7 +180,29 @@ const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false
           })
         }}
       >
-        {localLoading ? 'Conectando...' : <span style={{marginLeft: 12, fontWeight: 600}}>Entrar com Google</span>}
+        {localLoading ? (
+          <>
+            <div className="animate-spin rounded-full h-5 w-5 border-2 border-gray-400 border-t-transparent"></div>
+            <span>Conectando...</span>
+          </>
+        ) : (
+          <>
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <g clipPath="url(#clip0_993_771)">
+                <path d="M19.805 10.23c0-.68-.06-1.36-.18-2.02H10v3.82h5.58c-.24 1.28-.97 2.36-2.07 3.08v2.56h3.34c1.96-1.81 3.09-4.48 3.09-7.44z" fill="#4285F4"/>
+                <path d="M10 20c2.7 0 4.97-.89 6.63-2.41l-3.34-2.56c-.93.62-2.12.99-3.29.99-2.53 0-4.68-1.71-5.44-4.01H1.09v2.62C2.82 17.98 6.13 20 10 20z" fill="#34A853"/>
+                <path d="M4.56 11.99A5.98 5.98 0 014.22 10c0-.69.12-1.36.34-1.99V5.39H1.09A9.98 9.98 0 000 10c0 1.64.39 3.19 1.09 4.61l3.47-2.62z" fill="#FBBC05"/>
+                <path d="M10 3.96c1.48 0 2.8.51 3.85 1.51l2.89-2.89C15.01.98 12.74 0 10 0 6.13 0 2.82 2.02 1.09 5.39l3.47 2.62C5.32 5.67 7.47 3.96 10 3.96z" fill="#EA4335"/>
+              </g>
+              <defs>
+                <clipPath id="clip0_993_771">
+                  <rect width="20" height="20" fill="white"/>
+                </clipPath>
+              </defs>
+            </svg>
+            <span>Entrar com Google</span>
+          </>
+        )}
       </Button>
       
       <style>{`
