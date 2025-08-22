@@ -640,7 +640,6 @@ const CompradorPage = () => {
           <h1 className="text-3xl font-bold mb-2 bg-green-800 text-white p-2 rounded-lg text-center">
             Portal do Comprador
           </h1>
-          <WalletConnector />
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
             <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl">
               <TabsTrigger value="comprar" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
