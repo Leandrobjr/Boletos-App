@@ -377,7 +377,7 @@ function LoginPage() {
             </div>
             
             {/* Botão Google - AUMENTADO */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
               <LoginButton 
                 onClick={handleGoogleLogin} 
                 style={{
@@ -390,7 +390,9 @@ function LoginPage() {
                   borderRadius: '0.75rem',
                   transition: 'all 0.2s',
                   boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
-                  fontSize: '1rem'
+                  fontSize: '1rem',
+                  maxWidth: '320px',
+                  margin: '0 auto'
                 }}
                 className="hover:border-green-500 hover:bg-green-50 hover:text-green-800"
               />

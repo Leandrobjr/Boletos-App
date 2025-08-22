@@ -160,16 +160,22 @@ const LoginButton = ({ variant = "contained", size = "medium", fullWidth = false
         fullWidth={true}
         disabled={localLoading || loading}
         onClick={handleClick}
-        className={`w-full flex items-center justify-center space-x-3 px-4 py-3 text-base font-semibold rounded-lg transition-all duration-200 ${className}`}
+        className={`flex items-center justify-center space-x-3 px-4 py-3 text-base font-semibold rounded-lg transition-all duration-200 ${className}`}
         style={{
           backgroundColor: '#ffffff',
           color: '#374151',
           border: '2px solid #d1d5db',
           boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
           height: '3.25rem',
+          width: '100%',
+          maxWidth: '320px',
+          margin: '0 auto',
           borderRadius: '0.75rem',
           fontSize: '1rem',
           fontWeight: '600',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
           ...(trackingProtectionActive && {
             '&::after': {
               content: '""',
