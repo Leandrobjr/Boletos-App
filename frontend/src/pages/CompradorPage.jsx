@@ -193,7 +193,7 @@ const CompradorPage = () => {
 
     // Se já está conectado, prosseguir para a próxima etapa
     if (wallet.address) {
-      setEtapaCompra(2);
+      setEtapaCompra(2);Desenvolvi um aplicativo me esqueci de falar que é uma aplicação web 
       setAlertInfo({
         type: 'success',
         title: 'Carteira conectada com sucesso!',
