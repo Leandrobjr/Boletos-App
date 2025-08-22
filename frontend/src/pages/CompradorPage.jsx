@@ -653,6 +653,46 @@ const CompradorPage = () => {
               </TabsTrigger>
             </TabsList>
             <TabsContent value="comprar">
+              {/* Informações explicativas sobre o sistema */}
+              <div style={{
+                backgroundColor: '#f0fdf4',
+                padding: '1rem',
+                borderRadius: '0.5rem',
+                border: '1px solid #bbf7d0',
+                marginBottom: '1rem'
+              }}>
+                <h3 style={{
+                  fontSize: '1.125rem',
+                  fontWeight: '600',
+                  color: '#166534',
+                  marginBottom: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <FaInfoCircle style={{ color: '#16a34a' }} />
+                  Como funciona o BoletoXCrypto
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    Aqui você visualiza os boletos disponíveis para compra de USDT, de forma segura
+                  </p>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    Não necessita confiar no VENDEDOR, como numa operação P2P comum
+                  </p>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    Clique em "SELECIONAR" para iniciar a transação de compra
+                  </p>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    O crédito em USDT já está travado na blockchain e será liberado na sua carteira, assim que o "VENDEDOR" receber o comprovante de pagamento e confirmar a baixa do boleto
+                  </p>
+                </div>
+              </div>
+              
               <Card>
                 <CardHeader className="bg-green-800 text-white">
                   <CardTitle className="text-xl">Livro de Ordens - Boletos Disponíveis</CardTitle>
@@ -954,7 +994,7 @@ const CompradorPage = () => {
               transform: 'translate(-50%, -50%)',
               width: '95%',
               maxWidth: '896px',
-              maxHeight: '90vh',
+              maxHeight: '80vh',
               overflowY: 'auto',
               backgroundColor: '#ffffff',
               color: '#1f2937',
@@ -1032,51 +1072,11 @@ const CompradorPage = () => {
               </button>
             </div>
             <div style={{
-              padding: '1.5rem',
+              padding: '1rem',
               display: 'flex',
               flexDirection: 'column',
-              gap: '1rem'
+              gap: '0.75rem'
             }}>
-              {/* Frases informativas sobre o sistema */}
-              <div style={{
-                backgroundColor: '#f0fdf4',
-                padding: '1rem',
-                borderRadius: '0.5rem',
-                border: '1px solid #bbf7d0',
-                marginBottom: '1rem'
-              }}>
-                <h3 style={{
-                  fontSize: '1.125rem',
-                  fontWeight: '600',
-                  color: '#166534',
-                  marginBottom: '0.75rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.5rem'
-                }}>
-                  <FaInfoCircle style={{ color: '#16a34a' }} />
-                  Como funciona o BoletoXCrypto
-                </h3>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
-                    Aqui você visualiza os boletos disponíveis para compra de USDT, de forma segura
-                  </p>
-                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
-                    Não necessita confiar no VENDEDOR, como numa operação P2P comum
-                  </p>
-                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
-                    Clique em "SELECIONAR" para iniciar a transação de compra
-                  </p>
-                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
-                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
-                    O crédito em USDT já está travado na blockchain e será liberado na sua carteira, assim que o "VENDEDOR" receber o comprovante de pagamento e confirmar a baixa do boleto
-                  </p>
-                </div>
-              </div>
-              
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
