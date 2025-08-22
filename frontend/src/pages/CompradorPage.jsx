@@ -541,59 +541,40 @@ const CompradorPage = () => {
 
   // Função otimizada para buscar boletos disponíveis
   const fetchBoletosDisponiveis = async () => {
-    console.log('🔍 COMPRADOR - Iniciando busca de boletos disponíveis...');
-    
-    // Verificar cache primeiro
-    const now = Date.now();
-    if (boletosCache && (now - cacheTime) < CACHE_DURATION) {
-      console.log('📦 COMPRADOR - Usando cache de boletos:', boletosCache.length);
-      setBoletosDisponiveis(boletosCache);
-      return;
-    }
+    if (!user?.uid) return;
 
-    setLoadingBoletos(true);
     try {
       const url = buildApiUrl('/boletos');
-      console.log('🔗 COMPRADOR - URL da API:', url);
+      const res = await fetch(url, {
+        headers: {
+          'Cache-Control': 'max-age=60',
+          'Pragma': 'cache'
+        }
+      });
       
-      const res = await fetch(url);
-      console.log('📡 COMPRADOR - Status da resposta:', res.status);
-      
-      if (!res.ok) throw new Error('Erro ao buscar boletos');
-      
+      if (!res.ok) throw new Error('Erro ao buscar boletos disponíveis');
       const data = await res.json();
-      console.log('📦 COMPRADOR - Dados recebidos:', data);
-      
       const lista = Array.isArray(data) ? data : (data?.data || []);
-      console.log('📋 COMPRADOR - Lista de boletos:', lista.length);
-      
-      // Filtrar apenas boletos DISPONÍVEIS para reduzir processamento
-      const boletosDisponiveis = lista
-        .filter(boleto => {
-          const statusMapeado = mapStatus(boleto.status);
-          console.log('🔍 COMPRADOR - Boleto:', boleto.numero_controle, 'Status:', boleto.status, 'Mapeado:', statusMapeado);
-          return statusMapeado === 'DISPONIVEL';
-        })
-        .map(boleto => ({
-            ...boleto,
-            numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
-          codigoBarras: boleto.codigo_barras || boleto.codigoBarras, // FIX: mapeamento correto
-            valor: boleto.valor_brl || boleto.valor,
-          valor_usdt: boleto.valor_usdt || boleto.valor_usdt_convertido || 0,
-            dataVencimento: boleto.vencimento,
-            beneficiario: boleto.cpf_cnpj || boleto.cpfCnpj,
-          status: 'DISPONIVEL'
-        }));
-      
-      console.log('✅ COMPRADOR - Boletos disponíveis filtrados:', boletosDisponiveis.length);
+
+      const boletosMapeados = lista.map(boleto => {
+        const statusMapeado = boleto.status === 'DISPONIVEL' ? 'DISPONIVEL' : boleto.status;
+        return {
+          ...boleto,
+          numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+          codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
+          valor: boleto.valor_brl || boleto.valor || 0,
+          valor_usdt: boleto.valor_usdt || 0,
+          dataVencimento: boleto.vencimento || boleto.dataVencimento,
+          beneficiario: boleto.cpf_cnpj || boleto.beneficiario,
+          status: statusMapeado
+        };
+      });
+
+      const boletosDisponiveis = boletosMapeados.filter(boleto => boleto.status === 'DISPONIVEL');
       setBoletosDisponiveis(boletosDisponiveis);
-      setBoletosCache(boletosDisponiveis);
-      setCacheTime(now);
     } catch (error) {
-        console.error('❌ COMPRADOR - Erro ao buscar boletos:', error);
-        setBoletosDisponiveis([]);
-    } finally {
-      setLoadingBoletos(false);
+      console.error('Erro ao buscar boletos disponíveis:', error);
+      setBoletosDisponiveis([]);
     }
   };
 
@@ -676,13 +657,8 @@ const CompradorPage = () => {
               <Card>
                 <CardHeader className="bg-green-800 text-white">
                   <CardTitle className="text-xl">Livro de Ordens - Boletos Disponíveis</CardTitle>
-                  <CardDescription className="text-white">Selecione um boleto disponível para comprar USDT</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6">
-                  <p className="text-gray-700 mb-6">
-                    Nesta seção você pode visualizar todos os boletos disponíveis para compra de USDT. 
-                    Selecione um boleto e clique em "Selecionar" para prosseguir com a transação.
-                  </p>
                   {loadingBoletos ? (
                     <div className="text-center py-12">
                       <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4"></div>
@@ -1062,6 +1038,46 @@ const CompradorPage = () => {
               flexDirection: 'column',
               gap: '1rem'
             }}>
+              {/* Frases informativas sobre o sistema */}
+              <div style={{
+                backgroundColor: '#f0fdf4',
+                padding: '1rem',
+                borderRadius: '0.5rem',
+                border: '1px solid #bbf7d0',
+                marginBottom: '1rem'
+              }}>
+                <h3 style={{
+                  fontSize: '1.125rem',
+                  fontWeight: '600',
+                  color: '#166534',
+                  marginBottom: '0.75rem',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem'
+                }}>
+                  <FaInfoCircle style={{ color: '#16a34a' }} />
+                  Como funciona o BoletoXCrypto
+                </h3>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    Aqui você visualiza os boletos disponíveis para compra de USDT, de forma segura
+                  </p>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    Não necessita confiar no VENDEDOR, como numa operação P2P comum
+                  </p>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    Clique em "SELECIONAR" para iniciar a transação de compra
+                  </p>
+                  <p style={{ color: '#15803d', fontSize: '0.875rem', display: 'flex', alignItems: 'flex-start', gap: '0.5rem' }}>
+                    <span style={{ color: '#16a34a', fontWeight: 'bold' }}>•</span>
+                    O crédito em USDT já está travado na blockchain e será liberado na sua carteira, assim que o "VENDEDOR" receber o comprovante de pagamento e confirmar a baixa do boleto
+                  </p>
+                </div>
+              </div>
+              
               <div style={{
                 display: 'flex',
                 justifyContent: 'space-between',
