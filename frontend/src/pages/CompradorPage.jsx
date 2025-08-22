@@ -194,6 +194,7 @@ const CompradorPage = () => {
     // Se já está conectado, prosseguir para a próxima etapa
     if (wallet.address) {
       setEtapaCompra(2);
+      
       setAlertInfo({
         type: 'success',
         title: 'Carteira conectada com sucesso!',
