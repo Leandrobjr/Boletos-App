@@ -49,7 +49,7 @@ const HeaderBXC = () => {
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', maxWidth: 1200, margin: '0 auto', padding: '0 32px', height: 72 }}>
         {/* Título alinhado à esquerda */}
         <div style={{ fontSize: '2rem', fontWeight: 800, letterSpacing: '-1px', color: '#fff', textAlign: 'left' }}>
-          BoletoXCrypto
+          <span style={{ fontSize: '2rem', fontWeight: 800, color: '#fff' }}>₿</span>oletoXCrypto
         </div>
         {/* Botões alinhados à direita */}
         <nav style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
