@@ -958,7 +958,7 @@ const CompradorPage = () => {
       {showModal && selectedBoleto && (
         <>
           <div
-            className="fixed inset-0 bg-black bg-opacity-70 backdrop-blur-sm z-[9998]"
+            className="fixed inset-0 bg-black bg-opacity-80 backdrop-blur-md z-[9998]"
             onClick={() => {
               setShowModal(false);
               setSelectedBoleto(null);
@@ -966,7 +966,7 @@ const CompradorPage = () => {
             }}
           />
           <div
-            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto bg-lime-200 text-gray-800 shadow-2xl rounded-2xl border border-green-700"
+            className="fixed top-1/2 left-1/2 z-[9999] w-[95%] max-w-4xl max-h-[90vh] overflow-y-auto bg-white text-gray-800 shadow-2xl rounded-2xl border-2 border-green-600"
             style={{
               transform: 'translate(-50%, -50%)',
               position: 'fixed',
@@ -977,9 +977,13 @@ const CompradorPage = () => {
             }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="px-6 pt-6 pb-2 border-b border-green-700 flex items-center justify-between">
-              <h2 className="text-xl font-bold text-green-700 flex items-center gap-2">
-                <FaCreditCard className="text-green-700" /> Detalhes do Boleto
+            {/* Header melhorado com gradiente e botão fechar destacado */}
+            <div className="px-6 pt-6 pb-4 border-b-2 border-green-600 flex items-center justify-between bg-gradient-to-r from-green-600 to-green-700 rounded-t-2xl">
+              <h2 className="text-xl font-bold text-white flex items-center gap-3">
+                <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+                  <FaCreditCard className="text-white text-lg" />
+                </div>
+                Detalhes do Boleto
               </h2>
               <button
                 onClick={() => {
@@ -987,54 +991,58 @@ const CompradorPage = () => {
                   setSelectedBoleto(null);
                   setEtapaCompra(0);
                 }}
-                className="text-gray-400 hover:text-red-500 transition"
+                className="flex items-center gap-2 px-4 py-2 bg-white bg-opacity-20 hover:bg-white hover:bg-opacity-30 text-white hover:text-green-800 transition-all duration-200 rounded-lg font-semibold"
                 title="Fechar"
+                aria-label="Fechar modal"
               >
-                <FaTimesCircle size={22} />
+                <FaTimesCircle size={18} />
+                <span>Fechar</span>
               </button>
             </div>
-            <div className="px-6 py-4 space-y-3">
-              <div className="flex justify-between">
-                <span className="font-semibold">Nº Boleto:</span>
-                <span>{selectedBoleto.numeroBoleto}</span>
+            <div className="px-6 py-6 space-y-4">
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-700">Nº Boleto:</span>
+                <span className="font-mono text-gray-800 bg-gray-50 px-3 py-1 rounded-lg">{selectedBoleto.numeroBoleto}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Beneficiário CPF/CNPJ:</span>
-                <span>{selectedBoleto.beneficiario}</span>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-700">Beneficiário CPF/CNPJ:</span>
+                <span className="text-gray-800">{selectedBoleto.beneficiario}</span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Valor (R$):</span>
-                <span className="text-green-700 font-bold">
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-700">Valor (R$):</span>
+                <span className="text-green-700 font-bold text-lg">
                   R$ {(selectedBoleto.valor !== undefined && selectedBoleto.valor !== null) ? selectedBoleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Valor Líquido (USDT):</span>
-                <span>{valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT</span>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-700">Valor Líquido (USDT):</span>
+                <span className="text-blue-600 font-bold">{valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT</span>
               </div>
-              <div className="flex justify-between items-center gap-2">
-                <span className="font-semibold">Código de Barras:</span>
-                <span className="font-mono text-[12px] bg-lime-300 p-3 rounded-2xl border border-green-700 text-gray-800 select-all overflow-x-auto whitespace-nowrap max-w-[420px] shadow-inner" style={{wordBreak:'break-all'}}>
-                  {(selectedBoleto.codigoBarras || selectedBoleto.codigo_barras || '--')}
-                </span>
-                <button
-                  className="ml-2 px-2 py-1 text-xs bg-green-700 text-white rounded hover:bg-green-800"
-                  onClick={() => {
-                    const codigo = selectedBoleto.codigoBarras || selectedBoleto.codigo_barras || '';
-                    if (codigo) {
-                      navigator.clipboard.writeText(codigo);
-                      setCopiedCodigoBarras(true);
-                      setTimeout(() => setCopiedCodigoBarras(false), 1500);
-                    }
-                  }}
-                >
-                  Copiar
-                </button>
-                {copiedCodigoBarras && <span className="text-green-700 text-xs ml-1">Copiado!</span>}
+              <div className="flex justify-between items-center gap-2 py-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-700">Código de Barras:</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-mono text-[12px] bg-gray-100 p-3 rounded-lg border border-gray-300 text-gray-800 select-all overflow-x-auto whitespace-nowrap max-w-[420px] shadow-inner" style={{wordBreak:'break-all'}}>
+                    {(selectedBoleto.codigoBarras || selectedBoleto.codigo_barras || '--')}
+                  </span>
+                  <button
+                    className="px-3 py-1 text-xs bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors duration-200 font-semibold"
+                    onClick={() => {
+                      const codigo = selectedBoleto.codigoBarras || selectedBoleto.codigo_barras || '';
+                      if (codigo) {
+                        navigator.clipboard.writeText(codigo);
+                        setCopiedCodigoBarras(true);
+                        setTimeout(() => setCopiedCodigoBarras(false), 1500);
+                      }
+                    }}
+                  >
+                    Copiar
+                  </button>
+                  {copiedCodigoBarras && <span className="text-green-600 text-xs font-semibold">Copiado!</span>}
+                </div>
               </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Vencimento:</span>
-                <span>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-700">Vencimento:</span>
+                <span className="text-gray-800">
                   {(() => {
                     try {
                       if (!selectedBoleto.dataVencimento) return '--';
@@ -1047,16 +1055,30 @@ const CompradorPage = () => {
                   })()}
                 </span>
               </div>
-              <div className="flex justify-between">
-                <span className="font-semibold">Status:</span>
-                <span>{selectedBoleto.status || '--'}</span>
+              <div className="flex justify-between items-center py-2 border-b border-gray-200">
+                <span className="font-semibold text-gray-700">Status:</span>
+                <span className={`px-3 py-1 rounded-full text-sm font-semibold ${
+                  selectedBoleto.status === 'DISPONIVEL' ? 'bg-green-100 text-green-800' :
+                  selectedBoleto.status === 'AGUARDANDO PAGAMENTO' ? 'bg-yellow-100 text-yellow-800' :
+                  selectedBoleto.status === 'BAIXADO' ? 'bg-blue-100 text-blue-800' :
+                  'bg-gray-100 text-gray-800'
+                }`}>
+                  {selectedBoleto.status || '--'}
+                </span>
               </div>
               {/* Etapa 1: Conectar carteira */}
               {etapaCompra === 1 && (
-                <div className="flex flex-col gap-3 mt-4">
+                <div className="flex flex-col gap-4 mt-6">
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                    <h3 className="text-lg font-semibold text-blue-800 mb-2 flex items-center gap-2">
+                      <FaWallet className="text-blue-600" />
+                      Conectar Carteira
+                    </h3>
+                    <p className="text-blue-700 text-sm">Para prosseguir com a compra, conecte sua carteira digital.</p>
+                  </div>
                   <button
                     onClick={handleConectarCarteira}
-                    className="bg-green-700 hover:bg-green-800 text-white text-xl font-semibold py-2 rounded shadow flex items-center justify-center gap-2"
+                    className="bg-green-600 hover:bg-green-700 text-white text-xl font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-3"
                   >
                     <FaWallet /> Conectar Carteira
                   </button>
@@ -1064,34 +1086,34 @@ const CompradorPage = () => {
               )}
               {/* Etapa 2: Travar boleto */}
               {etapaCompra === 2 && (
-                <div className="flex flex-col gap-3 mt-4">
+                <div className="flex flex-col gap-4 mt-6">
                   {wallet.isConnected && wallet.address ? (
                     <>
-                      <div className="bg-green-100 p-3 rounded-lg mb-4 border border-green-700">
-                        <div className="flex items-center mb-2">
-                          <FaWallet className="text-green-700 mr-2" />
-                          <span className="font-medium text-green-800">Carteira Conectada</span>
+                      <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                        <div className="flex items-center mb-3">
+                          <FaWallet className="text-green-600 mr-2 text-lg" />
+                          <span className="font-semibold text-green-800 text-lg">Carteira Conectada</span>
                         </div>
-                        <p className="text-sm text-green-700 break-all">Endereço: {wallet.address}</p>
-                        <p className="text-xs text-green-600 mt-1">Rede: {wallet.chain?.name || 'Desconhecida'}</p>
+                        <p className="text-sm text-green-700 break-all mb-2">Endereço: {wallet.address}</p>
+                        <p className="text-xs text-green-600">Rede: {wallet.chain?.name || 'Desconhecida'}</p>
                       </div>
                       <button
                         onClick={handleTravarBoleto}
-                        className="bg-green-700 hover:bg-green-800 text-white font-semibold py-2 rounded shadow flex items-center justify-center gap-2 ml-auto"
+                        className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-3"
                       >
                         <FaLock /> Reservar Boleto e Travar USDT
                       </button>
                     </>
                   ) : (
-                    <div className="bg-red-100 p-3 rounded-lg mb-4 border border-red-700">
-                      <div className="flex items-center mb-2">
-                        <FaExclamationTriangle className="text-red-700 mr-2" />
-                        <span className="font-medium text-red-800">Carteira não conectada</span>
+                    <div className="bg-red-50 p-4 rounded-lg border border-red-200">
+                      <div className="flex items-center mb-3">
+                        <FaExclamationTriangle className="text-red-600 mr-2 text-lg" />
+                        <span className="font-semibold text-red-800 text-lg">Carteira não conectada</span>
                       </div>
-                      <p className="text-sm text-red-700">Você precisa conectar sua carteira para continuar.</p>
+                      <p className="text-sm text-red-700 mb-4">Você precisa conectar sua carteira para continuar.</p>
                       <button
                         onClick={handleConectarCarteira}
-                        className="bg-green-700 hover:bg-green-800 text-white text-lg font-semibold py-2 rounded shadow flex items-center justify-center gap-2 mt-3"
+                        className="bg-green-600 hover:bg-green-700 text-white text-lg font-semibold py-3 px-6 rounded-lg shadow-lg transition-all duration-200 flex items-center justify-center gap-3"
                       >
                         <FaWallet /> Conectar Carteira
                       </button>
@@ -1101,45 +1123,46 @@ const CompradorPage = () => {
               )}
               {/* Etapa 3: Enviar comprovante */}
               {etapaCompra === 3 && (
-                <div className="flex flex-col gap-3 mt-4">
-                  <div className="bg-yellow-100 p-3 rounded-lg mb-4 border border-green-700">
-                    <div className="flex items-center mb-2">
-                      <FaClock className="text-green-700 mr-2" />
-                      <span className="font-medium text-green-800">Tempo Restante para Pagamento</span>
+                <div className="flex flex-col gap-4 mt-6">
+                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                    <div className="flex items-center mb-3">
+                      <FaClock className="text-yellow-600 mr-2 text-lg" />
+                      <span className="font-semibold text-yellow-800 text-lg">Tempo Restante para Pagamento</span>
                     </div>
                     <div className="flex flex-col items-center my-4">
-                      <div className="rounded-xl bg-yellow-300 border-2 border-yellow-500 px-10 py-4 shadow-lg flex items-end gap-4">
+                      <div className="rounded-xl bg-yellow-100 border-2 border-yellow-400 px-10 py-4 shadow-lg flex items-end gap-4">
                         <span
-                          className="text-5xl font-extrabold text-yellow-900 tracking-widest"
+                          className="text-5xl font-extrabold text-yellow-800 tracking-widest"
                           style={{ fontVariantNumeric: 'tabular-nums' }}
                         >
                           {Math.floor(tempoRestante / 60)}:{(tempoRestante % 60).toString().padStart(2, '0')}
                         </span>
                         <span
-                          className="text-xl font-bold text-yellow-900 mb-1"
+                          className="text-xl font-bold text-yellow-800 mb-1"
                           style={{ letterSpacing: '2px' }}
                         >
                           minutos
                         </span>
                       </div>
                     </div>
-                    <p className="text-sm text-green-800 mt-2">
+                    <p className="text-sm text-yellow-700 mt-2 text-center">
                       Realize o pagamento do boleto e envie o comprovante antes que o tempo acabe.
                     </p>
                   </div>
                   <form onSubmit={handleEnviarComprovante} className="space-y-4">
-                    <div>
-                      <Label htmlFor="comprovante" className="text-green-800">Enviar Comprovante de Pagamento</Label>
+                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                      <Label htmlFor="comprovante" className="text-blue-800 font-semibold text-lg mb-2 block">Enviar Comprovante de Pagamento</Label>
                       <Input
                         id="comprovante"
                         type="file"
                         accept="image/*,.pdf"
                         required
                         onChange={(e) => setComprovante(e.target.files[0])}
-                        className="mt-1"
+                        className="mt-2 border-blue-300 focus:border-blue-500 focus:ring-blue-500"
                       />
+                      <p className="text-blue-700 text-sm mt-2">Aceita imagens (JPG, PNG) e PDFs</p>
                     </div>
-                    <div className="flex justify-between">
+                    <div className="flex justify-between gap-4">
                       <button
                         type="button"
                         onClick={() => {
@@ -1147,13 +1170,13 @@ const CompradorPage = () => {
                             handleCancelarCompra();
                           }
                         }}
-                        className="bg-gray-300 hover:bg-gray-400 text-gray-800 py-2 px-4 rounded flex items-center"
+                        className="flex-1 bg-gray-300 hover:bg-gray-400 text-gray-800 py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-semibold"
                       >
                         <FaTimesCircle className="mr-2" /> Cancelar
                       </button>
                       <button
                         type="submit"
-                        className="bg-green-700 hover:bg-green-800 text-white py-2 px-4 rounded flex items-center"
+                        className="flex-1 bg-green-600 hover:bg-green-700 text-white py-3 px-6 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 font-semibold shadow-lg"
                       >
                         <FaUpload className="mr-2" /> Enviar Comprovante
                       </button>
@@ -1163,23 +1186,23 @@ const CompradorPage = () => {
               )}
               {/* Etapa 4: Pagamento confirmado */}
               {etapaCompra === 4 && (
-                <div className="flex flex-col gap-3 mt-4">
-                  <div className="bg-green-100 p-4 rounded-lg mb-4 border border-green-700 text-center">
+                <div className="flex flex-col gap-4 mt-6">
+                  <div className="bg-green-50 p-6 rounded-lg border border-green-200 text-center">
                     <div className="flex justify-center mb-4">
-                      <div className="w-16 h-16 rounded-full bg-green-200 flex items-center justify-center">
-                        <FaCheck className="text-green-700 text-3xl" />
+                      <div className="w-20 h-20 rounded-full bg-green-200 flex items-center justify-center shadow-lg">
+                        <FaCheck className="text-green-600 text-4xl" />
                       </div>
                     </div>
-                    <h3 className="text-xl font-bold text-green-700 mb-2">Pagamento Confirmado!</h3>
-                    <p className="text-green-800 mb-4">
-                      Você receberá {valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT em sua carteira em breve.
+                    <h3 className="text-2xl font-bold text-green-700 mb-3">Pagamento Confirmado!</h3>
+                    <p className="text-green-700 mb-6 text-lg">
+                      Você receberá <span className="font-bold text-blue-600">{valorLiquidoUSDT(selectedBoleto.valor_usdt)} USDT</span> em sua carteira em breve.
                     </p>
                     <button
                       onClick={() => {
                         setShowModal(false);
                         setActiveTab('meusBoletos');
                       }}
-                      className="bg-green-700 hover:bg-green-800 text-white text-lg py-2 px-4 rounded flex items-center mx-auto"
+                      className="bg-green-600 hover:bg-green-700 text-white text-lg py-3 px-8 rounded-lg transition-all duration-200 flex items-center justify-center gap-3 font-semibold shadow-lg mx-auto"
                     >
                       <FaList className="mr-2" /> Ver Meus Boletos
                     </button>
