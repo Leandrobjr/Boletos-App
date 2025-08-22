@@ -123,20 +123,21 @@ function LoginPage() {
         <Card 
           style={{
             border: 'none',
+            borderRadius: '1rem',
             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
             backgroundColor: 'rgba(255, 255, 255, 0.95)',
             backdropFilter: 'blur(8px)',
             overflow: 'hidden'
           }}
         >
-          {/* Header com gradiente */}
+          {/* Header com gradiente - REDUZIDO */}
           <CardHeader 
             style={{
               background: 'linear-gradient(to right, #166534, #15803d, #65a30d)',
               color: 'white',
               textAlign: 'center',
-              padding: '2rem',
-              paddingBottom: '1.5rem'
+              padding: '1.5rem',
+              paddingBottom: '1rem'
             }}
           >
             <div 
@@ -144,14 +145,14 @@ function LoginPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 alignItems: 'center',
-                gap: '1rem'
+                gap: '0.75rem'
               }}
             >
-              {/* Ícone centralizado */}
+              {/* Ícone centralizado - MENOR */}
               <div 
                 style={{
-                  width: '4rem',
-                  height: '4rem',
+                  width: '3rem',
+                  height: '3rem',
                   backgroundColor: 'rgba(255, 255, 255, 0.2)',
                   borderRadius: '50%',
                   display: 'flex',
@@ -160,14 +161,14 @@ function LoginPage() {
                   backdropFilter: 'blur(8px)'
                 }}
               >
-                <FaLock style={{ fontSize: '1.5rem', color: 'white' }} />
+                <FaLock style={{ fontSize: '1.25rem', color: 'white' }} />
               </div>
               
-              {/* Título e subtítulo */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {/* Título e subtítulo - COMPACTOS */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
                 <CardTitle 
                   style={{
-                    fontSize: '1.875rem',
+                    fontSize: '1.5rem',
                     fontWeight: 'bold',
                     letterSpacing: '0.025em',
                     color: 'white',
@@ -179,7 +180,7 @@ function LoginPage() {
                 <p 
                   style={{
                     color: '#dcfce7',
-                    fontSize: '1rem',
+                    fontSize: '0.875rem',
                     fontWeight: '500',
                     margin: 0
                   }}
@@ -193,14 +194,14 @@ function LoginPage() {
           {/* Conteúdo do formulário */}
           <CardContent 
             style={{
-              padding: '2rem',
-              paddingTop: '1.5rem'
+              padding: '1.5rem',
+              paddingTop: '1rem'
             }}
           >
             {/* Formulário de login */}
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
               {/* Campo Email */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label 
                   htmlFor="email" 
                   style={{
@@ -223,17 +224,18 @@ function LoginPage() {
                   required
                   autoComplete="email"
                   style={{
-                    height: '3rem',
+                    height: '2.75rem',
                     borderColor: '#d1d5db',
                     fontSize: '1rem',
-                    padding: '0 1rem'
+                    padding: '0 1rem',
+                    borderRadius: '0.75rem'
                   }}
                   className="focus:border-green-500 focus:ring-green-500"
                 />
               </div>
               
               {/* Campo Senha */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                 <label 
                   htmlFor="password" 
                   style={{
@@ -256,10 +258,11 @@ function LoginPage() {
                   required
                   autoComplete="current-password"
                   style={{
-                    height: '3rem',
+                    height: '2.75rem',
                     borderColor: '#d1d5db',
                     fontSize: '1rem',
-                    padding: '0 1rem'
+                    padding: '0 1rem',
+                    borderRadius: '0.75rem'
                   }}
                   className="focus:border-green-500 focus:ring-green-500"
                 />
@@ -318,11 +321,11 @@ function LoginPage() {
                 disabled={loading}
                 style={{
                   width: '100%',
-                  height: '3rem',
+                  height: '2.75rem',
                   background: 'linear-gradient(to right, #166534, #65a30d)',
                   color: 'white',
                   fontWeight: '600',
-                  borderRadius: '0.5rem',
+                  borderRadius: '0.75rem',
                   border: 'none',
                   cursor: 'pointer',
                   transition: 'all 0.2s',
@@ -355,7 +358,7 @@ function LoginPage() {
             </form>
             
             {/* Divider */}
-            <div style={{ position: 'relative', margin: '2rem 0' }}>
+            <div style={{ position: 'relative', margin: '1.5rem 0' }}>
               <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center' }}>
                 <div style={{ width: '100%', borderTop: '1px solid #d1d5db' }}></div>
               </div>
@@ -373,27 +376,28 @@ function LoginPage() {
               </div>
             </div>
             
-            {/* Botão Google */}
+            {/* Botão Google - AUMENTADO */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               <LoginButton 
                 onClick={handleGoogleLogin} 
                 style={{
                   width: '100%',
-                  height: '3rem',
-                  border: '1.5px solid #d1d5db',
+                  height: '3.25rem',
+                  border: '2px solid #d1d5db',
                   backgroundColor: 'white',
                   color: '#374151',
                   fontWeight: '600',
-                  borderRadius: '0.5rem',
+                  borderRadius: '0.75rem',
                   transition: 'all 0.2s',
-                  boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1)'
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  fontSize: '1rem'
                 }}
                 className="hover:border-green-500 hover:bg-green-50 hover:text-green-800"
               />
             </div>
             
             {/* Link Cadastro */}
-            <div style={{ marginTop: '2rem', textAlign: 'center' }}>
+            <div style={{ marginTop: '1.5rem', textAlign: 'center' }}>
               <p 
                 style={{
                   color: '#6b7280',
@@ -434,13 +438,20 @@ function LoginPage() {
             zIndex: 50
           }}
         >
-          <Card style={{ width: '100%', maxWidth: '28rem', border: 'none', boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', backgroundColor: 'white' }}>
+          <Card style={{ 
+            width: '100%', 
+            maxWidth: '28rem', 
+            border: 'none', 
+            borderRadius: '1rem',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)', 
+            backgroundColor: 'white' 
+          }}>
             {/* Header do modal */}
             <CardHeader 
               style={{
                 background: 'linear-gradient(to right, #166534, #65a30d)',
                 color: 'white',
-                borderRadius: '0.5rem 0.5rem 0 0',
+                borderRadius: '1rem 1rem 0 0',
                 position: 'relative'
               }}
             >
@@ -530,7 +541,8 @@ function LoginPage() {
                     onChange={(e) => setGoogleUserData({...googleUserData, nome: e.target.value})}
                     style={{
                       height: '2.75rem',
-                      borderColor: '#d1d5db'
+                      borderColor: '#d1d5db',
+                      borderRadius: '0.75rem'
                     }}
                     className="focus:border-green-500 focus:ring-green-500"
                     placeholder="Seu nome completo"
@@ -560,7 +572,8 @@ function LoginPage() {
                     onChange={(e) => setGoogleUserData({...googleUserData, cpfCnpj: e.target.value})}
                     style={{
                       height: '2.75rem',
-                      borderColor: '#d1d5db'
+                      borderColor: '#d1d5db',
+                      borderRadius: '0.75rem'
                     }}
                     className="focus:border-green-500 focus:ring-green-500"
                     placeholder="000.000.000-00 ou 00.000.000/0001-00"
@@ -590,7 +603,8 @@ function LoginPage() {
                     onChange={(e) => setGoogleUserData({...googleUserData, telefone: e.target.value})}
                     style={{
                       height: '2.75rem',
-                      borderColor: '#d1d5db'
+                      borderColor: '#d1d5db',
+                      borderRadius: '0.75rem'
                     }}
                     className="focus:border-green-500 focus:ring-green-500"
                     placeholder="(11) 99999-9999"
@@ -618,7 +632,7 @@ function LoginPage() {
                       width: '100%',
                       padding: '0.5rem 0.75rem',
                       border: '1px solid #d1d5db',
-                      borderRadius: '0.375rem',
+                      borderRadius: '0.75rem',
                       resize: 'none',
                       fontSize: '0.875rem'
                     }}
@@ -638,7 +652,7 @@ function LoginPage() {
                       padding: '0.5rem 1rem',
                       border: '1px solid #d1d5db',
                       color: '#374151',
-                      borderRadius: '0.5rem',
+                      borderRadius: '0.75rem',
                       fontWeight: '500',
                       transition: 'colors 0.2s',
                       background: 'white',
@@ -656,7 +670,7 @@ function LoginPage() {
                       padding: '0.5rem 1rem',
                       background: 'linear-gradient(to right, #166534, #65a30d)',
                       color: 'white',
-                      borderRadius: '0.5rem',
+                      borderRadius: '0.75rem',
                       fontWeight: '500',
                       transition: 'all 0.2s',
                       border: 'none',
