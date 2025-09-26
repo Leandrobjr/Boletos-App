@@ -38,7 +38,7 @@ module.exports = async (req, res) => {
       console.log(`🔍 [DEBUG] Buscando boletos para usuário: ${uid}`);
       
       const result = await pool.query(
-        'SELECT *, comprador_id FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC',
+        'SELECT * FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC',
         [uid]
       );
       
