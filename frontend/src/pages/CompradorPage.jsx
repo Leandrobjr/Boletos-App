@@ -136,7 +136,7 @@ const CompradorPage = () => {
     try {
       // Enviar também a carteira (se conectada) para o backend identificar boletos reservados/comprados pelo usuário
       const walletQuery = address ? `?wallet=${encodeURIComponent(address)}` : '';
-      const res = await fetch(buildApiUrl(`/boletos/compra/${user.uid}${walletQuery}`), {
+      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}${walletQuery}`), {
         headers: {
           'Cache-Control': 'max-age=60', // Cache de 1 minuto
           'Pragma': 'cache'

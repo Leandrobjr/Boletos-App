@@ -134,16 +134,16 @@ module.exports = async (req, res) => {
     console.log('🔄 Atualizando status do boleto para AGUARDANDO PAGAMENTO...');
     
     // Atualizar status para AGUARDANDO PAGAMENTO - MANTER user_id original do vendedor
+    // Se a coluna comprador_id não existir, usar user_id temporariamente
     const updateQuery = `
       UPDATE boletos 
-      SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4
-      WHERE numero_controle = $5 AND status = $6 
+      SET status = $1, wallet_address = $2, tx_hash = $3
+      WHERE numero_controle = $4 AND status = $5 
       RETURNING *
     `;
     
     console.log('📋 Parâmetros do UPDATE:', {
       status: 'AGUARDANDO PAGAMENTO',
-      comprador_id: user_id,
       wallet_address: wallet_address,
       tx_hash: tx_hash || null,
       numero_controle: numero_controle,
@@ -152,7 +152,6 @@ module.exports = async (req, res) => {
     
     const updateResult = await pool.query(updateQuery, [
       'AGUARDANDO PAGAMENTO', 
-      user_id,           // ID do comprador (nova coluna comprador_id)
       wallet_address,    // Endereço da carteira do comprador
       tx_hash || null,   // Hash da transação de travamento
       numero_controle,   // Numero de controle do boleto
