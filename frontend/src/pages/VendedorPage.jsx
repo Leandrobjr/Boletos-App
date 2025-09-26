@@ -121,6 +121,7 @@ function VendedorPage() {
           codigoBarras: boleto.codigo_barras,
           cpfCnpj: boleto.cpf_cnpj,
           vencimento: boleto.vencimento,
+          valor: boleto.valor_brl || boleto.valor || 0,
           valor_usdt: boleto.valor_usdt || 0,
           status: statusMapeado,
           comprovante_url: boleto.comprovante_url,
