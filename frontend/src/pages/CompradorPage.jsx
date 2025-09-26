@@ -398,7 +398,7 @@ const CompradorPage = () => {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            comprovante: comprovanteUrl,
+            comprovante_url: comprovanteUrl,
             filename: file.name,
             filesize: file.size,
             filetype: file.type
