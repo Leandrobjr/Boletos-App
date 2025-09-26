@@ -35,10 +35,22 @@ module.exports = async (req, res) => {
     }
 
     if (req.method === 'GET') {
+      console.log(`🔍 [DEBUG] Buscando boletos para usuário: ${uid}`);
+      
       const result = await pool.query(
-        'SELECT * FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC',
+        'SELECT *, comprador_id FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC',
         [uid]
       );
+      
+      console.log(`📊 [DEBUG] Encontrados ${result.rowCount} boletos para usuário ${uid}`);
+      console.log(`📋 [DEBUG] Primeiros 3 boletos:`, result.rows.slice(0, 3).map(b => ({
+        id: b.id,
+        numero_controle: b.numero_controle,
+        valor_brl: b.valor_brl,
+        status: b.status,
+        criado_em: b.criado_em
+      })));
+      
       return res.status(200).json({ success: true, data: result.rows, count: result.rowCount });
     }
 

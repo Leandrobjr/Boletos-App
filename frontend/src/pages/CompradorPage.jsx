@@ -4,7 +4,7 @@ import {
   FaTrash, FaWallet, FaCheck, FaShoppingCart, FaMoneyBillWave,
   FaExclamationTriangle, FaInfoCircle, FaList, FaHistory, 
   FaCreditCard, FaLock, FaArrowRight, FaUpload, FaClock, FaTimesCircle,
-  FaFilePdf, FaExternalLinkAlt, FaFileInvoiceDollar
+  FaFilePdf, FaExternalLinkAlt, FaFileInvoiceDollar, FaEye
 } from 'react-icons/fa';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '../components/ui/card';
 import { Input } from '../components/ui/input';
@@ -15,9 +15,8 @@ import { Alert, AlertTitle, AlertDescription } from '../components/ui/alert';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '../components/auth/AuthProvider';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '../components/ui/dropdown-menu';
-import { useWalletConnection } from '../hooks/useWalletConnection';
-import { useBoletoEscrow } from '../hooks/useBoletoEscrow';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
+import { useBoletoEscrowFixed } from '../hooks/useBoletoEscrowFixed';
+import BalanceRefresher from '../components/BalanceRefresher';
 import StatusBadge from '../components/ui/status-badge';
 import { buildApiUrl } from '../config/apiConfig';
 import WalletConnector from '../components/wallet/WalletConnector';
@@ -39,40 +38,62 @@ const CompradorPage = () => {
   const [selectedComprovante, setSelectedComprovante] = useState(null);
   // Removido viewer lateral por simplicidade/performance
 
-  // Hooks para conexão Web3
-  const wallet = useWalletConnection();
-  const { travarBoleto } = useBoletoEscrow();
-  const { openConnectModal } = useConnectModal();
+  // Hook fixo para usar com contratos Enhanced
+  const { 
+    createEscrow,
+    registerBuyer,
+    releaseEscrow,
+    connectWallet,
+    isLoading,
+    error: escrowError,
+    isConnected,
+    address,
+    networkCorrect
+  } = useBoletoEscrowFixed();
+  
+  // Estados de conexão da carteira (agora vêm do hook)
 
   const taxaConversao = 5.0;
 
   const [boletosDisponiveis, setBoletosDisponiveis] = useState([]);
 
   const [meusBoletos, setMeusBoletos] = useState([]);
+  const [dropdownOpen, setDropdownOpen] = useState(null);
+
+  // Monitorar estado do sistema universal
+  // Verificar conexão ao montar componente
+  // Conexão da carteira é gerenciada pelo hook useBoletoEscrowFixed
+
+  // Fechar dropdown ao clicar fora
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      // Verificar se o clique foi dentro de um dropdown
+      const dropdownElement = event.target.closest('.dropdown-container');
+      if (!dropdownElement) {
+        setDropdownOpen(null);
+      }
+    };
+    
+    if (dropdownOpen !== null) {
+      document.addEventListener('click', handleClickOutside);
+      return () => document.removeEventListener('click', handleClickOutside);
+    }
+  }, [dropdownOpen]);
 
   // Monitorar mudanças na conexão da carteira
   useEffect(() => {
-    if (wallet.isConnected && wallet.address && etapaCompra === 1) {
-      // Verificar se está na rede correta (Polygon Amoy - ID 80002)
-      if (wallet.chainId !== 80002) {
-        setAlertInfo({
-          type: 'destructive',
-          title: 'Rede incorreta',
-          description: 'Para usar o BoletoXCrypto, você precisa estar na rede Polygon Amoy. Troque de rede na sua carteira.'
-        });
-        setTimeout(() => setAlertInfo(null), 5000);
-        return;
-      }
+    if (isConnected && address && etapaCompra === 1) {
+      // Sistema universal já gerencia a rede
 
       // Se a carteira foi conectada durante a etapa 1, avançar automaticamente
       setEtapaCompra(2);
       setAlertInfo({
         type: 'success',
         title: 'Carteira conectada automaticamente!',
-        description: `Endereço: ${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`
+        description: `Endereço: ${address.substring(0, 6)}...${address.substring(address.length - 4)}`
       });
       setTimeout(() => setAlertInfo(null), 3000);
-    } else if (!wallet.isConnected && etapaCompra === 2) {
+    } else if (!isConnected && etapaCompra === 2) {
       // Se a carteira foi desconectada durante a etapa 2, voltar para etapa 1
       setEtapaCompra(1);
       setAlertInfo({
@@ -82,7 +103,31 @@ const CompradorPage = () => {
       });
       setTimeout(() => setAlertInfo(null), 3000);
     }
-  }, [wallet.isConnected, wallet.address, wallet.chainId, etapaCompra]);
+  }, [isConnected, address, etapaCompra]);
+
+  // Verificar e restaurar temporizador para boletos pendentes
+  useEffect(() => {
+    if (meusBoletos && meusBoletos.length > 0) {
+      const boletoPendente = meusBoletos.find(boleto => 
+        boleto.status === 'PENDENTE_PAGAMENTO' && 
+        boleto.dataCompra && 
+        !boleto.comprovante_url
+      );
+      
+      if (boletoPendente && tempoRestante === null) {
+        const dataCompra = new Date(boletoPendente.dataCompra);
+        const agora = new Date();
+        const tempoDecorrido = Math.floor((agora - dataCompra) / 1000);
+        const tempoRestanteCalculado = Math.max(0, 3600 - tempoDecorrido); // 1 hora = 3600 segundos
+        
+        if (tempoRestanteCalculado > 0) {
+          setTempoRestante(tempoRestanteCalculado);
+          setSelectedBoleto(boletoPendente);
+          setEtapaCompra(3);
+        }
+      }
+    }
+  }, [meusBoletos, tempoRestante]);
 
   // Função para buscar boletos do usuário autenticado (ULTRA OTIMIZADA)
   const fetchMeusBoletos = async () => {
@@ -90,8 +135,8 @@ const CompradorPage = () => {
     
     try {
       // Enviar também a carteira (se conectada) para o backend identificar boletos reservados/comprados pelo usuário
-      const walletQuery = wallet?.address ? `?wallet=${encodeURIComponent(wallet.address)}` : '';
-      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}${walletQuery}`), {
+      const walletQuery = address ? `?wallet=${encodeURIComponent(address)}` : '';
+      const res = await fetch(buildApiUrl(`/boletos/compra/${user.uid}${walletQuery}`), {
         headers: {
           'Cache-Control': 'max-age=60', // Cache de 1 minuto
           'Pragma': 'cache'
@@ -166,53 +211,31 @@ const CompradorPage = () => {
 
   };
 
-  const handleConectarCarteira = () => {
-    if (!wallet.isConnected) {
-      try {
-        if (openConnectModal && typeof openConnectModal === 'function') {
-          openConnectModal();
-        } else {
+  const handleConectarCarteira = async () => {
+    try {
+      console.log('🔗 [COMPRADOR] Iniciando conexão da carteira...');
+      await connectWallet();
+      
           setAlertInfo({
-            type: 'destructive',
-            title: 'Erro de conexão',
-            description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
+        type: 'success',
+        title: 'Carteira conectada!',
+        description: 'Agora você pode escolher um boleto para comprar.'
           });
           setTimeout(() => setAlertInfo(null), 3000);
-        }
+      
       } catch (error) {
-        console.error('Erro ao abrir modal de conexão:', error);
+      console.error('Erro ao conectar carteira:', error);
         setAlertInfo({
           type: 'destructive',
           title: 'Erro de conexão',
-          description: 'Erro ao abrir modal. Tente conectar a carteira manualmente.'
-        });
-        setTimeout(() => setAlertInfo(null), 3000);
-      }
-      return;
-    }
-
-    // Se já está conectado, prosseguir para a próxima etapa
-    if (wallet.address) {
-      setEtapaCompra(2);
-      
-      setAlertInfo({
-        type: 'success',
-        title: 'Carteira conectada com sucesso!',
-        description: `Endereço: ${wallet.address.substring(0, 6)}...${wallet.address.substring(wallet.address.length - 4)}`
-      });
-      setTimeout(() => setAlertInfo(null), 3000);
-    } else {
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Carteira não conectada',
-        description: 'Conecte sua carteira antes de continuar.'
+        description: error.message || 'Erro ao conectar carteira. Verifique se ela está instalada e desbloqueada.'
       });
       setTimeout(() => setAlertInfo(null), 3000);
     }
   };
 
   const handleTravarBoleto = async () => {
-    if (!wallet.isConnected || !wallet.address) {
+    if (!isConnected || !address) {
       setAlertInfo({
         type: 'destructive',
         title: 'Carteira não conectada',
@@ -222,45 +245,26 @@ const CompradorPage = () => {
       return;
     }
 
-    // Verificar se está na rede correta
-    if (wallet.chainId !== 80002) {
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Rede incorreta',
-        description: 'Para usar o BoletoXCrypto, você precisa estar na rede Polygon Amoy. Troque de rede na sua carteira.'
-      });
-      setTimeout(() => setAlertInfo(null), 5000);
-      return;
-    }
+    // Verificar se está na rede correta (sistema universal já gerencia isso)
+    // Removido verificação manual - sistema universal já valida a rede
 
     setAlertInfo({
       type: 'default',
-      title: 'Travando boleto...',
-      description: 'Aguarde enquanto reservamos o boleto e travamos os USDT no contrato.'
+      title: 'Reservando boleto...',
+      description: 'Aguarde enquanto reservamos o boleto para você.'
     });
 
     try {
-      // Primeiro, travar os USDT no contrato inteligente
-      const valorUsdt = Number(selectedBoleto.valor_usdt);
-      const result = await travarBoleto({
-        boletoId: selectedBoleto.numero_controle,
-        valorUsdt: valorUsdt,
-        address: wallet.address
-      });
-
-      if (!result.success) {
-        throw new Error('Falha ao travar USDT no contrato');
-      }
-
-      // Depois, chamar o backend para reservar o boleto
-      const resourcePath = `/boletos/controle/${encodeURIComponent(selectedBoleto.numero_controle)}/reservar`;
+      // No contrato Enhanced, apenas chamar o backend para reservar
+      // O smart contract será atualizado pelo vendedor quando aprovar
+      const resourcePath = `/boletos/controle/${selectedBoleto.numeroBoleto}/reservar`;
       const response = await fetch(buildApiUrl(resourcePath), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           user_id: user.uid,
-          wallet_address: wallet.address,
-          tx_hash: result.txHash
+          wallet_address: address,
+          tx_hash: null // Sem transação blockchain neste momento
         })
       });
 
@@ -273,8 +277,8 @@ const CompradorPage = () => {
       setTempoRestante(3600);
       setAlertInfo({
         type: 'success',
-        title: 'Boleto reservado e USDT travados com sucesso!',
-        description: `Você tem 60 minutos para efetuar o pagamento e enviar o comprovante. TX: ${result.txHash.substring(0, 10)}...`
+        title: 'Boleto reservado com sucesso!',
+        description: 'Você tem 60 minutos para efetuar o pagamento e enviar o comprovante. O boleto foi reservado para você.'
       });
       setTimeout(() => setAlertInfo(null), 5000);
       
@@ -304,10 +308,9 @@ const CompradorPage = () => {
 
     try {
       // Se já travou USDT no contrato, liberar
-      if (etapaCompra >= 2 && wallet.address) {
-        const { liberarBoleto } = useBoletoEscrow();
-        const result = await liberarBoleto({
-          boletoId: selectedBoleto.numero_controle
+      if (etapaCompra >= 2 && address) {
+        const result = await releaseEscrow({
+          boletoId: selectedBoleto.numeroBoleto
         });
         
         if (!result.success) {
@@ -316,8 +319,8 @@ const CompradorPage = () => {
       }
 
       // Liberar o boleto no backend
-      if (selectedBoleto.numero_controle) {
-        await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/liberar`), {
+      if (selectedBoleto.numeroBoleto) {
+        await fetch(buildApiUrl(`/boletos/${selectedBoleto.numeroBoleto}/liberar`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: user.uid })
@@ -382,12 +385,20 @@ const CompradorPage = () => {
       const comprovanteUrl = reader.result; // Base64 do arquivo
       
       try {
-        // Enviar comprovante para o backend
-        const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/comprovante`), {
+        console.log('🔍 [DEBUG] Enviando comprovante para boleto:', {
+          id: selectedBoleto.id,
+          numeroBoleto: selectedBoleto.numeroBoleto,
+          numero_controle: selectedBoleto.numero_controle,
+          numero_controle_original: selectedBoleto.numero_controle,
+          boleto_completo: selectedBoleto
+        });
+        
+        // Enviar comprovante para o backend (usar rota sem /api/)
+        const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numeroBoleto}/comprovante`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            comprovante_url: comprovanteUrl,
+            comprovante: comprovanteUrl,
             filename: file.name,
             filesize: file.size,
             filetype: file.type
@@ -447,7 +458,7 @@ const CompradorPage = () => {
       const ident = boleto.numeroBoleto || boleto.numero_controle || boleto.id;
       
       // SOLUÇÃO 1: Usar URL direta para o comprovante (backend proxy)
-      const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl;
+      const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante;
       
       if (comprovanteUrl) {
 
@@ -541,20 +552,26 @@ const CompradorPage = () => {
   // Cache para boletos disponíveis (usando variáveis já declaradas acima)
 
   // Função otimizada para buscar boletos disponíveis
-  const fetchBoletosDisponiveis = async () => {
+  const fetchBoletosDisponiveis = async (forceRefresh = false) => {
     if (!user?.uid) return;
 
     try {
       const url = buildApiUrl('/boletos');
-      const res = await fetch(url, {
-        headers: {
-          'Cache-Control': 'max-age=60',
+      
+      const headers = forceRefresh ? {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      } : {
+        'Cache-Control': 'max-age=5', // Reduzido para 5 segundos
           'Pragma': 'cache'
-        }
-      });
+      };
+      
+      const res = await fetch(url, { headers });
       
       if (!res.ok) throw new Error('Erro ao buscar boletos disponíveis');
       const data = await res.json();
+      
       const lista = Array.isArray(data) ? data : (data?.data || []);
 
       const boletosMapeados = lista.map(boleto => {
@@ -584,7 +601,7 @@ const CompradorPage = () => {
     if (activeTab === 'comprar') {
       fetchBoletosDisponiveis();
     }
-  }, [activeTab]);
+  }, [activeTab, user?.uid]); // Adicionado user?.uid como dependência
 
   useEffect(() => {
     if (tab && tab !== activeTab) setActiveTab(tab);
@@ -599,6 +616,11 @@ const CompradorPage = () => {
       interval = setInterval(() => {
         fetchMeusBoletos(); // Polling silencioso sem loading
       }, 5000); // 5 segundos como original
+    } else if (activeTab === 'comprar') {
+      fetchBoletosDisponiveis(true); // Busca inicial com refresh forçado
+      interval = setInterval(() => {
+        fetchBoletosDisponiveis(); // Polling silencioso para livro de ordens
+      }, 3000); // 3 segundos para atualização mais frequente
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -638,9 +660,22 @@ const CompradorPage = () => {
     <div className="min-h-screen bg-lime-300 flex flex-col items-center justify-center">
       <main className="flex-1 w-full max-w-6xl px-4 py-1">
         <div className="w-full mx-auto">
-          <h1 className="text-3xl font-bold mb-2 bg-green-800 text-white p-2 rounded-lg text-center">
-            Portal do Comprador
-          </h1>
+          <div className="flex justify-between items-center mb-2 bg-green-800 text-white p-2 rounded-lg">
+            <h1 className="text-3xl font-bold">Portal do Comprador</h1>
+            <button
+              onClick={() => fetchBoletosDisponiveis(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-2"
+              title="Atualizar lista de boletos"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+              Atualizar
+            </button>
+          </div>
+
+          {/* Sistema de refresh de saldos em background */}
+          <BalanceRefresher address={address} isBackgroundMode={true} />
           <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full mb-6">
             <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl">
               <TabsTrigger value="comprar" className="flex items-center justify-center data-[state=active]:bg-lime-600 data-[state=active]:text-white">
@@ -728,7 +763,7 @@ const CompradorPage = () => {
                       <tbody>
                         {boletosDisponiveis.map((boleto) => (
                           <tr 
-                            key={boleto.id} 
+                            key={`disponivel-${boleto.id || boleto.numeroBoleto}-${Math.random()}`} 
                             className={`border-b border-gray-200 hover:bg-lime-50 ${selectedBoleto?.id === boleto.id ? 'bg-lime-100' : ''}`}
                           >
                             <td className="py-3 px-4">{boleto.numeroBoleto}</td>
@@ -836,7 +871,7 @@ const CompradorPage = () => {
                         </thead>
                         <tbody>
                           {meusBoletos.filter(boleto => boleto.status !== 'DISPONIVEL').map((boleto) => (
-                            <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
+                            <tr key={`reservado-${boleto.id || boleto.numeroBoleto}-${Math.random()}`} className="border-b border-gray-200 hover:bg-lime-50">
                               <td className="py-3 px-4">{boleto.numeroBoleto}</td>
                               <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? Number(boleto.valor).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                               <td className="py-3 px-4">{boleto.valor_usdt ? valorLiquidoUSDT(boleto.valor_usdt) + ' USDT' : '--'}</td>
@@ -847,31 +882,82 @@ const CompradorPage = () => {
                               })() : '--'}</td>
                                 <td className="py-3 px-4"><StatusBadge status={boleto.status} /></td>
                               <td className="py-3 px-6 w-44 flex gap-2">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                      <button className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-bold transition-colors duration-200">Ações</button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent className="min-w-48">
-                                      <DropdownMenuItem onClick={() => handlePagarBoleto(boleto)} disabled={boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                <div className="relative dropdown-container">
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setDropdownOpen(dropdownOpen === boleto.numeroBoleto ? null : boleto.numeroBoleto);
+                                    }}
+                                    className="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 text-xs font-bold transition-colors duration-200"
+                                  >
+                                    Ações
+                                  </button>
+                                  
+                                  {dropdownOpen === boleto.numeroBoleto && (
+                                    <div 
+                                      className="absolute right-0 top-full mt-1 w-48 bg-white border border-gray-200 rounded-md shadow-lg z-50"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <div className="py-1">
+                                        <button
+                                          onClick={() => { 
+                                            handlePagarBoleto(boleto); 
+                                            setDropdownOpen(null); 
+                                          }}
+                                          disabled={boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO'}
+                                          className={`w-full text-left px-4 py-2 text-sm font-medium flex items-center ${
+                                            boleto.status === 'AGUARDANDO BAIXA' || boleto.status === 'BAIXADO' 
+                                              ? 'text-gray-400 cursor-not-allowed' 
+                                              : 'text-gray-700 hover:bg-gray-100'
+                                          }`}
+                                        >
                                       <FaCreditCard className="mr-2 text-sm" />
                                       Pagar Boleto
-                                    </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => { setSelectedBoleto(boleto); setEtapaCompra(3); setShowModal(true); }} disabled={boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO'} className={`text-sm font-medium ${boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO' ? 'text-gray-400 cursor-not-allowed' : 'text-gray-700 hover:bg-gray-100'}`}>
+                                        </button>
+                                        
+                                        <button
+                                          onClick={() => { 
+                                            setSelectedBoleto(boleto); 
+                                            setEtapaCompra(3); 
+                                            setShowModal(true); 
+                                            setDropdownOpen(null); 
+                                          }}
+                                          disabled={boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO'}
+                                          className={`w-full text-left px-4 py-2 text-sm font-medium flex items-center ${
+                                            boleto.comprovante_url || boleto.comprovanteUrl || boleto.status === 'BAIXADO' 
+                                              ? 'text-gray-400 cursor-not-allowed' 
+                                              : 'text-gray-700 hover:bg-gray-100'
+                                          }`}
+                                        >
                                       <FaUpload className="mr-2 text-sm" />
                                       Enviar Comprovante
-                                    </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => {
+                                        </button>
 
+                                        <button
+                                          onClick={() => {
                                         handleVisualizarComprovante(boleto);
-                                      }} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
-                                        <FaUpload className="mr-2 text-sm" /> Visualizar Comprovante
-                                      </DropdownMenuItem>
-                                      <DropdownMenuItem onClick={() => handleDisputa(boleto)} className="text-sm font-medium text-gray-700 hover:bg-gray-100">
+                                            setDropdownOpen(null);
+                                          }}
+                                          className="w-full text-left px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 flex items-center"
+                                        >
+                                          <FaEye className="mr-2 text-sm" />
+                                          Visualizar Comprovante
+                                        </button>
+                                        
+                                        <button
+                                          onClick={() => { 
+                                            handleDisputa(boleto); 
+                                            setDropdownOpen(null); 
+                                          }}
+                                          className="w-full text-left px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 flex items-center"
+                                        >
                                       <FaExclamationTriangle className="mr-2 text-sm" />
                                       Disputa
-                                    </DropdownMenuItem>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                        </button>
+                                      </div>
+                                    </div>
+                                  )}
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -910,7 +996,7 @@ const CompradorPage = () => {
                         </thead>
                         <tbody>
                           {meusBoletos.map((boleto) => (
-                            <tr key={boleto.id} className="border-b border-gray-200 hover:bg-lime-50">
+                            <tr key={`historico-${boleto.id || boleto.numeroBoleto}-${Math.random()}`} className="border-b border-gray-200 hover:bg-lime-50">
                               <td className="py-3 px-4">
                                 {boleto.dataCompra ? (() => {
                                   const data = new Date(boleto.dataCompra);
@@ -1287,7 +1373,7 @@ const CompradorPage = () => {
               {/* Etapa 2: Travar boleto */}
               {etapaCompra === 2 && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginTop: '1.5rem' }}>
-                  {wallet.isConnected && wallet.address ? (
+                  {isConnected && address ? (
                     <>
                       <div style={{
                         backgroundColor: '#f0fdf4',
@@ -1303,8 +1389,8 @@ const CompradorPage = () => {
                           <FaWallet style={{ color: '#16a34a', marginRight: '0.5rem', fontSize: '1.125rem' }} />
                           <span style={{ fontWeight: '600', color: '#166534', fontSize: '1.125rem' }}>Carteira Conectada</span>
                         </div>
-                        <p style={{ fontSize: '0.875rem', color: '#15803d', wordBreak: 'break-all', marginBottom: '0.5rem' }}>Endereço: {wallet.address}</p>
-                        <p style={{ fontSize: '0.75rem', color: '#16a34a' }}>Rede: {wallet.chain?.name || 'Desconhecida'}</p>
+                        <p style={{ fontSize: '0.875rem', color: '#15803d', wordBreak: 'break-all', marginBottom: '0.5rem' }}>Endereço: {address}</p>
+                        <p style={{ fontSize: '0.75rem', color: '#16a34a' }}>Rede: Polygon Amoy</p>
                       </div>
                       <button
                         onClick={handleTravarBoleto}
@@ -1326,7 +1412,7 @@ const CompradorPage = () => {
                         onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
                         onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
                       >
-                        <FaLock /> Reservar Boleto e Travar USDT
+                        <FaLock /> TRAVAR BOLETO
                       </button>
                     </>
                   ) : (

@@ -1,17 +1,41 @@
 const { Pool } = require('pg');
 
-// Configuração do banco usando variáveis separadas (evita fallback para localhost)
-const dbHost = process.env.DB_HOST || 'ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech';
-const dbUser = process.env.DB_USER || 'neondb_owner';
-const dbPass = process.env.DB_PASS || 'npg_dPQtsIq53OVc';
-const dbName = process.env.DB_NAME || 'neondb';
+// CONFIGURAÇÃO ROBUSTA COM RETRY E FALLBACK
+let pool;
 
-const pool = new Pool({
-  connectionString: `postgresql://${dbUser}:${dbPass}@${dbHost}/${dbName}?sslmode=require&channel_binding=require`,
-  ssl: {
-    rejectUnauthorized: false
+const createConnection = async () => {
+  const connectionString = 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+  
+  try {
+    console.log('🔗 [DB] Criando nova conexão com Neon PostgreSQL...');
+    
+    const newPool = new Pool({
+      connectionString,
+      ssl: {
+        rejectUnauthorized: false
+      },
+      connectionTimeoutMillis: 10000, // 10s timeout
+      idleTimeoutMillis: 30000,       // 30s idle timeout
+      max: 5                          // max 5 conexões
+    });
+
+    // Testar conexão imediatamente
+    const testResult = await newPool.query('SELECT NOW() as current_time');
+    console.log('✅ [DB] Conexão testada:', testResult.rows[0]);
+    
+    return newPool;
+  } catch (error) {
+    console.error('❌ [DB] Erro na conexão:', error.message);
+    throw error;
   }
-});
+};
+
+const getPool = async () => {
+  if (!pool) {
+    pool = await createConnection();
+  }
+  return pool;
+};
 
 module.exports = async (req, res) => {
   // 1. CORS Headers (OBRIGATÓRIO)
@@ -35,12 +59,107 @@ module.exports = async (req, res) => {
     const op = urlObj.searchParams.get('op');
 
     if (req.method === 'GET') {
+      // Extrair user_id da URL se for rota /usuario/:uid
+      const userIdMatch = req.url.match(/\/usuario\/([^/?]+)/);
+      const userId = userIdMatch ? userIdMatch[1] : null;
+      
+      console.log('🔍 [GET] URL:', req.url);
+      console.log('🔍 [GET] User ID extraído:', userId);
+      
+      // Verificar se é solicitação de verificação de schema
+      const verificarSchema = urlObj.searchParams.get('verificar_schema');
+      
+      if (verificarSchema === 'true') {
+        console.log('🔍 Verificando schema da tabela boletos...');
+        
+        try {
+          const currentPool = await getPool();
+          // 1. Verificar estrutura atual
+          const tableInfo = await currentPool.query(`
+            SELECT column_name, data_type, is_nullable, column_default 
+            FROM information_schema.columns 
+            WHERE table_name = 'boletos' 
+            ORDER BY ordinal_position
+          `);
+          
+          console.log('📊 Estrutura atual da tabela boletos:');
+          tableInfo.rows.forEach(col => {
+            console.log(`  - ${col.column_name}: ${col.data_type} (nullable: ${col.is_nullable})`);
+          });
+
+          const existingColumns = tableInfo.rows.map(row => row.column_name);
+          const missingColumns = [];
+
+          // 2. Verificar campos necessários para blockchain
+          const requiredColumns = [
+            { name: 'escrow_id', type: 'VARCHAR(100)', nullable: true },
+            { name: 'tx_hash', type: 'VARCHAR(100)', nullable: true },
+            { name: 'data_travamento', type: 'TIMESTAMP', nullable: true },
+            { name: 'comprador_id', type: 'VARCHAR(100)', nullable: true }
+          ];
+
+          for (const col of requiredColumns) {
+            if (!existingColumns.includes(col.name)) {
+              missingColumns.push(col);
+            }
+          }
+
+          if (missingColumns.length === 0) {
+            return res.status(200).json({
+              success: true,
+              message: 'Todos os campos necessários já existem na tabela',
+              columns: existingColumns,
+              finalStructure: tableInfo.rows
+            });
+          }
+
+          // 3. Adicionar campos faltantes
+          console.log(`📝 Adicionando ${missingColumns.length} campos faltantes...`);
+          
+          for (const col of missingColumns) {
+            const alterQuery = `ALTER TABLE boletos ADD COLUMN ${col.name} ${col.type}${col.nullable ? '' : ' NOT NULL'}`;
+            console.log(`🔧 Executando: ${alterQuery}`);
+            
+            try {
+              await currentPool.query(alterQuery);
+              console.log(`✅ Campo ${col.name} adicionado com sucesso`);
+            } catch (error) {
+              console.error(`❌ Erro ao adicionar campo ${col.name}:`, error.message);
+            }
+          }
+
+          // 4. Verificar estrutura final
+          const finalTableInfo = await currentPool.query(`
+            SELECT column_name, data_type, is_nullable 
+            FROM information_schema.columns 
+            WHERE table_name = 'boletos' 
+            ORDER BY ordinal_position
+          `);
+
+          return res.status(200).json({
+            success: true,
+            message: `Schema atualizado! ${missingColumns.length} campos adicionados`,
+            addedColumns: missingColumns.map(col => col.name),
+            finalStructure: finalTableInfo.rows
+          });
+          
+        } catch (error) {
+          console.error('❌ Erro ao verificar/atualizar schema:', error);
+          return res.status(500).json({
+            success: false,
+            error: 'Erro ao verificar schema',
+            details: error.message
+          });
+        }
+      }
+      
       // Verificar se está buscando por numero_controle específico
       const numeroControle = urlObj.searchParams.get('numero_controle');
       
       if (numeroControle) {
         console.log(`🔍 Buscando boleto por numero_controle: ${numeroControle}`);
-        const result = await pool.query('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
+        const currentPool = await getPool();
+        const result = await currentPool.query('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
         
         if (result.rows.length === 0) {
           return res.status(404).json({
@@ -56,14 +175,41 @@ module.exports = async (req, res) => {
         });
       }
       
-      // Buscar apenas boletos DISPONÍVEIS incluindo codigo_barras (FIX)
-      const result = await pool.query(`
-        SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, vencimento, instituicao, status, criado_em 
-        FROM boletos 
-        WHERE status IN ('DISPONIVEL', 'pendente')
-        ORDER BY criado_em DESC 
-        LIMIT 50
-      `);
+      // Construir query baseada no contexto
+      let query, params = [];
+      
+      if (userId) {
+        // Buscar boletos específicos do usuário (todos os status)
+        console.log('📍 [GET] Buscando boletos do usuário:', userId);
+        query = `
+          SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, 
+                 vencimento, instituicao, status, criado_em, escrow_id, tx_hash, 
+                 data_travamento 
+          FROM boletos 
+          WHERE user_id = $1
+          ORDER BY criado_em DESC 
+          LIMIT 100
+        `;
+        params = [userId];
+      } else {
+        // Buscar apenas boletos DISPONÍVEIS para marketplace
+        console.log('📍 [GET] Buscando boletos disponíveis para marketplace');
+        query = `
+          SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, 
+                 vencimento, instituicao, status, criado_em 
+          FROM boletos 
+          WHERE status IN ('DISPONIVEL', 'pendente')
+          ORDER BY criado_em DESC 
+          LIMIT 50
+        `;
+      }
+      
+      const currentPool = await getPool();
+      const result = await currentPool.query(query, params);
+      
+      console.log('📊 [GET] Resultado da consulta:');
+      console.log(`   - Total encontrado: ${result.rowCount}`);
+      console.log(`   - Primeiros IDs: ${result.rows.slice(0, 3).map(r => r.id)}`);
       
       res.status(200).json({
         success: true,
@@ -76,7 +222,8 @@ module.exports = async (req, res) => {
       
       // PRIMEIRO: Verificar estrutura da tabela
       console.log('🔍 VERIFICANDO ESTRUTURA DA TABELA...');
-      const tableInfo = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'boletos' ORDER BY ordinal_position");
+      const currentPool = await getPool();
+      const tableInfo = await currentPool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'boletos' ORDER BY ordinal_position");
       console.log('📍 Estrutura completa da tabela boletos:', tableInfo.rows);
       
       // Criar novo boleto
@@ -89,7 +236,11 @@ module.exports = async (req, res) => {
         descricao,
         codigo_barras,
         cpf_cnpj,
-        instituicao
+        instituicao,
+        escrow_id, // ✅ Campos do blockchain
+        tx_hash,
+        status,
+        data_travamento
       } = req.body;
 
       console.log('📋 Dados recebidos:', {
@@ -101,7 +252,11 @@ module.exports = async (req, res) => {
         descricao,
         codigo_barras,
         cpf_cnpj,
-        instituicao
+        instituicao,
+        escrow_id, // ✅ Log dos dados blockchain
+        tx_hash,
+        status,
+        data_travamento
       });
 
       if (!numero_controle || !valor || !user_id) {
@@ -162,30 +317,46 @@ module.exports = async (req, res) => {
       console.log(`💰 Valor recebido: ${valor} BRL → ${valorUSDT} USDT (conversão feita no frontend)`);
       console.log(`🔍 Debug valor_usdt: "${req.body.valor_usdt}" (tipo: ${typeof req.body.valor_usdt})`);
 
-      const result = await pool.query(
+      // Usar status enviado pelo frontend ou 'DISPONIVEL' como fallback
+      const statusFinal = status || 'DISPONIVEL';
+      
+      const result = await currentPool.query(
         `INSERT INTO boletos (
           numero_controle, valor_brl, valor_usdt, vencimento, user_id, 
-          status, codigo_barras, cpf_cnpj, instituicao, criado_em
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) RETURNING *`,
+          status, codigo_barras, cpf_cnpj, instituicao, escrow_id, tx_hash, 
+          data_travamento, criado_em
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, NOW()) RETURNING *`,
         [
           numero_controle, 
           valor, 
           valorUSDT, // Usar o valor USDT já convertido pelo frontend
           dataVencimento, 
           user_id, 
-          'DISPONIVEL',
+          statusFinal,
           codigo_barras || null,
           cpf_cnpj || null,
-          instituicao || null
+          instituicao || null,
+          escrow_id || null, // ✅ Dados do blockchain
+          tx_hash || null,
+          data_travamento || new Date().toISOString()
         ]
       );
 
       console.log('✅ Boleto criado com sucesso:', result.rows[0]);
 
+      // 🧪 DEBUG: Verificar se o boleto aparece imediatamente na consulta
+      console.log('🧪 [DEBUG] Verificando se boleto aparece na consulta...');
+      const verificacao = await currentPool.query(
+        'SELECT id, numero_controle, status FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC LIMIT 5',
+        [user_id]
+      );
+      console.log('🧪 [DEBUG] Boletos encontrados após INSERT:', verificacao.rows);
+
       res.status(201).json({
         success: true,
         data: result.rows[0],
-        message: 'Boleto criado com sucesso'
+        message: 'Boleto criado com sucesso',
+        debug_verificacao: verificacao.rows // 🧪 Incluir verificação na resposta
       });
 
     } else if (req.method === 'PATCH' && (req.url.includes('/fix-null-dates') || op === 'fix-null-dates')) {
@@ -193,8 +364,9 @@ module.exports = async (req, res) => {
       console.log('🔧 Iniciando correção de datas null...');
       
       try {
+        const currentPool = await getPool();
         // Buscar boletos com vencimento null
-        const nullDatesResult = await pool.query(
+        const nullDatesResult = await currentPool.query(
           'SELECT id, numero_controle, criado_em FROM boletos WHERE vencimento IS NULL'
         );
         
@@ -217,7 +389,7 @@ module.exports = async (req, res) => {
           
           console.log(`📅 Atualizando boleto ${boleto.numero_controle}: ${criadoEm.toISOString()} -> ${vencimento.toISOString()}`);
           
-          const updateResult = await pool.query(
+          const updateResult = await currentPool.query(
             'UPDATE boletos SET vencimento = $1 WHERE id = $2',
             [vencimento.toISOString().split('T')[0], boleto.id]
           );
@@ -244,13 +416,68 @@ module.exports = async (req, res) => {
         });
       }
 
+    } else if (req.method === 'PATCH' && (req.url.includes('/reservar') || op === 'reservar')) {
+      // Endpoint para reservar boleto
+      console.log('🔒 Iniciando reserva de boleto...');
+      console.log('📦 Body recebido:', req.body);
+      
+      try {
+        const currentPool = await getPool();
+        const { numero_controle, status, wallet_address, tx_hash, comprador_id } = req.body;
+        
+        if (!numero_controle) {
+          return res.status(400).json({
+            error: 'Numero controle é obrigatório',
+            required: ['numero_controle']
+          });
+        }
+        
+        console.log('🔍 Reservando boleto:', numero_controle);
+        
+        const result = await currentPool.query(`
+          UPDATE boletos 
+          SET status = $1, wallet_address = $2, tx_hash = $3, user_id = $4
+          WHERE numero_controle = $5 AND status = 'DISPONIVEL'
+          RETURNING *
+        `, [
+          status || 'AGUARDANDO PAGAMENTO',
+          wallet_address,
+          tx_hash,
+          comprador_id,
+          numero_controle
+        ]);
+        
+        if (result.rowCount === 0) {
+          return res.status(404).json({
+            error: 'Boleto não encontrado ou não disponível',
+            numero_controle: numero_controle
+          });
+        }
+        
+        console.log('✅ Boleto reservado com sucesso:', numero_controle);
+        
+        return res.status(200).json({
+          success: true,
+          data: result.rows[0],
+          message: 'Boleto reservado com sucesso'
+        });
+        
+      } catch (error) {
+        console.error('❌ Erro ao reservar boleto:', error);
+        return res.status(500).json({
+          error: 'Erro interno do servidor',
+          details: error.message
+        });
+      }
+
     } else if (req.method === 'PATCH' && (req.url.includes('/fix-usdt-values') || op === 'fix-usdt-values')) {
       // Endpoint para corrigir valores USDT dos boletos antigos
       console.log('🔧 Iniciando correção de valores USDT...');
       
       try {
+        const currentPool = await getPool();
         // Buscar boletos onde valor_usdt = valor_brl (não convertidos)
-        const uncorrectedResult = await pool.query(
+        const uncorrectedResult = await currentPool.query(
           'SELECT id, numero_controle, valor_brl, valor_usdt FROM boletos WHERE valor_usdt = valor_brl'
         );
         
@@ -272,7 +499,7 @@ module.exports = async (req, res) => {
           
           console.log(`💰 Convertendo boleto ${boleto.numero_controle}: ${valorBRL} BRL → ${valorUSDT.toFixed(2)} USDT`);
           
-          const updateResult = await pool.query(
+          const updateResult = await currentPool.query(
             'UPDATE boletos SET valor_usdt = $1 WHERE id = $2',
             [valorUSDT.toFixed(2), boleto.id]
           );

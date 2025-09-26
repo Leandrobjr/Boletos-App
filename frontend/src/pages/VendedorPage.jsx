@@ -7,6 +7,7 @@ import {
 } from 'react-icons/fa';
 // Lazy loading para componentes pesados
 const HistoricoTransacoes = lazy(() => import('../components/HistoricoTransacoes'));
+// Componentes de teste removidos para limpeza
 import {
   Card, CardHeader, CardTitle,
   CardDescription, CardContent
@@ -21,17 +22,16 @@ import {
   Alert, AlertTitle, AlertDescription
 } from '../components/ui/alert';
 import Button from '../components/ui/Button';
-import { useWalletConnection } from '../hooks/useWalletConnection';
 import { useUSDTConversion } from '../hooks/useUSDTConversion';
-import { useBoletoEscrow } from '../hooks/useBoletoEscrow';
-import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { useAuth } from '../components/auth/AuthProvider';
 import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from '../components/ui/dropdown-menu';
 import { parseValorBRL } from '../lib/utils';
-import ModernWalletConnector from '../components/wallet/ModernWalletConnector';
 import StatusBadge from '../components/ui/status-badge';
 import { useParams, useNavigate } from 'react-router-dom';
+import BalanceRefresher from '../components/BalanceRefresher';
 import { buildApiUrl } from '../config/apiConfig';
+// Hook corrigido - sem endereços hardcoded
+import { useBoletoEscrowFixed } from '../hooks/useBoletoEscrowFixed';
 
 function VendedorPage() {
   const { user } = useAuth();
@@ -47,10 +47,24 @@ function VendedorPage() {
   });
   const [boletos, setBoletos] = useState([]);
   const [alertInfo, setAlertInfo] = useState(null);
-  const wallet = useWalletConnection();
   const { taxaConversao, brlToUsdt, fetchTaxaConversao } = useUSDTConversion();
-  const { travarBoleto, liberarBoleto } = useBoletoEscrow();
-  const { openConnectModal } = useConnectModal();
+  const { 
+    createEscrowForSeller: createEscrow, 
+    registerBuyer,
+    releaseEscrow,
+    connectWallet,
+    isLoading, 
+    error: escrowError,
+    isConnected,
+    address,
+    networkCorrect
+  } = useBoletoEscrowFixed();
+  
+  // Estados de conexão da carteira (agora vêm do hook)
+  
+  // Função para conectar carteira (agora vem do hook)
+  
+  // Hook corrigido não precisa de checkConnection
   const intervalRef = useRef();
   const [success, setSuccess] = useState(false);
   const [buttonMessage, setButtonMessage] = useState('Cadastrar e Travar USDT');
@@ -70,15 +84,20 @@ function VendedorPage() {
 
   // Função para abrir o modal de conexão da carteira
   const handleWalletConnection = () => {
-    if (openConnectModal) openConnectModal();
+    connectWallet();
   };
 
   // Função para buscar boletos do backend (OTIMIZADA)
   const fetchBoletos = async () => {
-    if (!user?.uid) return;
+    console.log('🚀 [DEBUG] fetchBoletos chamada, user:', user?.uid);
+    if (!user?.uid) {
+      console.log('❌ [DEBUG] Sem usuário, retornando');
+      return;
+    }
     
     setLoadingBoletos(true);
     try {
+      console.log('🔍 [DEBUG] Buscando boletos para usuário:', user.uid);
       const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}`), {
         headers: {
           'Cache-Control': 'max-age=60', // Cache de 1 minuto
@@ -104,7 +123,10 @@ function VendedorPage() {
           vencimento: boleto.vencimento,
           valor_usdt: boleto.valor_usdt || 0,
           status: statusMapeado,
-          comprovante_url: boleto.comprovante_url
+          comprovante_url: boleto.comprovante_url,
+          comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
+          comprovante: boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante,
+          comprador_id: boleto.comprador_id
         };
       });
       
@@ -161,7 +183,7 @@ function VendedorPage() {
   useEffect(() => {
     if (boletos.length > 0) {
       // Verificar imediatamente apenas
-      verificarBoletosParaDestravar();
+      verificarBoletosParaDestravar(); // ✅ REATIVADO - função releaseEscrow implementada
       
       // POLLING REMOVIDO - projeto nunca teve atualização automática
     }
@@ -184,7 +206,7 @@ function VendedorPage() {
   useEffect(() => {
     
     // Se estava processando baixa e agora a carteira está conectada, continuar automaticamente
-    if (processandoBaixa && boletoParaBaixar && wallet.isConnected && wallet.address) {
+    if (processandoBaixa && boletoParaBaixar && isConnected && address) {
       setProcessandoBaixa(false);
       setBoletoParaBaixar(null);
       
@@ -192,13 +214,13 @@ function VendedorPage() {
         processarBaixaBoleto(boletoParaBaixar);
       }, 2000);
     }
-  }, [wallet.isConnected, wallet.address, wallet.chainId, wallet.chain, processandoBaixa, boletoParaBaixar]);
+  }, [isConnected, address, processandoBaixa, boletoParaBaixar]);
 
   // Timeout de segurança para limpar estado se conexão não acontecer
   useEffect(() => {
     if (processandoBaixa && boletoParaBaixar) {
       const timeout = setTimeout(() => {
-        if (!wallet.isConnected) {
+        if (!isConnected) {
           setProcessandoBaixa(false);
           setBoletoParaBaixar(null);
           setAlertInfo({
@@ -212,7 +234,7 @@ function VendedorPage() {
 
       return () => clearTimeout(timeout);
     }
-  }, [processandoBaixa, boletoParaBaixar, wallet.isConnected]);
+  }, [processandoBaixa, boletoParaBaixar, isConnected]);
 
   useEffect(() => {
     // Atualiza cotação apenas ao montar (sem polling automático)
@@ -272,6 +294,12 @@ function VendedorPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Prevenir múltiplas submissões
+    if (buttonMessage === 'Cadastrando...' || buttonMessage === 'Travando USDT...' || buttonMessage === 'Cadastrando boleto...' || isLoading) {
+      console.log('⚠️ [VENDEDOR] Submissão já em andamento, ignorando');
+      return;
+    }
+    
     setSuccess(false);
     setButtonError(false);
     setButtonMessage('Cadastrando...');
@@ -285,7 +313,7 @@ function VendedorPage() {
     if (!formData.instituicao.trim()) errors.instituicao = 'Instituição emissora é obrigatória';
     
     // Validação mais rigorosa da carteira
-    if (!wallet.isConnected || !wallet.address) {
+    if (!isConnected || !address) {
       errors.wallet = 'Conecte sua carteira antes de travar o boleto';
     } else {
     }
@@ -304,27 +332,70 @@ function VendedorPage() {
       });
       return;
     }
-    const boletoObj = {
-      user_id: user.uid,
-      cpf_cnpj: formData.cpfCnpj,
-      codigo_barras: formData.codigoBarras,
-      valor: valorNum,
-      valor_usdt: valorUsdt,
-      vencimento: formData.dataVencimento,
-      instituicao: formData.instituicao,
-      numero_controle: Date.now().toString()
-    };
-    
     try {
-      const resp = await fetch(buildApiUrl('/boletos'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(boletoObj)
+      setButtonMessage('Travando USDT...');
+      
+      // Primeiro, travar USDT no contrato inteligente
+      // Primeiro, travar USDT no escrow usando arquitetura universal
+      const escrowResult = await createEscrow({
+        valorUSDT: valorUsdt,
+        codigoBarras: formData.codigoBarras,
+        valor: valorNum,
+        cpfCnpj: formData.cpfCnpj,
+        dataVencimento: formData.dataVencimento,
+        instituicao: formData.instituicao
       });
-      if (!resp.ok) {
-        const errorData = await resp.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro ${resp.status}: ${resp.statusText}`);
+
+      if (!escrowResult.success) {
+        throw new Error('Falha ao travar USDT no contrato');
       }
+
+      console.log('🎯 [DEBUG] Escrow result:', escrowResult);
+      setButtonMessage('Cadastrando boleto...');
+      
+      // Depois, cadastrar o boleto no backend
+      const boletoObj = {
+        user_id: user.uid,
+        cpf_cnpj: formData.cpfCnpj,
+        codigo_barras: formData.codigoBarras,
+        valor: valorNum,
+        valor_usdt: valorUsdt,
+        vencimento: formData.dataVencimento,
+        instituicao: formData.instituicao,
+        numero_controle: Date.now().toString(),
+        escrow_id: escrowResult.escrowId,
+        tx_hash: escrowResult.txHash || escrowResult.approveTxHash,
+        status: 'DISPONIVEL',
+        data_travamento: new Date().toISOString()
+      };
+      
+      console.log('🎯 [DEBUG] Enviando boleto para backend:', boletoObj);
+      console.log('🎯 [DEBUG] JSON que será enviado:', JSON.stringify(boletoObj, null, 2));
+      console.log('🎯 [DEBUG] URL:', buildApiUrl('/boletos'));
+      
+      try {
+        const resp = await fetch(buildApiUrl('/boletos'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(boletoObj)
+        });
+        
+        console.log('🎯 [DEBUG] Resposta do servidor:', resp.status, resp.statusText);
+        console.log('🎯 [DEBUG] Headers da resposta:', resp.headers);
+        
+        if (!resp.ok) {
+          const errorText = await resp.text();
+          console.log('🎯 [DEBUG] Texto do erro:', errorText);
+          throw new Error(`Erro ${resp.status}: ${resp.statusText} - ${errorText}`);
+        }
+        
+        const result = await resp.json();
+        console.log('🎯 [DEBUG] Resultado:', result);
+      } catch (fetchError) {
+        console.error('🎯 [DEBUG] Erro na requisição:', fetchError);
+        throw fetchError;
+      }
+
       setButtonMessage('Boleto cadastrado e USDT travado!');
       setSuccess(true);
       setShowCotacao(false);
@@ -339,10 +410,9 @@ function VendedorPage() {
       setAlertInfo({
         type: 'success',
         title: 'Cadastro realizado',
-        message: 'Boleto cadastrado e USDT travado com sucesso!'
+        message: `Boleto cadastrado e USDT travado com sucesso! Hash: ${(escrowResult.txHash || escrowResult.approveTxHash || 'N/A').substring(0, 10)}...`
       });
       fetchBoletosOptimized(true); // Forçar refresh após cadastro
-      // Botão permanece desabilitado e com mensagem de sucesso
       setButtonError(false);
     } catch (error) {
       console.error('Erro detalhado:', error);
@@ -515,27 +585,13 @@ function VendedorPage() {
       });
     
     // Verificar se a carteira está conectada
-    if (!wallet.isConnected || !wallet.address) {
+    if (!isConnected || !address) {
       setBoletoParaBaixar(boleto);
       setProcessandoBaixa(true);
       
       // Abrir modal de conexão automaticamente
       try {
-        if (openConnectModal && typeof openConnectModal === 'function') {
-          openConnectModal();
-        } else {
-            // Limpar estados de loading
-            setBoletoBaixandoId(null);
-            setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
-            
-          setAlertInfo({
-            type: 'destructive',
-            title: 'Erro de conexão',
-            description: 'Modal de conexão não disponível. Tente conectar a carteira manualmente.'
-          });
-          setTimeout(() => setAlertInfo(null), 3000);
-          return;
-        }
+        await connectWallet();
       } catch (error) {
         console.error('Erro ao abrir modal de conexão:', error);
           
@@ -618,7 +674,7 @@ function VendedorPage() {
 
       
       // Verificar se a carteira está conectada
-      if (!wallet.isConnected || !wallet.address) {
+      if (!isConnected || !address) {
         setAlertInfo({
           type: 'destructive',
           title: 'Carteira não conectada',
@@ -629,20 +685,12 @@ function VendedorPage() {
       }
 
       // Verificar se está na rede correta
-      if (wallet.chainId !== 80002) {
-        setAlertInfo({
-          type: 'destructive',
-          title: 'Rede incorreta',
-          description: 'Para destravar o boleto, você precisa estar na rede Polygon Amoy.'
-        });
-        setTimeout(() => setAlertInfo(null), 5000);
-        return;
-      }
+      // Validação de rede será feita pelo hook DEV
 
       // Destravar USDT no contrato
-      const txHash = await liberarBoleto(boleto.numeroControle);
+      const result = await releaseEscrow({ escrowId: boleto.escrow_id });
       
-      if (txHash) {
+      if (result.success) {
         // Atualizar status no backend
         const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
           method: 'PUT',
@@ -652,7 +700,7 @@ function VendedorPage() {
           body: JSON.stringify({
             status: 'DISPONIVEL',
             data_destravamento: new Date().toISOString(),
-            tx_hash: txHash
+            tx_hash: result.txHash
           })
         });
 
@@ -767,19 +815,7 @@ function VendedorPage() {
     const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
     
     // Verificar se está na rede correta
-    if (wallet.chainId !== 80002) {
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Rede incorreta',
-        description: 'Para usar o BoletoXCrypto, você precisa estar na rede Polygon Amoy. Troque de rede na sua carteira.'
-      });
-      setTimeout(() => setAlertInfo(null), 5000);
-      
-      // Limpar estados de loading
-      setBoletoBaixandoId(null);
-      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
-      return;
-    }
+    // Validação de rede será feita pelo hook DEV
 
     // Verificar se o boleto tem status "AGUARDANDO BAIXA"
     if (boleto.status !== 'AGUARDANDO BAIXA') {
@@ -797,7 +833,7 @@ function VendedorPage() {
     }
 
     // Verificar se há endereço do comprador
-    if (!boleto.wallet_address) {
+    if (!boleto.wallet_address && !boleto.comprador_id) {
       setAlertInfo({
         type: 'destructive',
         title: 'Dados incompletos',
@@ -819,11 +855,31 @@ function VendedorPage() {
 
     try {
       
-      // Primeiro, liberar os USDT do contrato inteligente para o COMPRADOR
-      const result = await liberarBoleto({
-        boletoId: boleto.numeroControle || boleto.numero_controle,
-        enderecoComprador: boleto.wallet_address, // Endereço do COMPRADOR
-        enderecoVendedor: wallet.address // Endereço do vendedor (para validação)
+      // Verificar se há escrow_id no boleto
+      if (!boleto.escrow_id) {
+        throw new Error('ID do escrow não encontrado no boleto. Não é possível liberar os USDT.');
+      }
+
+      // Verificar se há endereço do comprador
+      const compradorAddress = boleto.wallet_address || boleto.comprador_id;
+      if (!compradorAddress) {
+        throw new Error('Endereço da carteira do comprador não encontrado. Não é possível liberar os USDT.');
+      }
+
+      console.log('🔄 [DEBUG] Registrando comprador no contrato:', compradorAddress);
+      
+      // PRIMEIRO: Registrar o comprador no escrow
+      const registerResult = await registerBuyer(boleto.escrow_id, compradorAddress);
+      
+      if (!registerResult.success) {
+        throw new Error('Falha ao registrar comprador no contrato');
+      }
+
+      console.log('✅ [DEBUG] Comprador registrado. Liberando pagamento...');
+
+      // SEGUNDO: Liberar os USDT do contrato inteligente para o COMPRADOR
+      const result = await releaseEscrow({
+        escrowId: boleto.escrow_id
       });
       
       if (!result.success) {
@@ -831,14 +887,14 @@ function VendedorPage() {
       }
 
       // Depois, chamar o backend para baixar o boleto
-      const identBaixar = boleto.id || boleto.numeroControle || boleto.numero_controle;
+      const identBaixar = boleto.numeroControle || boleto.numero_controle || boleto.id;
       const response = await fetch(buildApiUrl(`/boletos/${identBaixar}/baixar`), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           user_id: user.uid,
-          wallet_address_vendedor: wallet.address,
-          wallet_address_comprador: boleto.wallet_address,
+          wallet_address_vendedor: address,
+          wallet_address_comprador: compradorAddress,
           tx_hash: result.txHash
         })
       });
@@ -853,7 +909,7 @@ function VendedorPage() {
       setAlertInfo({
         type: 'success',
         title: 'Boleto baixado com sucesso!',
-        description: `USDT liberados para o comprador (${boleto.wallet_address.substring(0, 6)}...${boleto.wallet_address.substring(boleto.wallet_address.length - 4)}). TX: ${result.txHash.substring(0, 10)}...`
+        description: `USDT liberados para o comprador (${compradorAddress.substring(0, 6)}...${compradorAddress.substring(compradorAddress.length - 4)}). TX: ${result.txHash.substring(0, 10)}...`
       });
       setTimeout(() => setAlertInfo(null), 5000);
 
@@ -931,7 +987,10 @@ function VendedorPage() {
           </h1>
           
           {/* Status da Carteira */}
-          {wallet.isConnected && (
+          {/* Sistema de refresh de saldos em background */}
+          <BalanceRefresher address={address} isBackgroundMode={true} />
+
+          {isConnected && (
             <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -939,12 +998,12 @@ function VendedorPage() {
                   <span className="text-sm font-medium text-green-800">Carteira Conectada</span>
                 </div>
                 <div className="text-xs text-green-600">
-                  {wallet.address?.substring(0, 6)}...{wallet.address?.substring(wallet.address.length - 4)}
+                  {address?.substring(0, 6)}...{address?.substring(address.length - 4)}
                 </div>
               </div>
               <div className="mt-1 text-xs text-green-600">
-                Rede: {wallet.chain?.name || 'Desconhecida'} 
-                {wallet.chainId !== 80002 && (
+                Rede: Polygon Amoy 
+                {!isConnected && (
                   <span className="ml-2 text-orange-600 font-medium">
                     ⚠️ Troque para Polygon Amoy
                   </span>
@@ -1025,27 +1084,29 @@ function VendedorPage() {
                   </form>
                 </CardContent>
               </Card>
+              
+              
               <div className="flex w-full max-w-4xl mx-auto gap-2 mt-4">
                 <button
                   type="button"
-                  onClick={openConnectModal}
-                  className={`w-1/3 font-bold rounded-xl text-lg h-12 py-3 px-2 flex items-center justify-center transition ${wallet.isConnected ? 'bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
-                  disabled={wallet.isConnected}
+                  onClick={connectWallet}
+                  className={`w-1/3 font-bold rounded-xl text-lg h-12 py-3 px-2 flex items-center justify-center transition ${isConnected ? 'bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
+                  disabled={isConnected}
                 >
-                  {wallet.isConnected
-                    ? `Conectado: ${wallet.address ? wallet.address.slice(0,6) + '...' + wallet.address.slice(-4) : ''}`
+                  {isConnected
+                    ? `Conectado: ${address ? address.slice(0,6) + '...' + address.slice(-4) : ''}`
                     : 'Conectar Carteira'}
                 </button>
                 <Button
                   type="button"
                   onClick={handleSubmit}
                   variant={success ? 'success' : buttonError ? 'danger' : 'blue'}
-                  disabled={!wallet.isConnected || !cotacaoValida || !valorValido || success || buttonError}
+                  disabled={!isConnected || !cotacaoValida || !valorValido || success || buttonError || isLoading}
                   size="lg"
-                  className={`w-1/3 font-bold rounded-xl text-lg h-12 py-3 px-2 flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed ${success ? 'bg-green-600 hover:bg-green-700 whitespace-pre-line' : ''}`}
+                  className={`w-1/3 font-bold rounded-xl text-lg h-12 py-3 px-2 flex items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed ${success ? 'bg-green-600 hover:bg-green-700 whitespace-pre-line' : ''} ${isLoading ? 'bg-yellow-500 hover:bg-yellow-600' : ''}`}
                   style={{ whiteSpace: 'pre-line' }}
                 >
-                  {buttonMessage}
+                  {isLoading ? '⏳ Processando...' : buttonMessage}
                 </Button>
                 <button
                   type="button"
@@ -1127,10 +1188,10 @@ function VendedorPage() {
                             ) : (
                             boletos.map((boleto, idx) => {
                             return (
-                              <tr key={boleto.numeroControle || boleto.id || `boleto-${idx}`} className="border-b border-gray-200 hover:bg-lime-50">
+                              <tr key={`${boleto.id || boleto.numeroControle}-${idx}`} className="border-b border-gray-200 hover:bg-lime-50">
                                 <td className="py-3 px-4">{boleto.numeroControle}</td>
                                 <td className="py-3 px-4">{boleto.cpfCnpj || '--'}</td>
-                                <td className="py-3 px-4">R$ {(boleto.valor_brl !== undefined && boleto.valor_brl !== null) ? boleto.valor_brl.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
+                                <td className="py-3 px-4">R$ {(boleto.valor !== undefined && boleto.valor !== null) ? boleto.valor.toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '--'}</td>
                                 <td className="py-3 px-4">
                                   {(() => {
                                     if (boleto.valor_usdt !== undefined && boleto.valor_usdt !== null) {
@@ -1147,7 +1208,11 @@ function VendedorPage() {
                                   <StatusBadge status={boleto.status} />
                                 </td>
                                 <td className="py-3 px-4">
-                                  {boleto.wallet_address ? (
+                                  {boleto.comprador_id ? (
+                                    <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
+                                      {boleto.comprador_id.substring(0, 6)}...{boleto.comprador_id.substring(boleto.comprador_id.length - 4)}
+                                    </span>
+                                  ) : boleto.wallet_address ? (
                                     <span className="text-xs font-mono bg-gray-100 px-2 py-1 rounded">
                                       {boleto.wallet_address.substring(0, 6)}...{boleto.wallet_address.substring(boleto.wallet_address.length - 4)}
                                     </span>
@@ -1163,25 +1228,135 @@ function VendedorPage() {
                                       </button>
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent>
-                                      {/* Opção para visualizar comprovante - sempre disponível se houver comprovante */}
-                                      {boleto.comprovante_url && (
+                                      {/* Para status AGUARDANDO BAIXA: 3 opções obrigatórias */}
+                                      {boleto.status === 'AGUARDANDO BAIXA' && (
+                                        <>
+                                          {/* 1. Visualizar Comprovante */}
+                                          <DropdownMenuItem 
+                                            onClick={() => {
+                                              try {
+                                                const ident = boleto.numeroControle || boleto.numero_controle || boleto.id;
+                                                
+                                                // SOLUÇÃO 1: Usar URL direta para o comprovante (backend proxy)
+                                                const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante;
+                                                
+                                                if (comprovanteUrl) {
+                                                  // Se for base64, criar blob URL para melhor performance
+                                                  if (comprovanteUrl.startsWith('data:')) {
+                                                    try {
+                                                      // Converter base64 para blob
+                                                      const [header, base64Data] = comprovanteUrl.split(',');
+                                                      const byteCharacters = atob(base64Data);
+                                                      const byteNumbers = new Array(byteCharacters.length);
+                                                      for (let i = 0; i < byteCharacters.length; i++) {
+                                                        byteNumbers[i] = byteCharacters.charCodeAt(i);
+                                                      }
+                                                      const byteArray = new Uint8Array(byteNumbers);
+                                                      const blob = new Blob([byteArray], { type: 'application/pdf' });
+                                                      const blobUrl = URL.createObjectURL(blob);
+                                                      
+                                                      window.open(blobUrl, '_blank', 'noopener,noreferrer');
+                                                      
+                                                      // Limpar blob URL após 30 segundos
+                                                      setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
+                                                      return;
+                                                    } catch (blobError) {
+                                                      console.warn('⚠️ VENDEDOR - Erro ao criar blob, usando base64 direto:', blobError);
+                                                      window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
+                                                      return;
+                                                    }
+                                                  } else {
+                                                    // URL externa direta
+                                                    window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
+                                                    return;
+                                                  }
+                                                }
+                                                
+                                                // SOLUÇÃO 2: Fallback - proxy via backend para garantir funcionamento
+                                                const backendUrl = import.meta.env.PROD 
+                                                  ? 'https://boletos-backend-290725.vercel.app'
+                                                  : 'http://localhost:3001';
+                                                
+                                                const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
+                                                window.open(proxyUrl, '_blank', 'noopener,noreferrer');
+                                                
+                                              } catch (error) {
+                                                console.error('❌ VENDEDOR - Erro ao abrir comprovante:', error);
+                                                alert('Erro ao abrir comprovante. Tente novamente.');
+                                              }
+                                            }}
+                                          >
+                                            Visualizar Comprovante
+                                          </DropdownMenuItem>
+                                          
+                                          {/* 2. Baixar Boleto */}
+                                          <DropdownMenuItem 
+                                            onClick={() => {
+                                              const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
+                                              if (statusBaixa[boletoId] !== 'processando') {
+                                                handleBaixarPagamento(boleto);
+                                              }
+                                            }}
+                                            disabled={statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'processando'}
+                                            className={`${
+                                              statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'processando' 
+                                                ? 'opacity-60 cursor-not-allowed' 
+                                                : statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'sucesso'
+                                                ? 'text-green-600 font-semibold'
+                                                : ''
+                                            }`}
+                                          >
+                                            {(() => {
+                                              const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
+                                              const status = statusBaixa[boletoId];
+                                              
+                                              if (status === 'processando') {
+                                                return (
+                                                  <div className="flex items-center gap-2">
+                                                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-900"></div>
+                                                    Processando...
+                                                  </div>
+                                                );
+                                              } else if (status === 'sucesso') {
+                                                return (
+                                                  <div className="flex items-center gap-2">
+                                                    <span className="text-green-600">✓</span>
+                                                    Boleto Baixado
+                                                  </div>
+                                                );
+                                              } else {
+                                                return 'Baixar Boleto';
+                                              }
+                                            })()}
+                                          </DropdownMenuItem>
+                                          
+                                          {/* 3. Disputa */}
+                                          <DropdownMenuItem 
+                                            onClick={() => {
+                                              handleDisputa(boleto);
+                                              setDropdownOpen(prev => ({ ...prev, [boleto.numeroControle]: false }));
+                                            }}
+                                            className="text-orange-600 hover:text-orange-700"
+                                          >
+                                            <FaExclamationTriangle className="mr-2 text-sm" />
+                                            Disputa
+                                          </DropdownMenuItem>
+                                        </>
+                                      )}
+
+                                      {/* Para outros status: opções disponíveis */}
+                                      {/* Opção para visualizar comprovante - outros status com comprovante */}
+                                      {boleto.status !== 'AGUARDANDO BAIXA' && boleto.comprovante_url && (
                                         <DropdownMenuItem 
                                           onClick={() => {
-
-                                            
                                             try {
                                               const ident = boleto.numeroControle || boleto.numero_controle || boleto.id;
                                               
-                                              // SOLUÇÃO 1: Usar URL direta para o comprovante (backend proxy)
-                                              const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl;
+                                              const comprovanteUrl = boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante;
                                               
                                               if (comprovanteUrl) {
-
-                                                
-                                                // Se for base64, criar blob URL para melhor performance
                                                 if (comprovanteUrl.startsWith('data:')) {
                                                   try {
-                                                    // Converter base64 para blob
                                                     const [header, base64Data] = comprovanteUrl.split(',');
                                                     const byteCharacters = atob(base64Data);
                                                     const byteNumbers = new Array(byteCharacters.length);
@@ -1192,10 +1367,7 @@ function VendedorPage() {
                                                     const blob = new Blob([byteArray], { type: 'application/pdf' });
                                                     const blobUrl = URL.createObjectURL(blob);
                                                     
-
                                                     window.open(blobUrl, '_blank', 'noopener,noreferrer');
-                                                    
-                                                    // Limpar blob URL após 30 segundos
                                                     setTimeout(() => URL.revokeObjectURL(blobUrl), 30000);
                                                     return;
                                                   } catch (blobError) {
@@ -1204,19 +1376,16 @@ function VendedorPage() {
                                                     return;
                                                   }
                                                 } else {
-                                                  // URL externa direta
                                                   window.open(comprovanteUrl, '_blank', 'noopener,noreferrer');
                                                   return;
                                                 }
                                               }
                                               
-                                              // SOLUÇÃO 2: Fallback - proxy via backend para garantir funcionamento
                                               const backendUrl = import.meta.env.PROD 
                                                 ? 'https://boletos-backend-290725.vercel.app'
                                                 : 'http://localhost:3001';
                                               
                                               const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
-
                                               window.open(proxyUrl, '_blank', 'noopener,noreferrer');
                                               
                                             } catch (error) {
@@ -1226,55 +1395,6 @@ function VendedorPage() {
                                           }}
                                         >
                                           Visualizar Comprovante
-                                        </DropdownMenuItem>
-                                      )}
-                                      
-                                      {/* Opção para baixar boleto - apenas para AGUARDANDO BAIXA */}
-                                      {boleto.status === 'AGUARDANDO BAIXA' && (
-                                        <DropdownMenuItem 
-                                          onClick={() => {
-                                            const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
-                                            if (statusBaixa[boletoId] !== 'processando') {
-                                            handleBaixarPagamento(boleto);
-                                            }
-                                          }}
-                                          disabled={statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'processando'}
-                                          className={`${
-                                            statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'processando' 
-                                              ? 'opacity-60 cursor-not-allowed' 
-                                              : statusBaixa[boleto.id || boleto.numeroControle || boleto.numero_controle] === 'sucesso'
-                                              ? 'text-green-600 font-semibold'
-                                              : ''
-                                          }`}
-                                        >
-                                          {(() => {
-                                            const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
-                                            const status = statusBaixa[boletoId];
-                                            
-                                            // Debug log
-
-                                            
-                                            if (status === 'processando') {
-
-                                              return (
-                                                <div className="flex items-center gap-2">
-                                                  <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-900"></div>
-                                                  Processando...
-                                                </div>
-                                              );
-                                            } else if (status === 'sucesso') {
-
-                                              return (
-                                                <div className="flex items-center gap-2">
-                                                  <span className="text-green-600">✓</span>
-                                                  Boleto Baixado
-                                                </div>
-                                              );
-                                            } else {
-
-                                              return 'Baixar boleto';
-                                            }
-                                          })()}
                                         </DropdownMenuItem>
                                       )}
                                       
@@ -1290,20 +1410,6 @@ function VendedorPage() {
                                           className="text-red-600 hover:text-red-700"
                                         >
                                           Cancelar Boleto
-                                        </DropdownMenuItem>
-                                      )}
-                                      
-                                      {/* Opção para disputa - apenas quando há comprovante */}
-                                      {boleto.comprovante_url && (
-                                        <DropdownMenuItem 
-                                          onClick={() => {
-                                            handleDisputa(boleto);
-                                            setDropdownOpen(prev => ({ ...prev, [boleto.numeroControle]: false }));
-                                          }}
-                                          className="text-orange-600 hover:text-orange-700"
-                                        >
-                                          <FaExclamationTriangle className="mr-2 text-sm" />
-                                          Disputa
                                         </DropdownMenuItem>
                                       )}
                                       
@@ -1391,7 +1497,7 @@ function VendedorPage() {
                   </div>
                   <div className="text-center">
                     <div className="font-semibold text-green-700 mb-1">Valor</div>
-                    <div className="text-gray-800 font-semibold">R$ {Number(selectedComprovante.valor_brl).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
+                    <div className="text-gray-800 font-semibold">R$ {Number(selectedComprovante.valor || 0).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</div>
                   </div>
                   <div className="text-center">
                     <div className="font-semibold text-green-700 mb-1">Status</div>
