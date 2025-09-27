@@ -183,10 +183,15 @@ function VendedorPage() {
   // Monitorar boletos para destravamento automático
   useEffect(() => {
     if (boletos.length > 0) {
-      // TEMPORARIAMENTE DESABILITADO - causando erros ao destravar boletos recém-criados
-      // verificarBoletosParaDestravar(); // ✅ REATIVADO - função releaseEscrow implementada
+      // Verificar apenas boletos que estão AGUARDANDO PAGAMENTO há mais de 60 minutos
+      verificarBoletosParaDestravar();
       
-      // POLLING REMOVIDO - projeto nunca teve atualização automática
+      // Configurar verificação periódica a cada 5 minutos
+      const interval = setInterval(() => {
+        verificarBoletosParaDestravar();
+      }, 5 * 60 * 1000); // 5 minutos
+      
+      return () => clearInterval(interval);
     }
   }, [boletos]);
 
@@ -669,13 +674,14 @@ function VendedorPage() {
     }
   };
 
-  // Função para destravar boleto automaticamente após 65 minutos
+  // Função para destravar boleto automaticamente após 60 minutos
   const handleDestravarBoleto = async (boleto) => {
     try {
-
+      console.log(`🔄 Iniciando destravamento automático do boleto ${boleto.id}`);
       
       // Verificar se a carteira está conectada
       if (!isConnected || !address) {
+        console.warn('⚠️ Carteira não conectada para destravamento automático');
         setAlertInfo({
           type: 'destructive',
           title: 'Carteira não conectada',
@@ -685,8 +691,13 @@ function VendedorPage() {
         return;
       }
 
-      // Verificar se está na rede correta
-      // Validação de rede será feita pelo hook DEV
+      // Verificar se o escrow_id é válido
+      if (!boleto.escrow_id || boleto.escrow_id === '0x123' || boleto.escrow_id.length < 10) {
+        console.error('❌ Escrow ID inválido para destravamento:', boleto.escrow_id);
+        return;
+      }
+
+      console.log(`🔓 Destravando escrow ${boleto.escrow_id} para boleto ${boleto.id}`);
 
       // Destravar USDT no contrato
       const result = await releaseEscrow({ escrowId: boleto.escrow_id });
@@ -709,50 +720,69 @@ function VendedorPage() {
           setAlertInfo({
             type: 'success',
             title: 'Boleto destravado automaticamente',
-            description: `Boleto ${boleto.numeroControle} foi destravado após 65 minutos sem pagamento.`
+            description: `Boleto ${boleto.numeroControle} foi destravado após 60 minutos sem pagamento.`
           });
           // Recarregar os boletos
           fetchBoletosOptimized(true);
         } else {
+          console.error('❌ Erro ao atualizar status no backend para boleto:', boleto.id);
           throw new Error('Erro ao atualizar status no backend');
         }
       } else {
-        throw new Error('Erro ao destravar USDT no contrato');
+        console.error('❌ Erro ao destravar USDT no contrato para boleto:', boleto.id, result.error);
+        throw new Error(`Erro ao destravar USDT no contrato: ${result.error || 'Erro desconhecido'}`);
       }
     } catch (error) {
-      console.error('Erro ao destravar boleto:', error);
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Erro ao destravar boleto',
-        description: 'Ocorreu um erro ao destravar o boleto automaticamente. Tente novamente.'
-      });
+      console.error('❌ Erro ao destravar boleto automaticamente:', boleto.id, error);
+      
+      // Não mostrar alerta para destravamento automático para não incomodar o usuário
+      // O sistema tentará novamente na próxima verificação
+      console.log('🔄 Tentativa de destravamento automático falhou, será tentado novamente em 5 minutos');
     }
-    setTimeout(() => setAlertInfo(null), 5000);
   };
 
   // Função para verificar e destravar boletos automaticamente
   const verificarBoletosParaDestravar = () => {
-    const agora = new Date();
-    const boletosParaDestravar = boletos.filter(boleto => {
-      // Verificar se o boleto está travado (AGUARDANDO PAGAMENTO)
-      if (boleto.status !== 'AGUARDANDO PAGAMENTO') return false;
-      
-      // Verificar se tem data de travamento
-      if (!boleto.data_travamento) return false;
-      
-      // Calcular tempo decorrido desde o travamento
-      const dataTravamento = new Date(boleto.data_travamento);
-      const tempoDecorrido = agora.getTime() - dataTravamento.getTime();
-      const minutosDecorridos = tempoDecorrido / (1000 * 60);
-      
-      // Destravar após 65 minutos (60 + 5 de tolerância)
-      return minutosDecorridos >= 65;
-    });
+    try {
+      const agora = new Date();
+      const boletosParaDestravar = boletos.filter(boleto => {
+        // Verificar se o boleto está travado (AGUARDANDO PAGAMENTO)
+        if (boleto.status !== 'AGUARDANDO PAGAMENTO') return false;
+        
+        // Verificar se tem data de travamento
+        if (!boleto.data_travamento) return false;
+        
+        // Verificar se tem escrow_id válido
+        if (!boleto.escrow_id || boleto.escrow_id === '0x123' || boleto.escrow_id.length < 10) {
+          console.warn('⚠️ Boleto sem escrow_id válido:', boleto.id);
+          return false;
+        }
+        
+        // Calcular tempo decorrido desde o travamento
+        const dataTravamento = new Date(boleto.data_travamento);
+        const tempoDecorrido = agora.getTime() - dataTravamento.getTime();
+        const minutosDecorridos = tempoDecorrido / (1000 * 60);
+        
+        // Destravar após 60 minutos (sem tolerância para ser mais preciso)
+        const deveDestravar = minutosDecorridos >= 60;
+        
+        if (deveDestravar) {
+          console.log(`🕐 Boleto ${boleto.id} deve ser destravado - ${minutosDecorridos.toFixed(1)} minutos decorridos`);
+        }
+        
+        return deveDestravar;
+      });
 
-    // Destravar cada boleto que passou do prazo
-    boletosParaDestravar.forEach(boleto => {
-      handleDestravarBoleto(boleto);
-    });
+      // Destravar cada boleto que passou do prazo
+      if (boletosParaDestravar.length > 0) {
+        console.log(`🔄 Destravando ${boletosParaDestravar.length} boletos automaticamente`);
+        boletosParaDestravar.forEach(boleto => {
+          handleDestravarBoleto(boleto);
+        });
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar boletos para destravar:', error);
+    }
   };
 
   const handleVisualizarBoleto = (boleto) => {

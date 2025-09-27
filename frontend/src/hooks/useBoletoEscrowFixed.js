@@ -248,6 +248,7 @@ export const useBoletoEscrowFixed = () => {
 
       // Validar escrowId
       if (!escrowId || escrowId === '0x123' || escrowId.length < 10) {
+        console.warn('⚠️ Escrow ID inválido para releaseEscrow:', escrowId);
         throw new Error('Escrow ID inválido');
       }
 
