@@ -183,8 +183,8 @@ function VendedorPage() {
   // Monitorar boletos para destravamento automático
   useEffect(() => {
     if (boletos.length > 0) {
-      // Verificar imediatamente apenas
-      verificarBoletosParaDestravar(); // ✅ REATIVADO - função releaseEscrow implementada
+      // TEMPORARIAMENTE DESABILITADO - causando erros ao destravar boletos recém-criados
+      // verificarBoletosParaDestravar(); // ✅ REATIVADO - função releaseEscrow implementada
       
       // POLLING REMOVIDO - projeto nunca teve atualização automática
     }

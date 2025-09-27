@@ -203,8 +203,8 @@ export const useBoletoEscrowFixed = () => {
         throw new Error('Carteira não conectada');
       }
 
-      if (!buyerAddress) {
-        throw new Error('Endereço do comprador é obrigatório');
+      if (!buyerAddress || buyerAddress === '0x0000000000000000000000000000000000000000') {
+        throw new Error('Endereço do comprador é obrigatório e não pode ser zero');
       }
 
       console.log('🔄 [FIXED] Registrando comprador:', buyerAddress, 'para escrow:', escrowId);
@@ -244,6 +244,11 @@ export const useBoletoEscrowFixed = () => {
 
       if (!isConnected || !address) {
         throw new Error('Carteira não conectada');
+      }
+
+      // Validar escrowId
+      if (!escrowId || escrowId === '0x123' || escrowId.length < 10) {
+        throw new Error('Escrow ID inválido');
       }
 
       const provider = new ethers.BrowserProvider(window.ethereum);
