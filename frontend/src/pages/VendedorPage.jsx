@@ -730,6 +730,14 @@ function VendedorPage() {
         }
       } else {
         console.error('❌ Erro ao destravar USDT no contrato para boleto:', boleto.id, result.error);
+        
+        // Se o escrow não está ativo, marcar boleto como expirado
+        if (result.error && result.error.includes('não está ativo')) {
+          console.log('🔄 Escrow inativo, marcando boleto como expirado');
+          await handleLimparBoletoAntigo(boleto);
+          return;
+        }
+        
         throw new Error(`Erro ao destravar USDT no contrato: ${result.error || 'Erro desconhecido'}`);
       }
     } catch (error) {
@@ -745,33 +753,52 @@ function VendedorPage() {
   const verificarBoletosParaDestravar = () => {
     try {
       const agora = new Date();
-      const boletosParaDestravar = boletos.filter(boleto => {
+      const boletosParaDestravar = [];
+      const boletosParaLimpar = [];
+      
+      boletos.forEach(boleto => {
         // Verificar se o boleto está travado (AGUARDANDO PAGAMENTO)
-        if (boleto.status !== 'AGUARDANDO PAGAMENTO') return false;
+        if (boleto.status !== 'AGUARDANDO PAGAMENTO') return;
         
         // Verificar se tem data de travamento
-        if (!boleto.data_travamento) return false;
-        
-        // Verificar se tem escrow_id válido
-        if (!boleto.escrow_id || boleto.escrow_id === '0x123' || boleto.escrow_id.length < 10) {
-          console.warn('⚠️ Boleto sem escrow_id válido:', boleto.id);
-          return false;
-        }
+        if (!boleto.data_travamento) return;
         
         // Calcular tempo decorrido desde o travamento
         const dataTravamento = new Date(boleto.data_travamento);
         const tempoDecorrido = agora.getTime() - dataTravamento.getTime();
         const minutosDecorridos = tempoDecorrido / (1000 * 60);
         
-        // Destravar após 60 minutos (sem tolerância para ser mais preciso)
-        const deveDestravar = minutosDecorridos >= 60;
-        
-        if (deveDestravar) {
-          console.log(`🕐 Boleto ${boleto.id} deve ser destravado - ${minutosDecorridos.toFixed(1)} minutos decorridos`);
+        // Verificar se tem escrow_id válido
+        if (!boleto.escrow_id || boleto.escrow_id === '0x123' || boleto.escrow_id.length < 10) {
+          console.warn('⚠️ Boleto sem escrow_id válido:', boleto.id);
+          // Se passou de 60 minutos e não tem escrow_id, marcar para limpeza
+          if (minutosDecorridos >= 60) {
+            boletosParaLimpar.push(boleto);
+          }
+          return;
         }
         
-        return deveDestravar;
+        // Se passou de 24 horas (1440 minutos), marcar para limpeza (boletos muito antigos)
+        if (minutosDecorridos >= 1440) {
+          console.log(`🧹 Boleto muito antigo para limpeza: ${boleto.id} - ${minutosDecorridos.toFixed(1)} minutos`);
+          boletosParaLimpar.push(boleto);
+          return;
+        }
+        
+        // Destravar após 60 minutos
+        if (minutosDecorridos >= 60) {
+          console.log(`🕐 Boleto ${boleto.id} deve ser destravado - ${minutosDecorridos.toFixed(1)} minutos decorridos`);
+          boletosParaDestravar.push(boleto);
+        }
       });
+
+      // Limpar boletos antigos ou sem escrow_id
+      if (boletosParaLimpar.length > 0) {
+        console.log(`🧹 Limpando ${boletosParaLimpar.length} boletos antigos/inválidos`);
+        boletosParaLimpar.forEach(boleto => {
+          handleLimparBoletoAntigo(boleto);
+        });
+      }
 
       // Destravar cada boleto que passou do prazo
       if (boletosParaDestravar.length > 0) {
@@ -782,6 +809,36 @@ function VendedorPage() {
       }
     } catch (error) {
       console.error('❌ Erro ao verificar boletos para destravar:', error);
+    }
+  };
+
+  // Função para limpar boletos antigos ou inválidos
+  const handleLimparBoletoAntigo = async (boleto) => {
+    try {
+      console.log(`🧹 Limpando boleto antigo: ${boleto.id}`);
+      
+      // Atualizar status para EXPIRADO no backend
+      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'EXPIRADO',
+          data_destravamento: new Date().toISOString(),
+          tx_hash: null
+        })
+      });
+
+      if (response.ok) {
+        console.log(`✅ Boleto ${boleto.id} marcado como EXPIRADO`);
+        // Recarregar os boletos
+        fetchBoletosOptimized(true);
+      } else {
+        console.error('❌ Erro ao marcar boleto como expirado:', boleto.id);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao limpar boleto antigo:', boleto.id, error);
     }
   };
 

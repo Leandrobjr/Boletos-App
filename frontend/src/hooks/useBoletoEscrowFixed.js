@@ -257,15 +257,22 @@ export const useBoletoEscrowFixed = () => {
       const contract = new ethers.Contract(DEV_CONFIG.P2P_ESCROW, P2P_ESCROW_ABI, signer);
 
       // Verificar se escrow existe e está ativo
-      const escrowDetails = await contract.getEscrowDetails(escrowId);
-      const { isActive, isReleased } = escrowDetails;
+      try {
+        const escrowDetails = await contract.getEscrowDetails(escrowId);
+        const { isActive, isReleased } = escrowDetails;
 
-      if (isReleased) {
-        return { success: true, txHash: null, message: 'Escrow já foi liberado' };
-      }
+        if (isReleased) {
+          console.log('✅ Escrow já foi liberado:', escrowId);
+          return { success: true, txHash: null, message: 'Escrow já foi liberado' };
+        }
 
-      if (!isActive) {
-        throw new Error('Escrow não está ativo');
+        if (!isActive) {
+          console.log('⚠️ Escrow não está ativo:', escrowId);
+          return { success: false, error: 'Escrow não está ativo - pode ter expirado ou sido cancelado' };
+        }
+      } catch (escrowError) {
+        console.error('❌ Erro ao verificar estado do escrow:', escrowError);
+        return { success: false, error: 'Escrow não encontrado ou inválido' };
       }
 
       const tx = await contract.approvePayment(escrowId);
