@@ -1,5 +1,10 @@
 {
   "version": 2,
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "@vercel/node@4.0.0"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/perfil/([^/]+)",
@@ -8,6 +13,14 @@
     {
       "source": "/api/boletos/controle/([^/]+)",
       "destination": "/api/boletos?numero_controle=$1"
+    },
+    {
+      "source": "/api/fees/collect",
+      "destination": "/api/fees/collect"
+    },
+    {
+      "source": "/api/timeout/check",
+      "destination": "/api/timeout/check"
     },
     {
       "source": "/api/(.*)",

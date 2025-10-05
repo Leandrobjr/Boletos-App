@@ -785,6 +785,16 @@ if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`🚀 Servidor backend Neon PostgreSQL rodando na porta ${PORT}`);
     console.log(`📊 DATABASE_URL configurado: ${process.env.DATABASE_URL ? 'Sim' : 'Não'}`);
+    
+    // Iniciar serviço de timeout automático apenas em desenvolvimento local
+    try {
+      const AutoTimeoutService = require('./services/AutoTimeoutService');
+      const autoTimeoutService = new AutoTimeoutService();
+      autoTimeoutService.start();
+      console.log('⏰ AutoTimeoutService iniciado para desenvolvimento local');
+    } catch (error) {
+      console.error('❌ Erro ao iniciar AutoTimeoutService:', error.message);
+    }
   });
 
   // Graceful shutdown

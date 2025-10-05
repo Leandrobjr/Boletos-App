@@ -214,11 +214,38 @@ module.exports = async (req, res) => {
         data: result.rows[0]
       });
 
+    } else if (req.method === 'PUT' && action === 'destravar') {
+      // Destravar boleto (voltar para DISPONIVEL após timeout)
+      try {
+        const { status, data_destravamento, tx_hash } = req.body;
+        
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+        const update = await pool.query(
+          isUUID
+            ? 'UPDATE boletos SET status = $1, data_destravamento = $2, tx_hash = $3, comprador_id = NULL, wallet_address = NULL, data_compra = NULL, tempo_limite = NULL WHERE id = $4 RETURNING *'
+            : 'UPDATE boletos SET status = $1, data_destravamento = $2, tx_hash = $3, comprador_id = NULL, wallet_address = NULL, data_compra = NULL, tempo_limite = NULL WHERE numero_controle = $4 RETURNING *',
+          [status || 'DISPONIVEL', data_destravamento, tx_hash, id]
+        );
+        
+        if (update.rowCount === 0) {
+          return res.status(404).json({ error: 'Boleto não encontrado', id });
+        }
+        
+        return res.status(200).json({ 
+          success: true, 
+          data: update.rows[0], 
+          message: 'Boleto destravado com sucesso' 
+        });
+      } catch (error) {
+        console.error('❌ Erro ao destravar boleto:', error);
+        return res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+      }
+
     } else {
       res.status(405).json({
         error: 'Método não permitido',
         method: req.method,
-        allowed: ['GET', 'PATCH', 'DELETE', 'OPTIONS']
+        allowed: ['GET', 'PATCH', 'PUT', 'DELETE', 'OPTIONS']
       });
     }
 

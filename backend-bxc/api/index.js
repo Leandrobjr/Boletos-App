@@ -1,5 +1,6 @@
 // Vercel Function para todas as rotas API
 const { Pool } = require('pg');
+const { ethers } = require('ethers');
 
 // Headers CORS
 const corsHeaders = {
@@ -35,6 +36,41 @@ module.exports = async (req, res) => {
   console.log('📍 Body:', req.body);
 
   try {
+    // POST /api/fees/collect - coleta taxas acumuladas do contrato P2P para o owner
+    if (method === 'POST' && url === '/api/fees/collect') {
+      try {
+        const rpcUrl = process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology';
+        const escrow = process.env.P2P_ESCROW_ADDRESS || '0xe69C2630F4d52AF44C1A4CDE7D1552Cf1f97Cec2';
+        const pk = process.env.OWNER_PRIVATE_KEY; // Mantenha no .env de Vercel/ambiente seguro
+        if (!pk) {
+          return res.status(400).json({ error: 'OWNER_PRIVATE_KEY não configurada' });
+        }
+
+        const provider = new ethers.JsonRpcProvider(rpcUrl);
+        const wallet = new ethers.Wallet(pk, provider);
+
+        const abi = [
+          'function owner() view returns (address)',
+          'function usdt() view returns (address)',
+          'function emergencyWithdraw(address _token)'
+        ];
+
+        const contract = new ethers.Contract(escrow, abi, wallet);
+        const owner = await contract.owner();
+        if (owner.toLowerCase() !== wallet.address.toLowerCase()) {
+          return res.status(403).json({ error: 'Carteira não é o owner do contrato', owner, signer: wallet.address });
+        }
+
+        const usdt = await contract.usdt();
+        const tx = await contract.emergencyWithdraw(usdt);
+        const receipt = await tx.wait();
+
+        return res.json({ success: true, txHash: tx.hash, status: receipt.status });
+      } catch (e) {
+        console.error('Erro ao coletar taxas:', e);
+        return res.status(500).json({ error: 'Falha na coleta de taxas', details: e.message });
+      }
+    }
     // Rota raiz - responder a qualquer URL que comece com /api
     if (url === '/api' || url === '/' || url.startsWith('/api/')) {
       // Se for apenas /api, retornar status
