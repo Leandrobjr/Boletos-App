@@ -8,7 +8,9 @@
  * @version 1.0.0 - Produção
  */
 
-const AutoTimeoutService = require('../../services/AutoTimeoutService');
+// Importação inline para Vercel Functions
+const { Pool } = require('pg');
+const { ethers } = require('ethers');
 
 // Instância global do serviço (reutilizada entre requests)
 let autoTimeoutService = null;
@@ -30,7 +32,16 @@ module.exports = async (req, res) => {
 
     // Inicializar serviço se necessário
     if (!autoTimeoutService) {
-      autoTimeoutService = new AutoTimeoutService();
+      try {
+        const AutoTimeoutService = require('../../services/AutoTimeoutService');
+        autoTimeoutService = new AutoTimeoutService();
+      } catch (error) {
+        console.error('Erro ao carregar AutoTimeoutService:', error);
+        return res.status(500).json({
+          error: 'Serviço não disponível',
+          message: 'AutoTimeoutService não pôde ser carregado'
+        });
+      }
     }
 
     if (req.method === 'GET') {

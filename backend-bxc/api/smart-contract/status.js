@@ -8,7 +8,8 @@
  * @version 1.0.0 - Produção
  */
 
-const SmartContractService = require('../../services/SmartContractService');
+// Importação inline para Vercel Functions
+const { ethers } = require('ethers');
 
 // Instância global do serviço
 let smartContractService = null;
@@ -30,7 +31,16 @@ module.exports = async (req, res) => {
 
     // Inicializar serviço se necessário
     if (!smartContractService) {
-      smartContractService = new SmartContractService();
+      try {
+        const SmartContractService = require('../../services/SmartContractService');
+        smartContractService = new SmartContractService();
+      } catch (error) {
+        console.error('Erro ao carregar SmartContractService:', error);
+        return res.status(500).json({
+          error: 'Serviço não disponível',
+          message: 'SmartContractService não pôde ser carregado'
+        });
+      }
     }
 
     if (req.method === 'GET') {
