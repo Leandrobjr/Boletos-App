@@ -24,13 +24,24 @@ module.exports = async (req, res) => {
     console.log(`🚀 API Boletos Comprados Request: ${req.method} ${req.url}`);
     
     if (req.method === 'GET') {
-      console.log('🔍 Buscando boletos disponíveis para compra');
+      const { uid } = req.query;
       
-      // Buscar todos os boletos disponíveis para compra (status DISPONIVEL)
+      console.log('🔍 Buscando boletos comprados pelo usuário:', uid);
+      
+      if (!uid) {
+        return res.status(400).json({
+          error: 'UID do usuário é obrigatório',
+          message: 'Forneça o UID do usuário para buscar seus boletos comprados'
+        });
+      }
+      
+      // Buscar boletos comprados pelo usuário (todos os status exceto DISPONIVEL)
       const result = await pool.query(
         `SELECT * FROM boletos 
-         WHERE status = 'DISPONIVEL' 
-         ORDER BY criado_em DESC`
+         WHERE comprador_id = $1 
+         AND status != 'DISPONIVEL'
+         ORDER BY criado_em DESC`,
+        [uid]
       );
       
       console.log('✅ Boletos encontrados:', result.rowCount);
