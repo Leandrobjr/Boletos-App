@@ -11,7 +11,8 @@
     "start-backend": "node server.js",
     "start-frontend": "cd frontend && npm run dev",
     "install-all": "npm install && cd frontend && npm install && cd ../backend-bxc && npm install",
-    "build": "cd frontend && npm run build"
+    "build": "echo 'No build needed for root project'",
+    "build-frontend": "cd frontend && npm run build"
   },
   "dependencies": {
     "express": "^5.1.0",
