@@ -809,6 +809,26 @@ app.get('/boletos/compra/:uid', async (req, res) => {
   }
 });
 
+// Rota para buscar boletos comprados (compatibilidade com frontend)
+app.get('/boletos/comprados/:uid', async (req, res) => {
+  try {
+    const uid = req.params.uid;
+    console.log('📍 GET /boletos/comprados/:uid para UID:', uid);
+    
+    // Buscar boletos comprados pelo usuário (status PENDENTE_PAGAMENTO, AGUARDANDO_BAIXA, BAIXADO)
+    const boletos = boletosStorage.filter(boleto => 
+      boleto.comprador_id === uid && 
+      ['PENDENTE_PAGAMENTO', 'AGUARDANDO_BAIXA', 'BAIXADO'].includes(boleto.status)
+    );
+    
+    console.log('✅ Boletos comprados encontrados:', boletos.length);
+    res.json(boletos);
+  } catch (error) {
+    console.error('❌ Erro ao buscar boletos comprados:', error);
+    res.status(500).json({ error: 'Erro interno do servidor' });
+  }
+});
+
 // Rota para reservar boleto
 app.patch('/boletos/controle/:numeroControle/reservar', async (req, res) => {
   try {

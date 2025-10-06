@@ -1,0 +1,51 @@
+{
+  "mcpServers": {
+    "docker": {
+      "command": "docker",
+      "args": ["exec", "-i", "docker_labs-ai-tools-for-devs-desktop-extension-service", "node", "/app/result/bin/entrypoint.js"],
+      "env": {
+        "DOCKER_HOST": "unix:///var/run/docker.sock"
+      }
+    },
+    "taskmanager": {
+      "command": "node",
+      "args": ["-e", "console.log('TaskManager MCP Server')"],
+      "env": {
+        "NODE_ENV": "development"
+      }
+    }
+  },
+  "settings": {
+    "docker": {
+      "url": "http://localhost:8811",
+      "timeout": 30000,
+      "retries": 3
+    },
+    "taskmanager": {
+      "url": "http://localhost:3002",
+      "timeout": 30000,
+      "retries": 3
+    }
+  },
+  "troubleshooting": {
+    "common_issues": [
+      {
+        "issue": "Transport is closed",
+        "solution": "Reiniciar o processo MCP ou o Cursor"
+      },
+      {
+        "issue": "Loading tools",
+        "solution": "Verificar URL e conectividade do servidor MCP"
+      },
+      {
+        "issue": "Unable to check status",
+        "solution": "Verificar dependências e configurações de rede"
+      }
+    ]
+  }
+}
+
+
+
+
+

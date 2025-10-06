@@ -84,8 +84,19 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
     try {
       const resp = await fetch(buildApiUrl('/api/proxy/coingecko?ticker=tether&vs=brl'));
       const data = await resp.json();
-      if (data && data.price != null) {
-        setCotacao(Number(data.price));
+      
+      // Backend retorna: { tether: { brl: 5.34 } }
+      // Frontend esperava: { price: 5.34 }
+      let preco = null;
+      
+      if (data && data.tether && data.tether.brl != null) {
+        preco = Number(data.tether.brl);
+      } else if (data && data.price != null) {
+        preco = Number(data.price);
+      }
+      
+      if (preco && preco > 0) {
+        setCotacao(preco);
       } else {
         throw new Error('Cotação indisponível');
       }

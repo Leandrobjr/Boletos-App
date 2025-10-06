@@ -48,7 +48,7 @@ export function useUSDTConversion() {
     setLoading(true);
     setError(null);
     try {
-      const resp = await fetch(buildApiUrl('/proxy/coingecko?ticker=tether&vs=brl'));
+      const resp = await fetch(buildApiUrl('/api/proxy/coingecko?ticker=tether&vs=brl'));
       
       if (!resp.ok) {
         throw new Error(`Erro HTTP ${resp.status}: ${resp.statusText}`);
@@ -56,8 +56,17 @@ export function useUSDTConversion() {
       
       const data = await resp.json();
       
-      if (data && data.price != null) {
-        const preco = Number(data.price);
+      // Backend retorna: { tether: { brl: 5.34 } }
+      // Frontend esperava: { price: 5.34 }
+      let preco = null;
+      
+      if (data && data.tether && data.tether.brl != null) {
+        preco = Number(data.tether.brl);
+      } else if (data && data.price != null) {
+        preco = Number(data.price);
+      }
+      
+      if (preco && preco > 0) {
         setTaxaConversao(preco);
         setCachedRate(preco); // Salvar no cache
       } else {

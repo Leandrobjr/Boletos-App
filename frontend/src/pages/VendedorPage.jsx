@@ -53,11 +53,13 @@ function VendedorPage() {
     registerBuyer,
     releaseEscrow,
     connectWallet,
+    withdrawProtocolEarnings,
     isLoading, 
     error: escrowError,
     isConnected,
     address,
-    networkCorrect
+    networkCorrect,
+    ownerAddress
   } = useBoletoEscrowFixed();
   
   // Estados de conexão da carteira (agora vêm do hook)
@@ -81,6 +83,26 @@ function VendedorPage() {
   const [selectedComprovante, setSelectedComprovante] = useState(null);
   const [destravamentoTimer, setDestravamentoTimer] = useState(null);
   const [loadingBoletos, setLoadingBoletos] = useState(false);
+  const isOwner = useMemo(() => {
+    if (!address) return false;
+    const addr = address.toLowerCase();
+    const knownOwner = '0x9950764ad4548e9106e3106c954a87d8b3cf64a7';
+    if (addr === knownOwner) return true;
+    return ownerAddress && ownerAddress.toLowerCase() === addr;
+  }, [ownerAddress, address]);
+
+  const handleWithdrawFees = async () => {
+    try {
+      setAlertInfo({ type: 'info', title: 'Coletando taxas', message: 'Executando saque de taxas acumuladas...' });
+      const res = await withdrawProtocolEarnings();
+      if (!res?.success) throw new Error(res?.error || 'Falha ao sacar taxas');
+      setAlertInfo({ type: 'success', title: 'Taxas coletadas', message: `TX: ${res.txHash.substring(0,10)}...` });
+    } catch (e) {
+      setAlertInfo({ type: 'destructive', title: 'Erro ao coletar taxas', message: e.message });
+    } finally {
+      setTimeout(() => setAlertInfo(null), 6000);
+    }
+  };
 
   // Função para abrir o modal de conexão da carteira
   const handleWalletConnection = () => {
@@ -1099,10 +1121,36 @@ function VendedorPage() {
               </div>
             </div>
           )}
-          
+          {isConnected && (
+            <div className="w-full mb-3 flex items-center justify-between border border-green-300 rounded p-2 bg-green-50">
+              <div className="text-sm text-green-900">
+                {isOwner ? (
+                  <>Owner do contrato conectado: {address?.slice(0,6)}...{address?.slice(-4)}</>
+                ) : (
+                  <>Carteira conectada: {address?.slice(0,6)}...{address?.slice(-4)} (não-owner)</>
+                )}
+              </div>
+              <Button onClick={handleWithdrawFees} disabled={isLoading || !isOwner} className={`px-4 py-2 rounded text-white ${isOwner ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'}`}>
+                Coletar Taxas do Contrato
+              </Button>
+            </div>
+          )}
 
-          
           <Tabs value={activeTab} onValueChange={goToTab} className="w-full mb-6">
+            {isConnected && (
+              <div className="w-full mb-3 flex items-center justify-between">
+                <div className="text-sm text-green-900">
+                  {isOwner ? (
+                    <>Owner do contrato conectado: {address?.slice(0,6)}...{address?.slice(-4)}</>
+                  ) : (
+                    <>Carteira conectada: {address?.slice(0,6)}...{address?.slice(-4)} (não-owner)</>
+                  )}
+                </div>
+                <Button onClick={handleWithdrawFees} disabled={isLoading || !isOwner} className={`px-4 py-2 rounded text-white ${isOwner ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'}`}>
+                  Coletar Taxas do Contrato
+                </Button>
+              </div>
+            )}
             <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl mb-2">
               <TabsTrigger value="cadastrar" className="flex items-center justify-center text-lg font-bold py-3 h-12 data-[state=active]:bg-lime-600 data-[state=active]:text-white">
                 <FaFileInvoiceDollar className="mr-2" /> Cadastrar

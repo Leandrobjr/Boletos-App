@@ -65,7 +65,6 @@ const forceCacheClear = () => {
 // Componente de rota protegida
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading, perfilVerificado } = useAuth();
-  console.log('[DEBUG] ProtectedRoute: isAuthenticated=', isAuthenticated, 'perfilVerificado=', perfilVerificado);
 
   if (loading) {
     return (

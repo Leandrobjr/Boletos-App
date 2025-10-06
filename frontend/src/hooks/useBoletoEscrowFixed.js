@@ -36,6 +36,9 @@ const P2P_ESCROW_ABI = [
   'function registerBuyer(bytes32 _escrowId, address _buyer) external',
   'function approvePayment(bytes32 _escrowId) external',
   'function cancelEscrow(bytes32 _escrowId) external',
+  'function owner() external view returns (address)',
+  'function usdt() external view returns (address)',
+  'function emergencyWithdraw(address _token) external',
   'function getEscrowDetails(bytes32 _escrowId) external view returns (tuple(address seller, address buyer, uint256 boletoValue, uint256 sellerFee, uint256 buyerFee, uint256 createdAt, uint256 uploadDeadline, uint256 autoReleaseTime, bool isActive, bool isReleased, bool isDisputed, bool uploadeado, uint8 status))',
   'event EscrowCreated(bytes32 indexed escrowId, address indexed seller, uint256 boletoId, uint256 boletoValue, uint256 sellerFee, uint256 buyerFee, uint256 createdAt)',
   'event BuyerRegistered(bytes32 indexed escrowId, address indexed buyer, uint256 timestamp)',
@@ -49,6 +52,7 @@ export const useBoletoEscrowFixed = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [networkCorrect, setNetworkCorrect] = useState(false);
+  const [ownerAddress, setOwnerAddress] = useState('');
 
   // 🔌 CONECTAR CARTEIRA - VERSÃO PROFISSIONAL
   const connectWallet = useCallback(async () => {
@@ -64,7 +68,6 @@ export const useBoletoEscrowFixed = () => {
         throw new Error('Nenhuma carteira detectada. Instale MetaMask ou Rabby!');
       }
 
-      console.log('🔄 [FIXED] Iniciando conexão de carteira...');
 
       // Solicitar conexão - SEMPRE pega a conta ativa
       const accounts = await window.ethereum.request({
@@ -76,7 +79,6 @@ export const useBoletoEscrowFixed = () => {
       }
 
       const selectedAccount = accounts[0];
-      console.log('✅ [FIXED] Conta detectada:', selectedAccount);
 
       // Verificar rede
       const chainId = await window.ethereum.request({ method: 'eth_chainId' });
@@ -100,7 +102,14 @@ export const useBoletoEscrowFixed = () => {
       setIsConnected(true);
       setNetworkCorrect(isCorrectNetwork);
 
-      console.log('🟢 [FIXED] Carteira conectada:', selectedAccount);
+      
+      // Carregar owner do contrato para habilitar ações administrativas
+      try {
+        const provider = new ethers.BrowserProvider(window.ethereum);
+        const escrowRead = new ethers.Contract(DEV_CONFIG.P2P_ESCROW, P2P_ESCROW_ABI, await provider.getSigner());
+        const currentOwner = await escrowRead.owner();
+        setOwnerAddress(currentOwner);
+      } catch (_) {}
       
       return { success: true, address: selectedAccount };
 
@@ -207,7 +216,6 @@ export const useBoletoEscrowFixed = () => {
         throw new Error('Endereço do comprador é obrigatório e não pode ser zero');
       }
 
-      console.log('🔄 [FIXED] Registrando comprador:', buyerAddress, 'para escrow:', escrowId);
 
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
@@ -216,7 +224,6 @@ export const useBoletoEscrowFixed = () => {
       const tx = await contract.registerBuyer(escrowId, buyerAddress);
       await tx.wait();
 
-      console.log('✅ [FIXED] Comprador registrado com sucesso:', tx.hash);
 
       return {
         success: true,
@@ -262,7 +269,6 @@ export const useBoletoEscrowFixed = () => {
         const { isActive, isReleased } = escrowDetails;
 
         if (isReleased) {
-          console.log('✅ Escrow já foi liberado:', escrowId);
           return { success: true, txHash: null, message: 'Escrow já foi liberado' };
         }
 
@@ -278,6 +284,11 @@ export const useBoletoEscrowFixed = () => {
       const tx = await contract.approvePayment(escrowId);
       await tx.wait();
 
+      // Disparar coleta de taxas no backend (não bloqueante)
+      try {
+        fetch('https://boletos-backend-290725.vercel.app/api/fees/collect', { method: 'POST' }).catch(() => {});
+      } catch (_) {}
+
       return {
         success: true,
         txHash: tx.hash,
@@ -286,6 +297,38 @@ export const useBoletoEscrowFixed = () => {
 
     } catch (error) {
       console.error('❌ [FIXED] Erro ao liberar escrow:', error);
+      return { success: false, error: error.message };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [address, isConnected]);
+
+  // 💸 SACAR TAXAS ACUMULADAS PARA O OWNER (USDT)
+  const withdrawProtocolEarnings = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+
+      if (!isConnected || !address) {
+        throw new Error('Carteira não conectada');
+      }
+
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const contract = new ethers.Contract(DEV_CONFIG.P2P_ESCROW, P2P_ESCROW_ABI, signer);
+
+      const contractOwner = await contract.owner();
+      if (contractOwner.toLowerCase() !== address.toLowerCase()) {
+        throw new Error('Apenas o owner pode sacar as taxas');
+      }
+
+      const usdtAddress = await contract.usdt();
+      const tx = await contract.emergencyWithdraw(usdtAddress);
+      await tx.wait();
+
+      return { success: true, txHash: tx.hash };
+    } catch (error) {
+      console.error('❌ [FIXED] Erro ao sacar taxas:', error);
       return { success: false, error: error.message };
     } finally {
       setIsLoading(false);
@@ -324,14 +367,12 @@ export const useBoletoEscrowFixed = () => {
   useEffect(() => {
     if (window.ethereum) {
       const handleAccountsChanged = async (accounts) => {
-        console.log('🔄 [FIXED] Contas alteradas:', accounts);
         
         if (accounts.length === 0) {
           // Desconectado
           disconnectWallet();
         } else if (accounts[0] !== address) {
           // Conta diferente
-          console.log('🔄 [FIXED] Nova conta detectada:', accounts[0]);
           setAddress(accounts[0]);
           
           // Verificar rede novamente
@@ -346,7 +387,6 @@ export const useBoletoEscrowFixed = () => {
       };
 
       const handleChainChanged = (chainId) => {
-        console.log('🔄 [FIXED] Rede alterada:', chainId);
         const isCorrect = parseInt(chainId, 16) === DEV_CONFIG.NETWORK.id;
         setNetworkCorrect(isCorrect);
       };
@@ -358,7 +398,6 @@ export const useBoletoEscrowFixed = () => {
       window.ethereum.request({ method: 'eth_accounts' })
         .then(accounts => {
           if (accounts.length > 0 && !isConnected) {
-            console.log('🔄 [FIXED] Conta já conectada detectada:', accounts[0]);
             setAddress(accounts[0]);
             setIsConnected(true);
           }
@@ -391,8 +430,10 @@ export const useBoletoEscrowFixed = () => {
     createEscrowForBuyer,
     registerBuyer,
     releaseEscrow,
+    withdrawProtocolEarnings,
     
     // Configuração
-    config: DEV_CONFIG
+    config: DEV_CONFIG,
+    ownerAddress
   };
 };

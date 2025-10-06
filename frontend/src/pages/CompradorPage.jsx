@@ -213,7 +213,6 @@ const CompradorPage = () => {
 
   const handleConectarCarteira = async () => {
     try {
-      console.log('🔗 [COMPRADOR] Iniciando conexão da carteira...');
       await connectWallet();
       
           setAlertInfo({
@@ -257,7 +256,7 @@ const CompradorPage = () => {
     try {
       // No contrato Enhanced, apenas chamar o backend para reservar
       // O smart contract será atualizado pelo vendedor quando aprovar
-      const resourcePath = `/boletos/controle/${selectedBoleto.numeroBoleto}/reservar`;
+      const resourcePath = `/boletos/controle/${selectedBoleto.numero_controle}/reservar`;
       const response = await fetch(buildApiUrl(resourcePath), {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -310,7 +309,7 @@ const CompradorPage = () => {
       // Se já travou USDT no contrato, liberar
       if (etapaCompra >= 2 && address) {
         const result = await releaseEscrow({
-          boletoId: selectedBoleto.numeroBoleto
+          boletoId: selectedBoleto.numero_controle
         });
         
         if (!result.success) {
@@ -319,8 +318,8 @@ const CompradorPage = () => {
       }
 
       // Liberar o boleto no backend
-      if (selectedBoleto.numeroBoleto) {
-        await fetch(buildApiUrl(`/boletos/${selectedBoleto.numeroBoleto}/liberar`), {
+      if (selectedBoleto.numero_controle) {
+        await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/liberar`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ user_id: user.uid })
@@ -385,16 +384,9 @@ const CompradorPage = () => {
       const comprovanteUrl = reader.result; // Base64 do arquivo
       
       try {
-        console.log('🔍 [DEBUG] Enviando comprovante para boleto:', {
-          id: selectedBoleto.id,
-          numeroBoleto: selectedBoleto.numeroBoleto,
-          numero_controle: selectedBoleto.numero_controle,
-          numero_controle_original: selectedBoleto.numero_controle,
-          boleto_completo: selectedBoleto
-        });
         
         // Enviar comprovante para o backend (usar rota sem /api/)
-        const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numeroBoleto}/comprovante`), {
+        const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/comprovante`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
