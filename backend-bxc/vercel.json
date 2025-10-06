@@ -19,10 +19,6 @@
       "destination": "/api/fees/collect"
     },
     {
-      "source": "/api/timeout/check",
-      "destination": "/api/timeout/check"
-    },
-    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }
