@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Backend para BoletoXCrypto - Vercel Functions",
   "engines": {
-    "node": ">=18.0.0"
+    "node": "20.x"
   },
   "scripts": {
     "build": "echo 'Backend build complete - Vercel Functions ready'",
