@@ -82,6 +82,7 @@ module.exports = async (req, res) => {
           url
         });
       }
+    }
 
     // GET /api/perfil/:uid
     if (method === 'GET' && url.startsWith('/api/perfil/')) {
