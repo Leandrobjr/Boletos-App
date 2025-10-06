@@ -11,19 +11,21 @@
 const { ethers } = require('ethers');
 
 module.exports = async (req, res) => {
-  // CORS Headers
+  // 1. CORS Headers (OBRIGATÓRIO)
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
   res.setHeader('Access-Control-Max-Age', '86400');
 
-  // Handle preflight requests
+  // 2. Preflight CORS
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
 
   try {
-    console.log(`🚀 API Smart Contract Status: ${req.method} ${req.url}`);
+    console.log(`🚀 API Smart Contract Status Request: ${req.method} ${req.url}`);
+    console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
+    console.log('🔍 Request Headers:', req.headers);
 
     if (req.method === 'GET') {
       const { boletoId } = req.query;
