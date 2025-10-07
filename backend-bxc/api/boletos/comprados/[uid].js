@@ -28,6 +28,10 @@ module.exports = async (req, res) => {
       const url = new URL(req.url, `http://${req.headers.host}`);
       const uid = url.searchParams.get('uid') || url.pathname.split('/').pop();
       
+      // Debug: Log da URL completa para verificar parâmetros
+      console.log('🔍 URL completa:', req.url);
+      console.log('🔍 Parâmetros da URL:', url.searchParams.toString());
+      
       console.log('🔍 Buscando boletos comprados pelo usuário:', uid);
       
       if (!uid || uid === 'comprados') {
