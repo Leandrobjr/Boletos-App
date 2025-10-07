@@ -43,6 +43,27 @@ module.exports = async (req, res) => {
       
       // Buscar boletos comprados pelo usuário (lógica original do server.js)
       // Um user_id pode ser comprador em algumas transações e vendedor em outras
+      
+      // DEBUG: Verificar estrutura da tabela primeiro
+      console.log('🔍 [DEBUG] Verificando estrutura da tabela boletos...');
+      const tableInfo = await pool.query(`
+        SELECT column_name, data_type 
+        FROM information_schema.columns 
+        WHERE table_name = 'boletos' 
+        ORDER BY ordinal_position
+      `);
+      console.log('📋 Colunas da tabela:', tableInfo.rows.map(r => r.column_name));
+      
+      // DEBUG: Verificar se existem boletos com comprador_id
+      console.log('🔍 [DEBUG] Verificando boletos com comprador_id...');
+      const debugResult = await pool.query(`
+        SELECT id, comprador_id, status, user_id, wallet_address
+        FROM boletos 
+        WHERE comprador_id IS NOT NULL
+        LIMIT 10
+      `);
+      console.log('📊 Boletos com comprador_id:', debugResult.rows);
+      
       const result = await pool.query(
         `SELECT * FROM boletos 
          WHERE comprador_id = $1 
