@@ -24,11 +24,13 @@ module.exports = async (req, res) => {
     console.log(`🚀 API Boletos Comprados Request: ${req.method} ${req.url}`);
     
     if (req.method === 'GET') {
-      const { uid } = req.query;
+      // Extrair UID da URL (como faz a API do vendedor)
+      const url = new URL(req.url, `http://${req.headers.host}`);
+      const uid = url.searchParams.get('uid') || url.pathname.split('/').pop();
       
       console.log('🔍 Buscando boletos comprados pelo usuário:', uid);
       
-      if (!uid) {
+      if (!uid || uid === 'comprados') {
         return res.status(400).json({
           error: 'UID do usuário é obrigatório',
           message: 'Forneça o UID do usuário para buscar seus boletos comprados'
