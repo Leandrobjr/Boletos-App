@@ -37,11 +37,12 @@ module.exports = async (req, res) => {
         });
       }
       
-      // Buscar boletos comprados pelo usuário (todos os status exceto DISPONIVEL)
+      // Buscar boletos comprados pelo usuário (lógica original do server.js)
+      // Um user_id pode ser comprador em algumas transações e vendedor em outras
       const result = await pool.query(
         `SELECT * FROM boletos 
          WHERE comprador_id = $1 
-         AND status != 'DISPONIVEL'
+         AND status IN ('PENDENTE_PAGAMENTO', 'AGUARDANDO_BAIXA', 'BAIXADO')
          ORDER BY criado_em DESC`,
         [uid]
       );
