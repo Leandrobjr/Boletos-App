@@ -36,6 +36,87 @@ module.exports = async (req, res) => {
   console.log('📍 Body:', req.body);
 
   try {
+    // POST /api/limpar-boletos-expirados - LIMPEZA EMERGENCIAL
+    if (method === 'POST' && url === '/api/limpar-boletos-expirados') {
+      console.log('🧹 [LIMPAR] Iniciando limpeza de boletos expirados...');
+      
+      try {
+        const agora = new Date();
+        const limite60Minutos = new Date(agora.getTime() - (60 * 60 * 1000));
+
+        const boletosExpirados = await pool.query(`
+          SELECT id, numero_controle, status, data_travamento, user_id
+          FROM boletos 
+          WHERE status IN ('PENDENTE_PAGAMENTO', 'AGUARDANDO_PAGAMENTO')
+          AND data_travamento IS NOT NULL
+          AND data_travamento <= $1
+          ORDER BY data_travamento ASC
+        `, [limite60Minutos.toISOString()]);
+
+        console.log(`🔍 [LIMPAR] Encontrados ${boletosExpirados.rowCount} boletos expirados`);
+
+        const resultados = {
+          timestamp: agora.toISOString(),
+          boletosLimpos: [],
+          estatisticas: {
+            total: boletosExpirados.rowCount,
+            processados: 0,
+            erros: 0
+          }
+        };
+
+        for (const boleto of boletosExpirados.rows) {
+          try {
+            const dataTravamento = new Date(boleto.data_travamento);
+            const minutosDecorridos = (agora.getTime() - dataTravamento.getTime()) / (1000 * 60);
+
+            console.log(`🔄 [LIMPAR] Limpando boleto ${boleto.id} (${minutosDecorridos.toFixed(1)}min)`);
+
+            const updateResult = await pool.query(`
+              UPDATE boletos 
+              SET 
+                status = 'DISPONIVEL',
+                comprador_id = NULL,
+                wallet_address = NULL,
+                data_destravamento = $1,
+                data_travamento = NULL,
+                updated_at = $1
+              WHERE id = $2
+              RETURNING id, status, data_destravamento
+            `, [agora.toISOString(), boleto.id]);
+
+            if (updateResult.rowCount > 0) {
+              resultados.boletosLimpos.push({
+                id: boleto.id,
+                numero_controle: boleto.numero_controle,
+                minutosDecorridos: Math.round(minutosDecorridos),
+                statusAnterior: boleto.status,
+                novoStatus: 'DISPONIVEL'
+              });
+              resultados.estatisticas.processados++;
+              console.log(`✅ [LIMPAR] Boleto ${boleto.id} limpo com sucesso`);
+            }
+          } catch (error) {
+            console.error(`❌ [LIMPAR] Erro ao limpar boleto ${boleto.id}:`, error.message);
+            resultados.estatisticas.erros++;
+          }
+        }
+
+        return res.status(200).json({
+          success: true,
+          message: 'Limpeza de boletos expirados concluída',
+          ...resultados
+        });
+
+      } catch (error) {
+        console.error('❌ [LIMPAR] Erro interno:', error);
+        return res.status(500).json({
+          error: 'Erro interno do servidor',
+          message: error.message
+        });
+      }
+    }
+
     // POST /api/fees/collect - coleta taxas acumuladas do contrato P2P para o owner
     if (method === 'POST' && url === '/api/fees/collect') {
       try {
