@@ -35,6 +35,10 @@
       "destination": "/api/migrate-execute"
     },
     {
+      "source": "/api/migrate-data",
+      "destination": "/api/migrate-data"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }
