@@ -21,6 +21,46 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // 🔄 VERIFICAÇÃO AUTOMÁTICA DE BOLETOS EXPIRADOS (60 MINUTOS)
+    try {
+      const agora = new Date();
+      const limite60Minutos = new Date(agora.getTime() - (60 * 60 * 1000)); // 60 minutos atrás
+      
+      // Buscar boletos expirados (AGUARDANDO_PAGAMENTO há mais de 60 minutos)
+      const boletosExpirados = await pool.query(`
+        SELECT id, numero_controle, status, data_travamento
+        FROM boletos
+        WHERE status = 'AGUARDANDO_PAGAMENTO'
+        AND data_travamento IS NOT NULL
+        AND data_travamento <= $1
+      `, [limite60Minutos.toISOString()]);
+      
+      if (boletosExpirados.rowCount > 0) {
+        console.log(`🔄 [AUTO-DESTRAVAR] Encontrados ${boletosExpirados.rowCount} boletos expirados`);
+        
+        // Destravar cada boleto expirado
+        for (const boleto of boletosExpirados.rows) {
+          try {
+            await pool.query(`
+              UPDATE boletos
+              SET status = 'DISPONIVEL',
+                  data_destravamento = $1,
+                  comprador_id = NULL,
+                  wallet_address = NULL,
+                  data_travamento = NULL
+              WHERE id = $2
+            `, [agora.toISOString(), boleto.id]);
+            
+            console.log(`✅ [AUTO-DESTRAVAR] Boleto ${boleto.numero_controle} destravado automaticamente`);
+          } catch (error) {
+            console.error(`❌ [AUTO-DESTRAVAR] Erro ao destravar boleto ${boleto.id}:`, error.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('⚠️ [AUTO-DESTRAVAR] Erro na verificação automática:', error.message);
+    }
+
     // Extrair UID da query string ou URL
     const url = new URL(req.url, `http://${req.headers.host}`);
     const uid = url.searchParams.get('uid') || url.pathname.split('/').pop();
@@ -40,11 +80,37 @@ module.exports = async (req, res) => {
       const tableInfo = await pool.query("SELECT column_name, data_type FROM information_schema.columns WHERE table_name = 'boletos'");
       console.log('📍 Estrutura da tabela boletos:', tableInfo.rows);
       
-      // Buscar boletos do usuário
+      // Buscar TODOS os boletos do usuário (independente do status)
       const result = await pool.query(
         'SELECT * FROM boletos WHERE user_id = $1 ORDER BY criado_em DESC',
         [uid]
       );
+      
+      console.log(`🔍 [USUARIO] Encontrados ${result.rowCount} boletos para usuário ${uid}`);
+      
+      // Se não encontrou por user_id, tentar por comprador_id (caso o usuário seja comprador)
+      if (result.rowCount === 0) {
+        console.log('🔄 [USUARIO] Tentando buscar por comprador_id...');
+        const resultComprador = await pool.query(
+          'SELECT * FROM boletos WHERE comprador_id = $1 ORDER BY criado_em DESC',
+          [uid]
+        );
+        console.log(`🔍 [COMPRADOR] Encontrados ${resultComprador.rowCount} boletos como comprador`);
+        
+        // Retornar ambos os resultados
+        const todosBoletos = [...result.rows, ...resultComprador.rows];
+        
+        res.status(200).json({
+          success: true,
+          data: todosBoletos,
+          count: todosBoletos.length,
+          debug: {
+            user_id_results: result.rowCount,
+            comprador_id_results: resultComprador.rowCount
+          }
+        });
+        return;
+      }
 
       res.status(200).json({
         success: true,
