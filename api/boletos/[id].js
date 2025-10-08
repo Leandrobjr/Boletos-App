@@ -244,8 +244,8 @@ module.exports = async (req, res) => {
         const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
         const update = await pool.query(
           isUUID
-            ? 'UPDATE boletos SET status = $1, data_destravamento = $2, tx_hash = $3 WHERE id = $4 RETURNING *'
-            : 'UPDATE boletos SET status = $1, data_destravamento = $2, tx_hash = $3 WHERE numero_controle = $4 RETURNING *',
+            ? 'UPDATE boletos SET status = $1, data_destravamento = $2, tx_hash = $3, comprador_id = NULL, wallet_address = NULL, data_travamento = NULL WHERE id = $4 RETURNING *'
+            : 'UPDATE boletos SET status = $1, data_destravamento = $2, tx_hash = $3, comprador_id = NULL, wallet_address = NULL, data_travamento = NULL WHERE numero_controle = $4 RETURNING *',
           [status || 'DISPONIVEL', data_destravamento, tx_hash, id]
         );
         

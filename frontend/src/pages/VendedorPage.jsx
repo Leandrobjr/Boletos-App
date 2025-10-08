@@ -726,11 +726,16 @@ function VendedorPage() {
       
       if (result.success) {
         // Atualizar status no backend
-        const response = await fetch(buildApiUrl(`/destravar-boleto?id=${boleto.id}`), {
+        const response = await fetch(buildApiUrl(`/boletos/${boleto.id}?action=destravar`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-          }
+          },
+          body: JSON.stringify({
+            status: 'DISPONIVEL',
+            data_destravamento: new Date().toISOString(),
+            tx_hash: result.txHash
+          })
         });
 
         if (response.ok) {
