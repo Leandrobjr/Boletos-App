@@ -41,29 +41,28 @@ module.exports = async (req, res) => {
         });
       }
       
-      // Buscar boletos comprados pelo usuário (lógica original do server.js)
-      // Um user_id pode ser comprador em algumas transações e vendedor em outras
+      // SOLUÇÃO DEFINITIVA: Buscar por comprador_id
+      // Sistema agora separa vendedor (user_id) de comprador (comprador_id)
+      console.log('🔍 [DEFINITIVO] Buscando boletos comprados pelo usuário:', uid);
       
-      // DEBUG: Verificar estrutura da tabela primeiro
-      console.log('🔍 [DEBUG] Verificando estrutura da tabela boletos...');
-      const tableInfo = await pool.query(`
-        SELECT column_name, data_type 
+      // Verificar se a coluna comprador_id existe
+      const columnCheck = await pool.query(`
+        SELECT column_name 
         FROM information_schema.columns 
         WHERE table_name = 'boletos' 
-        ORDER BY ordinal_position
+        AND column_name = 'comprador_id'
       `);
-      console.log('📋 Colunas da tabela:', tableInfo.rows.map(r => r.column_name));
-      
-      // DEBUG: Verificar se existem boletos com comprador_id
-      console.log('🔍 [DEBUG] Verificando boletos com comprador_id...');
-      const debugResult = await pool.query(`
-        SELECT id, comprador_id, status, user_id, wallet_address
-        FROM boletos 
-        WHERE comprador_id IS NOT NULL
-        LIMIT 10
-      `);
-      console.log('📊 Boletos com comprador_id:', debugResult.rows);
-      
+
+      if (columnCheck.rowCount === 0) {
+        console.log('❌ [ERRO] Coluna comprador_id não existe. Execute a migração primeiro.');
+        return res.status(500).json({
+          error: 'Migração necessária',
+          message: 'Coluna comprador_id não existe. Execute /api/migrate/add-comprador-id primeiro.',
+          migrationRequired: true
+        });
+      }
+
+      // Buscar boletos comprados pelo usuário
       const result = await pool.query(
         `SELECT * FROM boletos 
          WHERE comprador_id = $1 

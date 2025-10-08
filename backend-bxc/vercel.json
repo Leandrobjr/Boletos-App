@@ -27,6 +27,10 @@
       "destination": "/api/fees/collect"
     },
     {
+      "source": "/api/migrate/add-comprador-id",
+      "destination": "/api/migrate/add-comprador-id"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }
