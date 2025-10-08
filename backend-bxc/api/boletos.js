@@ -42,6 +42,40 @@ module.exports = async (req, res) => {
       } else {
         console.log('✅ [MIGRAÇÃO] Coluna comprador_id já existe.');
       }
+
+      // 🔄 MIGRAÇÃO DE DADOS: Migrar dados existentes
+      const boletosParaMigrar = await pool.query(`
+        SELECT id, wallet_address, status, user_id
+        FROM boletos 
+        WHERE wallet_address IS NOT NULL 
+        AND wallet_address != ''
+        AND comprador_id IS NULL
+        AND status IN ('PENDENTE_PAGAMENTO', 'AGUARDANDO_BAIXA', 'BAIXADO')
+      `);
+
+      if (boletosParaMigrar.rowCount > 0) {
+        console.log(`🔄 [MIGRAÇÃO DADOS] Migrando ${boletosParaMigrar.rowCount} boletos...`);
+        
+        for (const boleto of boletosParaMigrar.rows) {
+          try {
+            // Usar o user_id como comprador_id (assumindo que é o comprador)
+            await pool.query(`
+              UPDATE boletos 
+              SET comprador_id = $1 
+              WHERE id = $2
+            `, [boleto.user_id, boleto.id]);
+            
+            console.log(`✅ [MIGRAÇÃO DADOS] Boleto ${boleto.id} migrado`);
+          } catch (error) {
+            console.error(`❌ [MIGRAÇÃO DADOS] Erro ao migrar boleto ${boleto.id}:`, error.message);
+          }
+        }
+        
+        console.log('✅ [MIGRAÇÃO DADOS] Migração de dados concluída!');
+      } else {
+        console.log('✅ [MIGRAÇÃO DADOS] Nenhum boleto precisa ser migrado.');
+      }
+      
     } catch (migrationError) {
       console.error('⚠️ [MIGRAÇÃO] Erro na migração:', migrationError.message);
       // Continuar mesmo com erro de migração
