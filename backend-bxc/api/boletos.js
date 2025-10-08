@@ -21,6 +21,31 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // 🚀 MIGRAÇÃO AUTOMÁTICA: Verificar e criar coluna comprador_id se necessário
+    try {
+      const checkColumn = await pool.query(`
+        SELECT column_name 
+        FROM information_schema.columns 
+        WHERE table_name = 'boletos' 
+        AND column_name = 'comprador_id'
+      `);
+
+      if (checkColumn.rowCount === 0) {
+        console.log('🔧 [MIGRAÇÃO] Coluna comprador_id não existe. Executando migração...');
+        
+        await pool.query(`ALTER TABLE boletos ADD COLUMN comprador_id VARCHAR(255)`);
+        await pool.query(`CREATE INDEX idx_boletos_comprador_id ON boletos(comprador_id)`);
+        await pool.query(`CREATE INDEX idx_boletos_comprador_status ON boletos(comprador_id, status)`);
+        await pool.query(`COMMENT ON COLUMN boletos.comprador_id IS 'ID do usuário comprador (Firebase UID)'`);
+        
+        console.log('✅ [MIGRAÇÃO] Coluna comprador_id criada com sucesso!');
+      } else {
+        console.log('✅ [MIGRAÇÃO] Coluna comprador_id já existe.');
+      }
+    } catch (migrationError) {
+      console.error('⚠️ [MIGRAÇÃO] Erro na migração:', migrationError.message);
+      // Continuar mesmo com erro de migração
+    }
     console.log(`🚀 API Boletos Request: ${req.method} ${req.url}`);
     console.log('📦 Request Body:', JSON.stringify(req.body, null, 2));
     console.log('🔍 Request Headers:', req.headers);
