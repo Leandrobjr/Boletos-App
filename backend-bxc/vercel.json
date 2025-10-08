@@ -39,8 +39,8 @@
       "destination": "/api/migrate-data"
     },
     {
-      "source": "/api/boletos/([^/]+)/destravar",
-      "destination": "/api/boletos/[id]/destravar?id=$1"
+      "source": "/api/destravar-boleto",
+      "destination": "/api/destravar-boleto"
     },
     {
       "source": "/api/timeout-check",

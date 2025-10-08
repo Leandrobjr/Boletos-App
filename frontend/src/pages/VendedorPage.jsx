@@ -726,16 +726,11 @@ function VendedorPage() {
       
       if (result.success) {
         // Atualizar status no backend
-        const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
+        const response = await fetch(buildApiUrl(`/destravar-boleto?id=${boleto.id}`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'DISPONIVEL',
-            data_destravamento: new Date().toISOString(),
-            tx_hash: result.txHash
-          })
+          }
         });
 
         if (response.ok) {
@@ -840,16 +835,11 @@ function VendedorPage() {
       console.log(`🧹 Limpando boleto antigo: ${boleto.id}`);
       
       // Atualizar status para EXPIRADO no backend
-      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
+      const response = await fetch(buildApiUrl(`/destravar-boleto?id=${boleto.id}`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          status: 'EXPIRADO',
-          data_destravamento: new Date().toISOString(),
-          tx_hash: null
-        })
+        }
       });
 
       if (response.ok) {
