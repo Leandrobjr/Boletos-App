@@ -47,6 +47,10 @@
       "destination": "/api/timeout-check"
     },
     {
+      "source": "/api/limpar-boletos-expirados",
+      "destination": "/api/limpar-boletos-expirados"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }
