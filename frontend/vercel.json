@@ -3,6 +3,10 @@
     {
       "source": "/api/(.*)",
       "destination": "https://boletos-backend-290725.vercel.app/api/$1"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ],
   "headers": [
