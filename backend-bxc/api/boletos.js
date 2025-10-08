@@ -21,6 +21,46 @@ module.exports = async (req, res) => {
   }
 
   try {
+    // 🔄 VERIFICAÇÃO AUTOMÁTICA DE BOLETOS EXPIRADOS (60 MINUTOS)
+    try {
+      const agora = new Date();
+      const limite60Minutos = new Date(agora.getTime() - (60 * 60 * 1000)); // 60 minutos atrás
+      
+      // Buscar boletos expirados (AGUARDANDO_PAGAMENTO há mais de 60 minutos)
+      const boletosExpirados = await pool.query(`
+        SELECT id, numero_controle, status, data_travamento
+        FROM boletos
+        WHERE status = 'AGUARDANDO_PAGAMENTO'
+        AND data_travamento IS NOT NULL
+        AND data_travamento <= $1
+      `, [limite60Minutos.toISOString()]);
+      
+      if (boletosExpirados.rowCount > 0) {
+        console.log(`🔄 [AUTO-DESTRAVAR] Encontrados ${boletosExpirados.rowCount} boletos expirados`);
+        
+        // Destravar cada boleto expirado
+        for (const boleto of boletosExpirados.rows) {
+          try {
+            await pool.query(`
+              UPDATE boletos
+              SET status = 'DISPONIVEL',
+                  data_destravamento = $1,
+                  comprador_id = NULL,
+                  wallet_address = NULL,
+                  data_travamento = NULL
+              WHERE id = $2
+            `, [agora.toISOString(), boleto.id]);
+            
+            console.log(`✅ [AUTO-DESTRAVAR] Boleto ${boleto.numero_controle} destravado automaticamente`);
+          } catch (error) {
+            console.error(`❌ [AUTO-DESTRAVAR] Erro ao destravar boleto ${boleto.id}:`, error.message);
+          }
+        }
+      }
+    } catch (error) {
+      console.error('⚠️ [AUTO-DESTRAVAR] Erro na verificação automática:', error.message);
+    }
+    
     // 🚀 MIGRAÇÃO AUTOMÁTICA: Verificar e criar coluna comprador_id se necessário
     try {
       const checkColumn = await pool.query(`
