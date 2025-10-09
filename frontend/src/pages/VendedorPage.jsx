@@ -119,10 +119,13 @@ function VendedorPage() {
     
     setLoadingBoletos(true);
     try {
-      console.log('🔍 [DEBUG] Buscando boletos para usuário:', user.uid);
-      const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}`), {
+      console.log('🔍 [VENDEDOR] Buscando boletos para usuário:', user.uid);
+      
+      // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
+      const timestamp = Date.now();
+      const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}?t=${timestamp}`), {
         headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate', // CACHE DESABILITADO
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
           'Expires': '0'
         }
@@ -176,11 +179,13 @@ function VendedorPage() {
   const [boletosCache, setBoletosCache] = useState(null);
   const CACHE_DURATION = 0; // CACHE DESABILITADO TEMPORARIAMENTE PARA DEBUG
   
-  // LIMPAR TODO O CACHE LOCAL
+  // LIMPAR TODO O CACHE LOCAL DO VENDEDOR
   useEffect(() => {
     localStorage.removeItem('boletosCache');
     sessionStorage.removeItem('boletosCache');
-    console.log('🧹 [DEBUG] Cache local limpo');
+    localStorage.removeItem('vendedorBoletosCache');
+    sessionStorage.removeItem('vendedorBoletosCache');
+    console.log('🧹 [VENDEDOR] Cache local limpo completamente');
   }, []);
   
   // Preload de dados quando usuário loga
@@ -196,14 +201,14 @@ function VendedorPage() {
     if (!user?.uid) return;
     
     const now = Date.now();
-    if (!forceRefresh && boletosCache && (now - lastFetchTime < CACHE_DURATION)) {
-      console.log('📦 VENDEDOR - Usando cache de boletos');
-      setBoletos(boletosCache);
-      return; // Usar cache
-    }
+    // SEMPRE FORÇAR REQUISIÇÃO REAL - CACHE DESABILITADO
+    console.log('🔄 [VENDEDOR] Forçando requisição real ao backend (cache desabilitado)');
     
     await fetchBoletos();
     setLastFetchTime(now);
+    
+    // Não atualizar cache - sempre buscar dados frescos
+    setBoletosCache(null);
   };
 
   useEffect(() => {
