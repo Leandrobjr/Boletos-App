@@ -734,47 +734,65 @@ function VendedorPage() {
 
       console.log(`🔓 Destravando escrow ${boleto.escrow_id} para boleto ${boleto.id}`);
 
-      // Destravar USDT no contrato
-      const result = await releaseEscrow({ escrowId: boleto.escrow_id });
+      // ⚠️ SMART CONTRACT DESABILITADO TEMPORARIAMENTE
+      // Pular tentativa de liberar no smart contract por enquanto
+      console.log('⚠️ [TEMP] Pulando liberação no smart contract - apenas atualizando banco de dados');
       
-      if (result.success) {
-        // Atualizar status no backend
-        const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
-          method: 'PUT',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            status: 'DISPONIVEL',
-            data_destravamento: new Date().toISOString(),
-            tx_hash: result.txHash
-          })
-        });
+      // Ir direto para atualização no backend
+      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          status: 'DISPONIVEL',
+          data_destravamento: new Date().toISOString(),
+          tx_hash: null // Sem transação no smart contract por enquanto
+        })
+      });
 
-        if (response.ok) {
-          setAlertInfo({
-            type: 'success',
-            title: 'Boleto destravado automaticamente',
-            description: `Boleto ${boleto.numeroControle} foi destravado após 60 minutos sem pagamento.`
-          });
-          // Recarregar os boletos
-          fetchBoletosOptimized(true);
-        } else {
-          console.error('❌ Erro ao atualizar status no backend para boleto:', boleto.id);
-          throw new Error('Erro ao atualizar status no backend');
-        }
+      if (response.ok) {
+        setAlertInfo({
+          type: 'success',
+          title: 'Boleto destravado automaticamente',
+          description: `Boleto ${boleto.numeroControle} foi destravado após 60 minutos sem pagamento.`
+        });
+        // Recarregar os boletos
+        fetchBoletosOptimized(true);
       } else {
-        console.error('❌ Erro ao destravar USDT no contrato para boleto:', boleto.id, result.error);
-        
-        // Se o escrow não está ativo, marcar boleto como expirado
-        if (result.error && result.error.includes('não está ativo')) {
-          console.log('🔄 Escrow inativo, marcando boleto como expirado');
-          await handleLimparBoletoAntigo(boleto);
-          return;
-        }
-        
-        throw new Error(`Erro ao destravar USDT no contrato: ${result.error || 'Erro desconhecido'}`);
+        console.error('❌ Erro ao atualizar status no backend para boleto:', boleto.id);
+        throw new Error('Erro ao atualizar status no backend');
       }
+      
+      // CÓDIGO ORIGINAL COMENTADO (reativar quando smart contract estiver corrigido):
+      // const result = await releaseEscrow({ escrowId: boleto.escrow_id });
+      // if (result.success) {
+      //   const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
+      //     method: 'PUT',
+      //     headers: { 'Content-Type': 'application/json' },
+      //     body: JSON.stringify({
+      //       status: 'DISPONIVEL',
+      //       data_destravamento: new Date().toISOString(),
+      //       tx_hash: result.txHash
+      //     })
+      //   });
+      //   if (response.ok) {
+      //     setAlertInfo({
+      //       type: 'success',
+      //       title: 'Boleto destravado automaticamente',
+      //       description: `Boleto ${boleto.numeroControle} foi destravado após 60 minutos sem pagamento.`
+      //     });
+      //     fetchBoletosOptimized(true);
+      //   } else {
+      //     throw new Error('Erro ao atualizar status no backend');
+      //   }
+      // } else {
+      //   if (result.error && result.error.includes('não está ativo')) {
+      //     await handleLimparBoletoAntigo(boleto);
+      //     return;
+      //   }
+      //   throw new Error(`Erro ao destravar USDT no contrato: ${result.error || 'Erro desconhecido'}`);
+      // }
     } catch (error) {
       console.error('❌ Erro ao destravar boleto automaticamente:', boleto.id, error);
       
@@ -853,7 +871,7 @@ function VendedorPage() {
       console.log(`🧹 Limpando boleto antigo: ${boleto.id}`);
       
       // Atualizar status para DISPONIVEL no backend
-      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}?action=destravar`), {
+      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
