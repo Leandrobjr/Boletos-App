@@ -97,13 +97,32 @@ module.exports = async (req, res) => {
         );
         console.log(`🔍 [COMPRADOR] Encontrados ${resultComprador.rowCount} boletos como comprador`);
         
-        // Retornar ambos os resultados
-        const todosBoletos = [...result.rows, ...resultComprador.rows];
+        // Se ainda não encontrou, buscar TODOS os boletos (para debug)
+        if (resultComprador.rowCount === 0) {
+          console.log('🔄 [DEBUG] Buscando TODOS os boletos para debug...');
+          const todosBoletos = await pool.query('SELECT * FROM boletos ORDER BY criado_em DESC LIMIT 10');
+          console.log(`🔍 [DEBUG] Encontrados ${todosBoletos.rowCount} boletos na tabela`);
+          
+          res.status(200).json({
+            success: true,
+            data: todosBoletos.rows,
+            count: todosBoletos.rowCount,
+            debug: {
+              user_id_results: result.rowCount,
+              comprador_id_results: resultComprador.rowCount,
+              total_boletos: todosBoletos.rowCount,
+              uid_buscado: uid,
+              message: 'Retornando todos os boletos para debug'
+            }
+          });
+          return;
+        }
         
+        // Retornar resultados do comprador
         res.status(200).json({
           success: true,
-          data: todosBoletos,
-          count: todosBoletos.length,
+          data: resultComprador.rows,
+          count: resultComprador.rowCount,
           debug: {
             user_id_results: result.rowCount,
             comprador_id_results: resultComprador.rowCount
