@@ -122,8 +122,9 @@ function VendedorPage() {
       console.log('🔍 [DEBUG] Buscando boletos para usuário:', user.uid);
       const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}`), {
         headers: {
-          'Cache-Control': 'max-age=60', // Cache de 1 minuto
-          'Pragma': 'cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate', // CACHE DESABILITADO
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
       if (!res.ok) {
@@ -173,7 +174,7 @@ function VendedorPage() {
   // Cache de boletos para evitar requisições desnecessárias (ULTRA OTIMIZADO)
   const [lastFetchTime, setLastFetchTime] = useState(0);
   const [boletosCache, setBoletosCache] = useState(null);
-  const CACHE_DURATION = 120000; // 2 minutos de cache (aumentado)
+  const CACHE_DURATION = 0; // CACHE DESABILITADO TEMPORARIAMENTE PARA DEBUG
   
   // Preload de dados quando usuário loga
   useEffect(() => {
@@ -839,12 +840,17 @@ function VendedorPage() {
     try {
       console.log(`🧹 Limpando boleto antigo: ${boleto.id}`);
       
-      // Atualizar status para EXPIRADO no backend
-      const response = await fetch(buildApiUrl(`/destravar-boleto?id=${boleto.id}`), {
+      // Atualizar status para DISPONIVEL no backend
+      const response = await fetch(buildApiUrl(`/boletos/${boleto.id}?action=destravar`), {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
-        }
+        },
+        body: JSON.stringify({
+          status: 'DISPONIVEL',
+          data_destravamento: new Date().toISOString(),
+          tx_hash: null
+        })
       });
 
       if (response.ok) {
