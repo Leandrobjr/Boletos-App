@@ -134,12 +134,16 @@ const CompradorPage = () => {
     if (!user?.uid) return;
     
     try {
-      // Enviar também a carteira (se conectada) para o backend identificar boletos reservados/comprados pelo usuário
-      const walletQuery = address ? `?wallet=${encodeURIComponent(address)}` : '';
-      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}${walletQuery}`), {
+      console.log('🔍 [COMPRADOR] Buscando boletos do usuário:', user.uid);
+      
+      // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
+      const timestamp = Date.now();
+      const walletQuery = address ? `&wallet=${encodeURIComponent(address)}` : '';
+      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}?t=${timestamp}${walletQuery}`), {
         headers: {
-          'Cache-Control': 'max-age=60', // Cache de 1 minuto
-          'Pragma': 'cache'
+          'Cache-Control': 'no-cache, no-store, must-revalidate',
+          'Pragma': 'no-cache',
+          'Expires': '0'
         }
       });
       
@@ -171,7 +175,16 @@ const CompradorPage = () => {
   // Cache para boletos do usuário (OTIMIZADO)
   const [boletosCache, setBoletosCache] = useState(null);
   const [cacheTime, setCacheTime] = useState(0);
-  const CACHE_DURATION = 60000; // 1 minuto (aumentado)
+  const CACHE_DURATION = 0; // CACHE DESABILITADO PARA DEBUG
+  
+  // LIMPAR TODO O CACHE LOCAL DO COMPRADOR
+  useEffect(() => {
+    localStorage.removeItem('boletosCache');
+    sessionStorage.removeItem('boletosCache');
+    localStorage.removeItem('meusBoletosCache');
+    sessionStorage.removeItem('meusBoletosCache');
+    console.log('🧹 [COMPRADOR] Cache local limpo completamente');
+  }, []);
   
   // Preload de dados quando usuário loga
   useEffect(() => {
@@ -185,19 +198,15 @@ const CompradorPage = () => {
   const fetchMeusBoletosComLoading = async () => {
     if (!user?.uid) return;
     
-    // Verificar cache primeiro
-    const now = Date.now();
-    if (boletosCache && (now - cacheTime) < CACHE_DURATION) {
-      setMeusBoletos(boletosCache);
-      return;
-    }
+    // SEMPRE FORÇAR REQUISIÇÃO REAL - CACHE DESABILITADO
+    console.log('🔄 [COMPRADOR] Forçando requisição real ao backend (cache desabilitado)');
     
     setLoadingMeusBoletos(true);
     try {
       await fetchMeusBoletos();
-      // Atualizar cache
-      setBoletosCache(meusBoletos);
-      setCacheTime(now);
+      // Não atualizar cache - sempre buscar dados frescos
+      setBoletosCache(null);
+      setCacheTime(0);
     } finally {
       setLoadingMeusBoletos(false);
     }
@@ -589,15 +598,16 @@ const CompradorPage = () => {
     if (!user?.uid) return;
 
     try {
-      const url = buildApiUrl('/boletos');
+      console.log('🔍 [COMPRADOR] Buscando boletos disponíveis...');
       
-      const headers = forceRefresh ? {
+      // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
+      const timestamp = Date.now();
+      const url = buildApiUrl(`/boletos?t=${timestamp}`);
+      
+      const headers = {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0'
-      } : {
-        'Cache-Control': 'max-age=5', // Reduzido para 5 segundos
-          'Pragma': 'cache'
       };
       
       const res = await fetch(url, { headers });
