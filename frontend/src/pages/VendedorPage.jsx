@@ -176,6 +176,13 @@ function VendedorPage() {
   const [boletosCache, setBoletosCache] = useState(null);
   const CACHE_DURATION = 0; // CACHE DESABILITADO TEMPORARIAMENTE PARA DEBUG
   
+  // LIMPAR TODO O CACHE LOCAL
+  useEffect(() => {
+    localStorage.removeItem('boletosCache');
+    sessionStorage.removeItem('boletosCache');
+    console.log('🧹 [DEBUG] Cache local limpo');
+  }, []);
+  
   // Preload de dados quando usuário loga
   useEffect(() => {
     if (user?.uid) {
