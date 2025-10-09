@@ -125,6 +125,24 @@ module.exports = async (req, res) => {
     console.log('🔍 Request Headers:', req.headers);
 
     if (req.method === 'GET') {
+      // DEBUG: Se for requisição de debug, retornar todos os boletos
+      if (req.url.includes('debug=all')) {
+        console.log('🔍 [DEBUG] Retornando TODOS os boletos...');
+        const allBoletos = await pool.query('SELECT * FROM boletos ORDER BY criado_em DESC');
+        
+        res.status(200).json({
+          success: true,
+          data: allBoletos.rows,
+          count: allBoletos.rowCount,
+          debug: {
+            timestamp: new Date().toISOString(),
+            total_boletos: allBoletos.rowCount,
+            aguardando_pagamento: allBoletos.rows.filter(b => b.status === 'AGUARDANDO_PAGAMENTO').length
+          }
+        });
+        return;
+      }
+      
       // Verificar se é busca por número de controle via query parameter
       // Múltiplas estratégias para detectar o query parameter
       let numero_controle = null;
