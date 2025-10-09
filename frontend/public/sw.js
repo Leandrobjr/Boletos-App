@@ -20,15 +20,22 @@ self.addEventListener('install', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // SEMPRE buscar da rede, NUNCA do cache
+  const url = new URL(event.request.url);
+  
+  // NÃO interceptar requisições externas (Firebase, APIs, etc)
+  if (url.origin !== location.origin) {
+    return; // Deixar o navegador lidar com requisições externas
+  }
+  
+  // NÃO interceptar requisições de API
+  if (url.pathname.startsWith('/api/')) {
+    return; // Deixar o navegador lidar com APIs
+  }
+  
+  // Para recursos locais (JS, CSS, HTML), sempre buscar da rede
   event.respondWith(
     fetch(event.request, {
-      cache: 'no-store',
-      headers: {
-        'Cache-Control': 'no-cache, no-store, must-revalidate',
-        'Pragma': 'no-cache',
-        'Expires': '0'
-      }
+      cache: 'no-store'
     }).catch(() => {
       // Só usar cache em caso de falha de rede
       return caches.match(event.request);
