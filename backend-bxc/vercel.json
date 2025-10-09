@@ -51,6 +51,10 @@
       "destination": "/api/limpar-boletos-expirados"
     },
     {
+      "source": "/api/boletos/([^/]+)/destravar",
+      "destination": "/api/boletos/[id]/destravar?id=$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }
