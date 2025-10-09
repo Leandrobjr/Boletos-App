@@ -739,7 +739,7 @@ function VendedorPage() {
       
       if (result.success) {
         // Atualizar status no backend
-        const response = await fetch(buildApiUrl(`/boletos/${boleto.id}?action=destravar`), {
+        const response = await fetch(buildApiUrl(`/boletos/${boleto.id}/destravar`), {
           method: 'PUT',
           headers: {
             'Content-Type': 'application/json',
