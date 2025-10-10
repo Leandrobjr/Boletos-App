@@ -25,7 +25,10 @@ module.exports = async (req, res) => {
     const pk = process.env.OWNER_PRIVATE_KEY;
     if (!pk) return res.status(400).json({ error: 'OWNER_PRIVATE_KEY não configurada' });
 
-    const provider = new ethers.JsonRpcProvider(rpcUrl);
+    // Compatibilidade entre ethers v5 e v6
+    const provider = (ethers.JsonRpcProvider)
+      ? new ethers.JsonRpcProvider(rpcUrl)
+      : new ethers.providers.JsonRpcProvider(rpcUrl);
     const wallet = new ethers.Wallet(pk, provider);
     const abi = [
       'function owner() view returns (address)',
