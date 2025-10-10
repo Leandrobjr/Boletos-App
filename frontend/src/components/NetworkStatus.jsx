@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { buildApiUrl } from '../config/apiConfig';
 import { Card, CardContent, CardHeader, CardTitle } from './ui/card';
 import Button from './ui/Button';
 
@@ -23,7 +24,7 @@ export function NetworkStatus() {
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
       // Usar proxy RPC para contornar CORS
-      const response = await fetch('http://localhost:3001/api/rpc-proxy', {
+      const response = await fetch(buildApiUrl('/rpc-proxy'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAccount, useReadContract } from 'wagmi';
 import { CONTRACT_CONFIG } from '../contracts/config';
 import MOCK_USDT_ABI from '../contracts/abis/MockUSDT.json';
+import { buildApiUrl } from '../config/apiConfig';
 
 export function USDTBalanceTest() {
   const { address, isConnected } = useAccount();
@@ -54,7 +55,7 @@ export function USDTBalanceTest() {
     setLoading(true);
     try {
       // Verificar saldo via RPC direto
-      const response = await fetch('http://localhost:3001/api/rpc-proxy', {
+      const response = await fetch(buildApiUrl('/rpc-proxy'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -91,7 +92,7 @@ export function USDTBalanceTest() {
       console.log('🪙 [MINT] Solicitando mint de USDT...');
       
       // Chamar função mint do MockUSDT
-      const response = await fetch('http://localhost:3001/api/rpc-proxy', {
+      const response = await fetch(buildApiUrl('/rpc-proxy'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

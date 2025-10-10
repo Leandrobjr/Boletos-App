@@ -12,6 +12,7 @@
  */
 
 import { useState, useCallback, useEffect } from 'react';
+import { buildApiUrl } from '../config/apiConfig';
 import { ethers } from 'ethers';
 
 // 🔧 CONFIGURAÇÃO APRIMORADA
@@ -103,7 +104,7 @@ const useBoletoEscrowEnhanced = () => {
   const apiClient = {
     async calculateFees(boletoValue) {
       try {
-        const response = await fetch('http://localhost:3001/api/taxas/calculate', {
+        const response = await fetch(buildApiUrl('/taxas/calculate'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ boletoValue })
@@ -117,7 +118,7 @@ const useBoletoEscrowEnhanced = () => {
 
     async getTransactionStatus(numeroControle) {
       try {
-        const response = await fetch(`http://localhost:3001/api/taxas/${numeroControle}`);
+        const response = await fetch(buildApiUrl(`/taxas/${numeroControle}`));
         return await response.json();
       } catch (error) {
         console.error('❌ Erro ao obter status:', error);

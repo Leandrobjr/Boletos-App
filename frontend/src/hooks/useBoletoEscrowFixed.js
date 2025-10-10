@@ -9,6 +9,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import { ethers } from 'ethers';
+import { buildApiUrl } from '../config/apiConfig';
 
 // Configuração fixa para DEV - Contratos na Amoy
 const DEV_CONFIG = {
@@ -286,7 +287,8 @@ export const useBoletoEscrowFixed = () => {
 
       // Disparar coleta de taxas no backend (não bloqueante)
       try {
-        fetch('https://boletos-backend-290725.vercel.app/api/fees/collect', { method: 'POST' }).catch(() => {});
+        // Disparo não bloqueante; ignora resultado
+        fetch(buildApiUrl('/fees/collect'), { method: 'POST' }).catch(() => {});
       } catch (_) {}
 
       return {

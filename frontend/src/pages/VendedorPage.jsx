@@ -1440,11 +1440,7 @@ function VendedorPage() {
                                                 }
                                                 
                                                 // SOLUÇÃO 2: Fallback - proxy via backend para garantir funcionamento
-                                                const backendUrl = import.meta.env.PROD 
-                                                  ? 'https://boletos-backend-290725.vercel.app'
-                                                  : 'http://localhost:3001';
-                                                
-                                                const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
+                                                const proxyUrl = buildApiUrl(`/proxy/comprovante/${ident}`);
                                                 window.open(proxyUrl, '_blank', 'noopener,noreferrer');
                                                 
                                               } catch (error) {
@@ -1548,11 +1544,7 @@ function VendedorPage() {
                                                 }
                                               }
                                               
-                                              const backendUrl = import.meta.env.PROD 
-                                                ? 'https://boletos-backend-290725.vercel.app'
-                                                : 'http://localhost:3001';
-                                              
-                                              const proxyUrl = `${backendUrl}/api/proxy/comprovante/${ident}`;
+                                              const proxyUrl = buildApiUrl(`/proxy/comprovante/${ident}`);
                                               window.open(proxyUrl, '_blank', 'noopener,noreferrer');
                                               
                                             } catch (error) {

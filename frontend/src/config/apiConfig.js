@@ -1,26 +1,16 @@
 // Configuração da API
 
-// FORÇAR URL BASEADA NO AMBIENTE - CORREÇÃO DEFINITIVA CORS
+// FORÇAR URL BASEADA NO AMBIENTE - padronizar produção com caminho relativo /api
 const getCorrectApiUrl = () => {
   const currentHost = window.location.hostname;
-  const currentUrl = window.location.href;
-  
 
-  
-  // PRODUÇÃO: Se estamos no Vercel do frontend - FORÇAR MESMO DOMÍNIO
-  if (currentHost.includes('vercel.app') || currentHost.includes('boletos-app')) {
-    // USAR API DO MESMO DOMÍNIO PARA EVITAR CORS
-    const prodUrl = `${window.location.protocol}//${currentHost}/api`;
-    return prodUrl;
-  }
-  
-  // LOCAL: Se estamos em localhost
+  // LOCAL: sempre apontar para o backend local com /api
   if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-    return 'http://localhost:3001';
+    return 'http://localhost:3001/api';
   }
-  
-  // FALLBACK: Usar API do mesmo domínio
-  return `${window.location.protocol}//${window.location.host}/api`;
+
+  // PRODUÇÃO: consumir via caminho relativo para acionar o rewrite
+  return '/api';
 };
 
 // URL BASE FIXA - NÃO PODE SER ALTERADA
@@ -59,11 +49,6 @@ export const buildApiUrl = (endpoint) => {
   // CORREÇÃO AUTOMÁTICA: Garantir que não há duplicação de /api
   if (finalUrl.includes('/api/api')) {
     finalUrl = finalUrl.replace('/api/api', '/api');
-  }
-  
-  // VALIDAÇÃO: Garantir que a URL está correta
-  if (finalUrl.includes('bxc-boletos-app.vercel.app')) {
-    return finalUrl.replace(/.*bxc-boletos-app\.vercel\.app/, 'https://boletos-backend-290725.vercel.app/api');
   }
   
   // VALIDAÇÃO FINAL: Garantir HTTPS em produção
