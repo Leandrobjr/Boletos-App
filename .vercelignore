@@ -1,0 +1,5 @@
+# Impedir deploy acidental do projeto raiz
+api/
+_legacy_root_api/
+_legacy_root_vercel.json
+dist/
