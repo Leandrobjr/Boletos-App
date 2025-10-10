@@ -4,12 +4,19 @@
 // - Header X-Wallet-Address presente na lista ADMIN_WALLETS
 // - Authorization: Bearer <Firebase ID Token> com claim customizada { admin: true }
 
-const admin = require('firebase-admin');
+// Carregar firebase-admin de forma opcional para evitar erro em runtime
+let admin = null;
+try {
+  // Pode não estar instalado em alguns ambientes; mantenha fluxo sem Firebase
+  admin = require('firebase-admin');
+} catch (_) {
+  admin = null;
+}
 
 let initialized = false;
 function initFirebaseAdmin() {
   try {
-    if (!initialized && !admin.apps.length && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+    if (!initialized && admin && admin.apps && !admin.apps.length && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       admin.initializeApp({
         credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID || 'projeto-bxc',
@@ -47,7 +54,7 @@ function walletAllowed(req) {
 async function verifyFirebase(idToken) {
   try {
     initFirebaseAdmin();
-    if (!admin.apps.length) return null;
+    if (!admin || !admin.apps || !admin.apps.length) return null;
     const decoded = await admin.auth().verifyIdToken(idToken);
     return decoded;
   } catch (_) {
