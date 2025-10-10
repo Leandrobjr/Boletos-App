@@ -2,6 +2,7 @@
 // Usa variáveis de ambiente: OWNER_PRIVATE_KEY, AMOY_RPC_URL, P2P_ESCROW_ADDRESS
 
 const { ethers } = require('ethers');
+const { requireAdmin } = require('../_utils/adminAuth');
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -15,6 +16,8 @@ module.exports = async (req, res) => {
 
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  // Autorização administrativa obrigatória
+  if (!(await requireAdmin(req, res))) return;
 
   try {
     const rpcUrl = process.env.AMOY_RPC_URL || 'https://rpc-amoy.polygon.technology';

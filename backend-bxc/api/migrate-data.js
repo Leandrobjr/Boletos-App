@@ -1,4 +1,5 @@
 const { Pool } = require('pg');
+const { requireAdmin } = require('./_utils/adminAuth');
 
 // Configuração do banco
 const pool = new Pool({
@@ -17,6 +18,9 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
   }
+
+  // Requer autorização administrativa
+  if (!(await requireAdmin(req, res))) return;
 
   try {
     console.log('🚀 [MIGRAÇÃO DE DADOS] Iniciando migração de wallet_address para comprador_id...');
