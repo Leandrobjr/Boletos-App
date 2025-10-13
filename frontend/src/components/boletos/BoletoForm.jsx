@@ -4,6 +4,7 @@ import { useAccount, useConnect, useDisconnect, useNetwork, useSwitchNetwork } f
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useConnectModal } from '@rainbow-me/rainbowkit';
 import { buildApiUrl } from '../../config/apiConfig';
+import { useUSDTConversion } from '../../hooks/useUSDTConversion';
 
 function formatarMoeda(valor) {
   try {
@@ -53,9 +54,7 @@ function formatarMoedaFinal(valor) {
 
 function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, address }) {
   const [valor, setValor] = useState("0,00");
-  const [cotacao, setCotacao] = useState(null);
   const [usdt, setUsdt] = useState("");
-  const [cotLoading, setCotLoading] = useState(false);
   const [wallet, setWallet] = useState("");
   const [escrowOk, setEscrowOk] = useState(false);
   const [feedback, setFeedback] = useState("");
@@ -74,60 +73,34 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
   const { openConnectModal } = useConnectModal();
   const { isConnected, address } = useAccount();
 
+  // Hook unificado para cotação USDT/BRL
+  const { taxaConversao, brlToUsdt, fetchTaxaConversao, loading: cotLoading, error: cotError } = useUSDTConversion();
+
   useEffect(() => {
     // Monitorar mudanças de carteira conectada
   }, [isConnected, address]);
 
-  async function buscarCotacao() {
-    setCotLoading(true);
-    setFeedback("");
-    try {
-      const resp = await fetch(buildApiUrl('/api/proxy/coingecko?ticker=tether&vs=brl'));
-      const data = await resp.json();
-      
-      // Backend retorna: { tether: { brl: 5.34 } }
-      // Frontend esperava: { price: 5.34 }
-      let preco = null;
-      
-      if (data && data.tether && data.tether.brl != null) {
-        preco = Number(data.tether.brl);
-      } else if (data && data.price != null) {
-        preco = Number(data.price);
-      }
-      
-      if (preco && preco > 0) {
-        setCotacao(preco);
-      } else {
-        throw new Error('Cotação indisponível');
-      }
-    } catch (e) {
-      setFeedback("Erro ao buscar cotação do USDT. Tente novamente.");
-    }
-    setCotLoading(false);
-  }
+  // Removido buscarCotacao: agora usamos o hook useUSDTConversion
 
   useEffect(() => {
-    if (valor && cotacao) {
+    if (valor) {
       const limpo = valor.replace(/\D/g, "");
       const inteiro = limpo.slice(0, -2) || "0";
       const centavos = limpo.slice(-2).padStart(2, "0");
       const valorNum = parseFloat(inteiro + "." + centavos);
-      if (!isNaN(valorNum) && cotacao > 0) {
-        // Calcula o valor em USDT
-        const valorUSDT = valorNum / cotacao;
-        // Adiciona a taxa de serviço de 1%
-        const taxaServico = valorUSDT * 0.01;
-        const valorTotalUSDT = valorUSDT + taxaServico;
-        setUsdt(valorTotalUSDT.toFixed(2));
+      if (!isNaN(valorNum) && valorNum > 0) {
+        // Conversão pura e simples (sem taxas)
+        const baseUsdt = parseFloat(brlToUsdt(valorNum));
+        setUsdt(baseUsdt.toFixed(2));
       } else {
         setUsdt("");
       }
     } else {
       setUsdt("");
     }
-  }, [valor, cotacao]);
+  }, [valor, brlToUsdt]);
 
-  useEffect(() => { buscarCotacao(); }, []);
+  // Carregar cotação inicial via hook (ele já busca ao montar)
 
   useEffect(() => {
     // Limpa feedback e campos ao montar ou ao desconectar carteira
@@ -259,9 +232,9 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
     const dadosEnvio = {
       valor: valorNum,
       valor_usdt: usdt,
-      cotacao: cotacao,
+      cotacao: taxaConversao,
       valor_original: valor
-    });
+    };
     setDebugEnviado(boletoObj);
     try {
       const resp = await fetch(buildApiUrl('/boletos'), {
@@ -429,11 +402,8 @@ function BoletoForm({ user, onBoletoAdded, handleWalletConnection, isConnected, 
             </div>
             <div className="col-span-12 sm:col-span-12 flex items-center mt-1">
               <p className="text-sm text-text-secondary mr-2">
-                Cotação USDT/BRL: <b>{cotLoading ? <div className="animate-spin h-4 w-4 mx-1" /> : cotacao ? `R$ ${cotacao}` : '--'}</b>
+                Cotação USDT/BRL: <b>{cotLoading ? <div className="animate-spin h-4 w-4 mx-1" /> : taxaConversao ? `R$ ${taxaConversao}` : '--'}</b>
               </p>
-              <button type="button" onClick={buscarCotacao} className="ml-1 text-primary-main text-sm">
-                Atualizar cotação
-              </button>
             </div>
             <div className="col-span-12">
               <input

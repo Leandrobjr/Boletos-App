@@ -693,60 +693,60 @@ app.post('/perfil', async (req, res) => {
   }
 });
 
-// Proxy para API do Coingecko
+// Proxy para API do Coingecko (padronizado para { price })
 app.get('/proxy/coingecko', async (req, res) => {
   try {
-    const { ticker, vs } = req.query;
+    const ticker = req.query.ticker || 'tether';
+    const vs = req.query.vs || 'brl';
     console.log('📍 GET /proxy/coingecko:', { ticker, vs });
-    
-    if (!ticker || !vs) {
-      return res.status(400).json({
-        error: 'Parâmetros ticker e vs são obrigatórios'
-      });
-    }
-    
-    const response = await axios.get(`https://api.coingecko.com/api/v3/simple/price`, {
-      params: {
-        ids: ticker,
-        vs_currencies: vs
-      }
+
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: { ids: ticker, vs_currencies: vs },
+      headers: { 'Accept': 'application/json', 'User-Agent': 'BXC-Boletos/1.0' }
     });
-    
-    console.log('✅ Dados do Coingecko:', response.data);
-    res.json(response.data);
+
+    const data = response.data || {};
+    const price = data?.[ticker]?.[vs];
+
+    if (price == null) {
+      return res.status(404).json({ error: 'Preço não encontrado', data });
+    }
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.json({ price, ticker, vs, timestamp: new Date().toISOString(), source: 'coingecko' });
   } catch (error) {
     console.error('❌ Erro ao buscar dados do Coingecko:', error.message);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Erro ao buscar dados do Coingecko',
       details: error.message 
     });
   }
 });
 
-// Proxy para API do Coingecko (com /api)
+// Proxy para API do Coingecko (com /api) - padronizado para { price }
 app.get('/api/proxy/coingecko', async (req, res) => {
   try {
-    const { ticker, vs } = req.query;
+    const ticker = req.query.ticker || 'tether';
+    const vs = req.query.vs || 'brl';
     console.log('📍 GET /api/proxy/coingecko:', { ticker, vs });
-    
-    if (!ticker || !vs) {
-      return res.status(400).json({
-        error: 'Parâmetros ticker e vs são obrigatórios'
-      });
-    }
-    
-    const response = await axios.get(`https://api.coingecko.com/api/v3/simple/price`, {
-      params: {
-        ids: ticker,
-        vs_currencies: vs
-      }
+
+    const response = await axios.get('https://api.coingecko.com/api/v3/simple/price', {
+      params: { ids: ticker, vs_currencies: vs },
+      headers: { 'Accept': 'application/json', 'User-Agent': 'BXC-Boletos/1.0' }
     });
-    
-    console.log('✅ Dados do Coingecko:', response.data);
-    res.json(response.data);
+
+    const data = response.data || {};
+    const price = data?.[ticker]?.[vs];
+
+    if (price == null) {
+      return res.status(404).json({ error: 'Preço não encontrado', data });
+    }
+
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    return res.json({ price, ticker, vs, timestamp: new Date().toISOString(), source: 'coingecko' });
   } catch (error) {
     console.error('❌ Erro ao buscar dados do Coingecko:', error.message);
-    res.status(500).json({ 
+    return res.status(500).json({ 
       error: 'Erro ao buscar dados do Coingecko',
       details: error.message 
     });

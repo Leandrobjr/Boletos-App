@@ -540,20 +540,37 @@ async function streamComprovanteFromSource(sourceUrl, res, filenameHint) {
   }
 }
 
+// Cache simples em memória para Coingecko (TTL 60s)
+const cgCache = {};
+
 // Proxy simples para Coingecko (evita CORS no frontend)
 app.get('/api/proxy/coingecko', async (req, res) => {
   try {
     const ticker = req.query.ticker || 'tether';
     const vs = req.query.vs || 'brl';
+    const cacheKey = `${ticker}:${vs}`;
+
+    // Retornar do cache se ainda válido (60s)
+    const cached = cgCache[cacheKey];
+    if (cached && (Date.now() - cached.ts) < 60000) {
+      res.setHeader('Access-Control-Allow-Origin', '*');
+      return res.json({ price: cached.price, ticker, vs, cached: true, timestamp: new Date(cached.ts).toISOString(), source: 'coingecko' });
+    }
+
     const url = `https://api.coingecko.com/api/v3/simple/price?ids=${encodeURIComponent(ticker)}&vs_currencies=${encodeURIComponent(vs)}`;
-    const r = await fetch(url, { headers: { 'Accept': 'application/json' } });
+    const r = await fetch(url, { headers: { 'Accept': 'application/json', 'User-Agent': 'BXC-Boletos/1.0' } });
     if (!r.ok) {
       return res.status(r.status).json({ error: `Falha Coingecko ${r.status}` });
     }
     const data = await r.json();
     const price = data?.[ticker]?.[vs];
     res.setHeader('Access-Control-Allow-Origin', '*');
-    res.json({ price });
+    if (price == null) {
+      return res.status(404).json({ error: 'Preço não encontrado', data });
+    }
+    // Armazenar no cache
+    cgCache[cacheKey] = { price, ts: Date.now() };
+    res.json({ price, ticker, vs, timestamp: new Date().toISOString(), source: 'coingecko' });
   } catch (e) {
     res.status(500).json({ error: 'Proxy Coingecko falhou', details: e.message });
   }
