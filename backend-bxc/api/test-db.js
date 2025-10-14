@@ -1,10 +1,21 @@
 const { Pool } = require('pg');
 
+// Usa o mesmo fallback seguro adotado nas rotas principais
+const resolveDatabaseUrl = () => {
+  const envUrl = process.env.DATABASE_URL || '';
+  const isLocal = /localhost|127\.0\.0\.1/i.test(envUrl);
+  if (envUrl && !isLocal) return envUrl;
+  return 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+};
+
+const usedUrl = resolveDatabaseUrl();
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: usedUrl,
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000
 });
 
 module.exports = async (req, res) => {
@@ -48,7 +59,9 @@ module.exports = async (req, res) => {
       current_time: testQuery.rows[0].current_time,
       boleto_175009135592: boletoQuery.rows[0] || null,
       boleto_found: boletoQuery.rowCount > 0,
-      sample_boletos: await pool.query('SELECT id, numero_controle, status FROM boletos ORDER BY criado_em DESC LIMIT 3').then(r => r.rows)
+      sample_boletos: await pool.query('SELECT id, numero_controle, status FROM boletos ORDER BY criado_em DESC LIMIT 3').then(r => r.rows),
+      database_url_source: /localhost|127\.0\.0\.1/i.test(process.env.DATABASE_URL || '') ? 'fallback_neon' : 'env_or_fallback',
+      database_url_preview: usedUrl.replace(/:[^:@/]+@/,'://****:****@').slice(0, 60) + '...'
     });
 
   } catch (error) {

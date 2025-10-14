@@ -1,11 +1,21 @@
 const { Pool } = require('pg');
 
-// Configuração do banco
+// Configuração do banco com fallback seguro (evita localhost em produção)
+const resolveDatabaseUrl = () => {
+  const envUrl = process.env.DATABASE_URL || '';
+  const isLocal = /localhost|127\.0\.0\.1/i.test(envUrl);
+  if (envUrl && !isLocal) return envUrl;
+  // Fallback para Neon já usado no projeto (mesma string de api/index.js)
+  return 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+};
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: resolveDatabaseUrl(),
   ssl: {
     rejectUnauthorized: false
-  }
+  },
+  connectionTimeoutMillis: 10000,
+  idleTimeoutMillis: 30000
 });
 
 module.exports = async (req, res) => {
@@ -435,4 +445,4 @@ module.exports = async (req, res) => {
       stack: error.stack
     });
   }
-}; 
+};
