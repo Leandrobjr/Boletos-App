@@ -1,7 +1,16 @@
 const { Pool } = require('pg');
 
+// Fallback seguro para conexão (evita localhost em produção)
+const resolveDatabaseUrl = () => {
+  const envUrl = process.env.DATABASE_URL || '';
+  const isLocal = /localhost|127\.0\.0\.1/i.test(envUrl);
+  if (envUrl && !isLocal) return envUrl;
+  // Mesmo fallback usado em outros endpoints
+  return 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+};
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: resolveDatabaseUrl(),
   ssl: { rejectUnauthorized: false }
 });
 

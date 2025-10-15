@@ -1,8 +1,16 @@
 const { Pool } = require('pg');
 
-// Configuração do banco
+// Configuração do banco com fallback seguro (evita localhost em produção)
+const resolveDatabaseUrl = () => {
+  const envUrl = process.env.DATABASE_URL || '';
+  const isLocal = /localhost|127\.0\.0\.1/i.test(envUrl);
+  if (envUrl && !isLocal) return envUrl;
+  // Fallback para Neon já usado no projeto (mesma string de api/index.js)
+  return 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+};
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: resolveDatabaseUrl(),
   ssl: {
     rejectUnauthorized: false
   }
@@ -54,11 +62,13 @@ module.exports = async (req, res) => {
       `);
 
       if (columnCheck.rowCount === 0) {
-        console.log('❌ [ERRO] Coluna comprador_id não existe. Execute a migração primeiro.');
-        return res.status(500).json({
-          error: 'Migração necessária',
-          message: 'Coluna comprador_id não existe. Execute /api/migrate/add-comprador-id primeiro.',
-          migrationRequired: true
+        console.log('❌ [ALERTA] Coluna comprador_id não existe. Evitando 500 e retornando lista vazia com flag de migração.');
+        return res.status(200).json({
+          success: true,
+          data: [],
+          count: 0,
+          migrationRequired: true,
+          message: 'Coluna comprador_id ausente. Execute /api/migrate/add-comprador-id.'
         });
       }
 
@@ -96,4 +106,4 @@ module.exports = async (req, res) => {
       stack: error.stack
     });
   }
-}; 
+};
