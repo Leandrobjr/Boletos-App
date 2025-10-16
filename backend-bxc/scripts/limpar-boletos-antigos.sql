@@ -91,3 +91,14 @@ WHERE
   AND data_travamento IS NOT NULL
   AND data_travamento < NOW() - INTERVAL '24 hours';
 
+-- =============================================================
+-- LEGACY ⚠️ USO PONTUAL APENAS
+-- =============================================================
+-- Este script foi utilizado pontualmente para limpeza manual.
+-- No fluxo atual:
+--  - 24h referem-se à escala de taxas, NÃO muda status.
+--  - Status após 60min: com comprovante → 'AGUARDANDO BAIXA'; sem → 'DISPONIVEL'.
+--  - Após 72h do comprovante: baixa automática via contrato (autoRelease).
+-- Portanto, não utilize este script como rotina de produção.
+-- =============================================================
+

@@ -1,7 +1,15 @@
 const { Pool } = require('pg');
 
+// Fallback seguro para conexão (evita localhost em produção)
+const resolveDatabaseUrl = () => {
+  const envUrl = process.env.DATABASE_URL || '';
+  const isLocal = /localhost|127\.0\.0\.1/i.test(envUrl);
+  if (envUrl && !isLocal) return envUrl;
+  return 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+};
+
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
+  connectionString: resolveDatabaseUrl(),
   ssl: { rejectUnauthorized: false }
 });
 
@@ -118,7 +126,7 @@ module.exports = async (req, res) => {
         console.log('✅ Boleto válido, executando UPDATE...');
         const result = await pool.query(
           'UPDATE boletos SET status = $1, comprador_id = $2, wallet_address = $3, tx_hash = $4 WHERE id = $5 AND status = $6 RETURNING *',
-          ['AGUARDANDO PAGAMENTO', user_id, wallet_address, tx_hash, id, 'DISPONIVEL']
+          ['AGUARDANDO_PAGAMENTO', user_id, wallet_address, tx_hash, id, 'DISPONIVEL']
         );
 
         console.log('📊 Resultado do UPDATE:', result.rowCount, 'linhas afetadas');
@@ -256,4 +264,4 @@ module.exports = async (req, res) => {
       details: error.message
     });
   }
-}; 
+};

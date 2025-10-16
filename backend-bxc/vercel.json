@@ -51,12 +51,26 @@
       "destination": "/api/limpar-boletos-expirados"
     },
     {
+      "source": "/api/smart-contract/status",
+      "destination": "/api/smart-contract/status"
+    },
+    {
       "source": "/api/boletos/([^/]+)/destravar",
       "destination": "/api/boletos/[id]/destravar?id=$1"
     },
     {
       "source": "/api/(.*)",
       "destination": "/api/$1"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/timeout-check",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/auto-release-72h",
+      "schedule": "0 * * * *" 
     }
   ]
 }
