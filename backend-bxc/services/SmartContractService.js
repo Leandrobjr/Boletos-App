@@ -27,6 +27,7 @@ class SmartContractService {
       "function expireTransactions(bytes32[] calldata _transactionIds) external onlyOwner nonReentrant",
       "function getTransaction(bytes32 _transactionId) external view returns (tuple(bytes32 id, address seller, address buyer, uint256 usdtAmount, uint256 transactionFee, uint256 buyerFee, uint256 boletoId, uint256 createdAt, uint256 selectedAt, uint256 proofUploadedAt, uint256 completedAt, uint256 boleto__VencimentoTimestamp, uint8 status, bool fundsReleased, bool isEmergencyWithdraw))",
       "function boletoToTransaction(uint256 _boletoId) external view returns (bytes32)",
+      "function autoRelease(bytes32 _transactionId) external",
       "event TransactionCancelled(bytes32 indexed transactionId, address indexed seller, uint256 refundAmount, string reason)"
     ];
     
@@ -65,6 +66,92 @@ class SmartContractService {
       console.error('❌ [SMART_CONTRACT] Erro na inicialização:', error);
       this.isInitialized = false;
       return false;
+    }
+  }
+
+  /**
+   * 🔍 Busca transação no smart contract por escrow/transaction ID
+   */
+  async getTransactionByEscrowId(transactionId) {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      if (!transactionId || transactionId === ethers.ZeroHash) {
+        console.log('⚠️ [SMART_CONTRACT] transactionId inválido');
+        return null;
+      }
+
+      const txn = await this.contract.getTransaction(transactionId);
+      return {
+        transactionId: transactionId,
+        seller: txn.seller,
+        buyer: txn.buyer,
+        usdtAmount: txn.usdtAmount?.toString?.() ?? String(txn.usdtAmount),
+        transactionFee: txn.transactionFee?.toString?.() ?? String(txn.transactionFee),
+        buyerFee: txn.buyerFee?.toString?.() ?? String(txn.buyerFee),
+        boletoId: txn.boletoId?.toString?.() ?? String(txn.boletoId),
+        createdAt: new Date(Number(txn.createdAt) * 1000),
+        selectedAt: new Date(Number(txn.selectedAt) * 1000),
+        proofUploadedAt: txn.proofUploadedAt ? new Date(Number(txn.proofUploadedAt) * 1000) : null,
+        completedAt: txn.completedAt ? new Date(Number(txn.completedAt) * 1000) : null,
+        status: Number(txn.status),
+        fundsReleased: Boolean(txn.fundsReleased)
+      };
+    } catch (error) {
+      console.error('❌ [SMART_CONTRACT] Erro em getTransactionByEscrowId:', error);
+      return null;
+    }
+  }
+
+  /**
+   * ⏱️ Verifica elegibilidade local para autoRelease (com base em proofUploadedAt)
+   */
+  isEligibleForAutoReleaseLocal(txn) {
+    try {
+      if (!txn || !txn.proofUploadedAt) return { eligible: false, reason: 'Sem comprovante (proofUploadedAt)' };
+      if (txn.fundsReleased) return { eligible: false, reason: 'Fundos já liberados' };
+
+      const now = Date.now();
+      const uploaded = txn.proofUploadedAt.getTime();
+      const deadlineMs = 72 * 60 * 60 * 1000; // 72h
+      const eligible = now >= (uploaded + deadlineMs);
+      return {
+        eligible,
+        now,
+        uploaded,
+        hoursSinceUpload: Math.floor((now - uploaded) / (60 * 60 * 1000))
+      };
+    } catch (error) {
+      console.error('❌ [SMART_CONTRACT] Erro ao verificar elegibilidade local:', error);
+      return { eligible: false, reason: error.message };
+    }
+  }
+
+  /**
+   * 🔓 Executa autoRelease no smart contract (requer chave privada configurada)
+   */
+  async autoReleaseTransaction(transactionId) {
+    try {
+      if (!this.isInitialized) {
+        await this.initialize();
+      }
+
+      const pk = process.env.AUTORELEASE_PRIVATE_KEY || process.env.OWNER_PRIVATE_KEY;
+      if (!pk) {
+        return { success: false, reason: 'AUTORELEASE_PRIVATE_KEY/OWNER_PRIVATE_KEY não configurada' };
+      }
+
+      const wallet = new ethers.Wallet(pk, this.provider);
+      const contractWithSigner = this.contract.connect(wallet);
+
+      const tx = await contractWithSigner.autoRelease(transactionId);
+      const receipt = await tx.wait();
+      return { success: true, txHash: receipt.transactionHash };
+    } catch (error) {
+      console.error('❌ [SMART_CONTRACT] Erro em autoReleaseTransaction:', error);
+      return { success: false, reason: error.message };
     }
   }
 

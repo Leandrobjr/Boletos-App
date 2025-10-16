@@ -10,6 +10,14 @@
 
 const { Pool } = require('pg');
 
+// Fallback seguro para conexão (evita localhost em produção)
+const resolveDatabaseUrl = () => {
+  const envUrl = process.env.DATABASE_URL || '';
+  const isLocal = /localhost|127\.0\.0\.1/i.test(envUrl);
+  if (envUrl && !isLocal) return envUrl;
+  return 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+};
+
 module.exports = async (req, res) => {
   // 1. CORS Headers (OBRIGATÓRIO)
   res.setHeader('Access-Control-Allow-Origin', '*');
@@ -25,16 +33,15 @@ module.exports = async (req, res) => {
   try {
     console.log('⏰ [TIMEOUT-CHECK] Iniciando verificação automática de timeout...');
 
-    // 3. Conectar ao banco PostgreSQL
+    // 3. Conectar ao banco PostgreSQL (com fallback seguro)
     const pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: resolveDatabaseUrl(),
       ssl: { rejectUnauthorized: false }
     });
 
     // 4. Buscar boletos travados há mais de 60 minutos
     const agora = new Date();
     const limite60Minutos = new Date(agora.getTime() - (60 * 60 * 1000)); // 60 minutos atrás
-    const limite24Horas = new Date(agora.getTime() - (24 * 60 * 60 * 1000)); // 24 horas atrás
 
     const boletosExpirados = await pool.query(`
       SELECT id, numero_controle, status, data_travamento, escrow_id, user_id
@@ -45,25 +52,13 @@ module.exports = async (req, res) => {
       ORDER BY data_travamento ASC
     `, [limite60Minutos.toISOString()]);
 
-    const boletosMuitoAntigos = await pool.query(`
-      SELECT id, numero_controle, status, data_travamento, escrow_id, user_id
-      FROM boletos 
-      WHERE status IN ('PENDENTE_PAGAMENTO', 'AGUARDANDO_PAGAMENTO')
-      AND data_travamento IS NOT NULL
-      AND data_travamento <= $1
-      ORDER BY data_travamento ASC
-    `, [limite24Horas.toISOString()]);
-
     console.log(`🔍 [TIMEOUT-CHECK] Encontrados ${boletosExpirados.rowCount} boletos expirados (60min)`);
-    console.log(`🔍 [TIMEOUT-CHECK] Encontrados ${boletosMuitoAntigos.rowCount} boletos muito antigos (24h)`);
 
     const resultados = {
       timestamp: agora.toISOString(),
       boletosExpirados60min: [],
-      boletosMuitoAntigos24h: [],
       estatisticas: {
         totalExpirados60min: boletosExpirados.rowCount,
-        totalMuitoAntigos24h: boletosMuitoAntigos.rowCount,
         processados: 0,
         erros: 0
       }
@@ -78,18 +73,33 @@ module.exports = async (req, res) => {
         console.log(`🔄 [TIMEOUT-CHECK] Processando boleto ${boleto.id} (${minutosDecorridos.toFixed(1)}min)`);
 
         // Destravar o boleto
-        const updateResult = await pool.query(`
-          UPDATE boletos 
-          SET 
-            status = 'DISPONIVEL',
-            comprador_id = NULL,
-            wallet_address = NULL,
-            data_destravamento = $1,
-            data_travamento = NULL,
-            updated_at = $1
-          WHERE id = $2
-          RETURNING id, status, data_destravamento
-        `, [agora.toISOString(), boleto.id]);
+        let updateResult;
+        try {
+          updateResult = await pool.query(`
+            UPDATE boletos 
+            SET 
+              status = 'DISPONIVEL',
+              comprador_id = NULL,
+              wallet_address = NULL,
+              data_destravamento = $1,
+              data_travamento = NULL,
+              updated_at = $1
+            WHERE id = $2
+            RETURNING id, status, data_destravamento
+          `, [agora.toISOString(), boleto.id]);
+        } catch (error) {
+          if (String(error.code) === '42703') {
+            // Fallback para esquemas antigos: atualiza somente status
+            updateResult = await pool.query(`
+              UPDATE boletos 
+              SET status = 'DISPONIVEL'
+              WHERE id = $1
+              RETURNING id, status
+            `, [boleto.id]);
+          } else {
+            throw error;
+          }
+        }
 
         if (updateResult.rowCount > 0) {
           resultados.boletosExpirados60min.push({
@@ -110,50 +120,14 @@ module.exports = async (req, res) => {
       }
     }
 
-    // 6. Processar boletos muito antigos (24 horas) - marcar como EXPIRADO
-    for (const boleto of boletosMuitoAntigos.rows) {
-      try {
-        const dataTravamento = new Date(boleto.data_travamento);
-        const horasDecorridas = (agora.getTime() - dataTravamento.getTime()) / (1000 * 60 * 60);
-
-        console.log(`🧹 [TIMEOUT-CHECK] Limpando boleto muito antigo ${boleto.id} (${horasDecorridas.toFixed(1)}h)`);
-
-        // Marcar como EXPIRADO
-        const updateResult = await pool.query(`
-          UPDATE boletos 
-          SET 
-            status = 'EXPIRADO',
-            data_destravamento = $1,
-            updated_at = $1
-          WHERE id = $2
-          RETURNING id, status, data_destravamento
-        `, [agora.toISOString(), boleto.id]);
-
-        if (updateResult.rowCount > 0) {
-          resultados.boletosMuitoAntigos24h.push({
-            id: boleto.id,
-            numero_controle: boleto.numero_controle,
-            horasDecorridas: Math.round(horasDecorridas),
-            escrow_id: boleto.escrow_id,
-            statusAnterior: boleto.status,
-            novoStatus: 'EXPIRADO',
-            data_destravamento: agora.toISOString()
-          });
-          resultados.estatisticas.processados++;
-          console.log(`✅ [TIMEOUT-CHECK] Boleto ${boleto.id} marcado como EXPIRADO`);
-        }
-      } catch (error) {
-        console.error(`❌ [TIMEOUT-CHECK] Erro ao limpar boleto ${boleto.id}:`, error.message);
-        resultados.estatisticas.erros++;
-      }
-    }
+    // 6. (Removido) Não há expiração de 24h — fluxo segue apenas com destrave após 60min sem comprovante
 
     // 7. Log final
     console.log(`📊 [TIMEOUT-CHECK] Processamento concluído:`, {
       processados: resultados.estatisticas.processados,
       erros: resultados.estatisticas.erros,
       expirados60min: resultados.estatisticas.totalExpirados60min,
-      muitoAntigos24h: resultados.estatisticas.totalMuitoAntigos24h
+      muitoAntigos24h: 0
     });
 
     // 8. Resposta

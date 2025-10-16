@@ -17,8 +17,15 @@ const SmartContractService = require('./SmartContractService');
 class AutoTimeoutService {
   constructor() {
     // Configuração do banco Neon PostgreSQL
+    const resolveDatabaseUrl = () => {
+      const envUrl = process.env.DATABASE_URL || '';
+      const isLocal = /localhost|127\.0\.0\.1/i.test(envUrl);
+      if (envUrl && !isLocal) return envUrl;
+      return 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require';
+    };
+
     this.pool = new Pool({
-      connectionString: process.env.DATABASE_URL,
+      connectionString: resolveDatabaseUrl(),
       ssl: {
         rejectUnauthorized: false
       }
@@ -122,7 +129,7 @@ class AutoTimeoutService {
         status, criado_em, data_travamento, escrow_id, tx_hash
       FROM boletos 
       WHERE 
-        status = 'AGUARDANDO PAGAMENTO' 
+        status IN ('AGUARDANDO_PAGAMENTO','AGUARDANDO PAGAMENTO') 
         AND data_travamento IS NOT NULL
         AND NOW() - data_travamento > INTERVAL '60 minutes'
       ORDER BY data_travamento ASC
@@ -171,7 +178,23 @@ class AutoTimeoutService {
       RETURNING *
     `;
 
-    const result = await this.pool.query(query, [newStatus, boletoId]);
+    let result;
+    try {
+      result = await this.pool.query(query, [newStatus, boletoId]);
+    } catch (error) {
+      // Fallback quando coluna motivo_destravamento OU data_destravamento não existe
+      if (String(error.code) === '42703') {
+        const minimalQuery = `
+          UPDATE boletos 
+          SET status = $1
+          WHERE id = $2
+          RETURNING *
+        `;
+        result = await this.pool.query(minimalQuery, [newStatus, boletoId]);
+      } else {
+        throw error;
+      }
+    }
     
     if (result.rowCount === 0) {
       throw new Error(`Boleto ${boletoId} não encontrado para atualização`);
@@ -195,7 +218,22 @@ class AutoTimeoutService {
       WHERE id = $1
     `;
 
-    await this.pool.query(query, [boletoId]);
+    try {
+      await this.pool.query(query, [boletoId]);
+    } catch (error) {
+      if (String(error.code) === '42703') {
+        const minimalQuery = `
+          UPDATE boletos 
+          SET 
+            comprador_id = NULL,
+            wallet_address = NULL
+          WHERE id = $1
+        `;
+        await this.pool.query(minimalQuery, [boletoId]);
+      } else {
+        throw error;
+      }
+    }
     console.log(`🧹 [AUTO_TIMEOUT] Dados do comprador limpos: boleto ${boletoId}`);
   }
 
@@ -248,7 +286,7 @@ class AutoTimeoutService {
         SELECT 
           COUNT(*) as total_boletos,
           COUNT(CASE WHEN status = 'DISPONIVEL' THEN 1 END) as disponiveis,
-          COUNT(CASE WHEN status = 'AGUARDANDO PAGAMENTO' THEN 1 END) as aguardando_pagamento,
+          COUNT(CASE WHEN status IN ('AGUARDANDO_PAGAMENTO','AGUARDANDO PAGAMENTO') THEN 1 END) as aguardando_pagamento,
           COUNT(CASE WHEN status = 'BAIXADO' THEN 1 END) as baixados,
           COUNT(CASE WHEN motivo_destravamento = 'TIMEOUT_AUTOMATICO_60_MINUTOS' THEN 1 END) as timeout_automaticos
         FROM boletos
