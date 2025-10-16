@@ -26,9 +26,9 @@ module.exports = async (req, res) => {
   }
 
   const { method } = req;
-  const { numeroControle } = req.query;
+  const { id } = req.query;
 
-  console.log(`🚀 API Request: ${method} /api/boletos/${numeroControle}/comprovante`);
+  console.log(`🚀 API Request: ${method} /api/boletos/${id}/comprovante`);
   console.log('📍 Body:', req.body);
 
   try {
@@ -43,9 +43,9 @@ module.exports = async (req, res) => {
     }
 
     // Verificar existência do boleto
-    const select = await pool.query('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
+    const select = await pool.query('SELECT * FROM boletos WHERE numero_controle = $1', [id]);
     if (select.rows.length === 0) {
-      return res.status(404).json({ error: 'Boleto não encontrado', numero_controle: numeroControle });
+      return res.status(404).json({ error: 'Boleto não encontrado', numero_controle: id });
     }
 
     const boleto = select.rows[0];
@@ -65,7 +65,7 @@ module.exports = async (req, res) => {
              tempo_limite_baixa = NOW() + INTERVAL '72 hours'
        WHERE numero_controle = $4
        RETURNING *`,
-      [payload, filename || null, filetype || null, numeroControle]
+      [payload, filename || null, filetype || null, id]
     );
 
     const atualizado = update.rows[0];
