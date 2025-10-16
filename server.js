@@ -1059,6 +1059,93 @@ app.patch('/boletos/:numeroControle/baixar', async (req, res) => {
   }
 });
 
+// Compat: aceitar PATCH com comprovante_url para upload de comprovante
+app.patch('/api/boletos/:numeroControle/comprovante', async (req, res) => {
+  try {
+    const numeroControle = req.params.numeroControle;
+    const { comprovante_url, filename, filesize, filetype } = req.body || {};
+
+    console.log('📍 PATCH /api/boletos/:numeroControle/comprovante:', numeroControle);
+    console.log('📄 Tamanho do comprovante_url:', comprovante_url ? comprovante_url.length : 0, 'caracteres');
+
+    if (!comprovante_url) {
+      return res.status(400).json({ error: 'comprovante_url é obrigatório' });
+    }
+
+    const boletoIndex = boletosStorage.findIndex(b => String(b.numero_controle) === String(numeroControle));
+    if (boletoIndex === -1) {
+      return res.status(404).json({ error: 'Boleto não encontrado' });
+    }
+
+    if (boletosStorage[boletoIndex].status !== 'PENDENTE_PAGAMENTO' && boletosStorage[boletoIndex].status !== 'AGUARDANDO_PAGAMENTO') {
+      return res.status(400).json({ error: 'Boleto não está pendente de pagamento' });
+    }
+
+    boletosStorage[boletoIndex].status = 'AGUARDANDO_BAIXA';
+    boletosStorage[boletoIndex].comprovante_url = comprovante_url;
+    boletosStorage[boletoIndex].comprovante = comprovante_url; // compat
+    boletosStorage[boletoIndex].upload_em = new Date().toISOString();
+    boletosStorage[boletoIndex].tempo_limite_baixa = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+    if (filename) boletosStorage[boletoIndex].comprovante_filename = filename;
+    if (filesize) boletosStorage[boletoIndex].comprovante_filesize = filesize;
+    if (filetype) boletosStorage[boletoIndex].comprovante_filetype = filetype;
+
+    saveStorage();
+
+    const comprovanteSalvo = boletosStorage[boletoIndex];
+    console.log('✅ Comprovante atualizado (PATCH):', comprovanteSalvo.id);
+    res.status(200).json(comprovanteSalvo);
+  } catch (error) {
+    console.error('❌ Erro ao atualizar comprovante (PATCH):', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
+
+// Compat: aceitar PATCH sem prefixo /api para upload de comprovante
+app.patch('/boletos/:numeroControle/comprovante', async (req, res) => {
+  try {
+    const numeroControle = req.params.numeroControle;
+    const { comprovante_url, comprovante, filename, filesize, filetype } = req.body || {};
+
+    console.log('📍 PATCH /boletos/:numeroControle/comprovante:', numeroControle);
+    const payload = comprovante_url || comprovante;
+    console.log('📄 Tamanho do comprovante (url/base64):', payload ? String(payload).length : 0, 'caracteres');
+
+    if (!payload) {
+      return res.status(400).json({ error: 'comprovante_url ou comprovante é obrigatório' });
+    }
+
+    const boletoIndex = boletosStorage.findIndex(b => String(b.numero_controle) === String(numeroControle));
+    if (boletoIndex === -1) {
+      return res.status(404).json({ error: 'Boleto não encontrado' });
+    }
+
+    if (boletosStorage[boletoIndex].status !== 'PENDENTE_PAGAMENTO' && boletosStorage[boletoIndex].status !== 'AGUARDANDO_PAGAMENTO') {
+      return res.status(400).json({ error: 'Boleto não está pendente de pagamento' });
+    }
+
+    boletosStorage[boletoIndex].status = 'AGUARDANDO_BAIXA';
+    // Salva tanto em comprovante_url quanto em comprovante para compatibilidade
+    boletosStorage[boletoIndex].comprovante_url = payload;
+    boletosStorage[boletoIndex].comprovante = payload;
+    boletosStorage[boletoIndex].upload_em = new Date().toISOString();
+    boletosStorage[boletoIndex].tempo_limite_baixa = new Date(Date.now() + 72 * 60 * 60 * 1000).toISOString();
+
+    if (filename) boletosStorage[boletoIndex].comprovante_filename = filename;
+    if (filesize) boletosStorage[boletoIndex].comprovante_filesize = filesize;
+    if (filetype) boletosStorage[boletoIndex].comprovante_filetype = filetype;
+
+    saveStorage();
+
+    const comprovanteSalvo = boletosStorage[boletoIndex];
+    console.log('✅ Comprovante atualizado (PATCH sem /api):', comprovanteSalvo.id);
+    res.status(200).json(comprovanteSalvo);
+  } catch (error) {
+    console.error('❌ Erro ao atualizar comprovante (PATCH sem /api):', error);
+    res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+});
 // Rota para visualizar comprovante
 app.get('/api/proxy/comprovante/:numeroControle', async (req, res) => {
   try {

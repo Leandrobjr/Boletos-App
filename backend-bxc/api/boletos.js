@@ -270,17 +270,37 @@ module.exports = async (req, res) => {
 
       console.log('✅ Validação passou, formatando data...');
 
-      // Formatar data de vencimento se fornecida
+      // Formatar data de vencimento se fornecida (aceita DD/MM/YYYY ou YYYY-MM-DD)
       let dataVencimento = null;
       if (vencimento) {
         try {
-          // Converter de DD/MM/YYYY para YYYY-MM-DD
-          const [dia, mes, ano] = vencimento.split('/');
-          dataVencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+          if (typeof vencimento === 'string') {
+            if (vencimento.includes('/')) {
+              // Formato DD/MM/YYYY → YYYY-MM-DD
+              const [dia, mes, ano] = vencimento.split('/');
+              dataVencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+            } else if (vencimento.includes('-')) {
+              // Formato YYYY-MM-DD (input type=date)
+              const [ano, mes, dia] = vencimento.split('-');
+              dataVencimento = `${ano}-${mes.padStart(2, '0')}-${dia.padStart(2, '0')}`;
+            } else {
+              // Tentar parse genérico
+              const parsed = new Date(vencimento);
+              if (!isNaN(parsed.getTime())) {
+                dataVencimento = parsed.toISOString().split('T')[0];
+              }
+            }
+          }
           console.log('📅 Data formatada:', dataVencimento);
         } catch (error) {
           console.warn('Erro ao formatar data de vencimento:', error);
         }
+      } else {
+        // Se não houver vencimento enviado, definir padrão de 30 dias após criação
+        const hoje = new Date();
+        hoje.setDate(hoje.getDate() + 30);
+        dataVencimento = hoje.toISOString().split('T')[0];
+        console.log('📅 Vencimento padrão aplicado (30 dias):', dataVencimento);
       }
 
       console.log('💾 Inserindo no banco...');

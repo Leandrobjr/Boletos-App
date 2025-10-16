@@ -109,9 +109,9 @@ const CompradorPage = () => {
   useEffect(() => {
     if (meusBoletos && meusBoletos.length > 0) {
       const boletoPendente = meusBoletos.find(boleto => 
-        boleto.status === 'PENDENTE_PAGAMENTO' && 
+        ['PENDENTE_PAGAMENTO', 'AGUARDANDO_PAGAMENTO', 'AGUARDANDO PAGAMENTO'].includes(boleto.status) && 
         boleto.dataCompra && 
-        !boleto.comprovante_url
+        !(boleto.comprovanteUrl || boleto.comprovante_url)
       );
       
       if (boletoPendente && tempoRestante === null) {
@@ -157,7 +157,8 @@ const CompradorPage = () => {
         codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
         valor: boleto.valor_brl || boleto.valor || 0,
         valor_usdt: boleto.valor_usdt || 0,
-        dataCompra: boleto.criado_em || boleto.dataCompra,
+        // Usar data_travamento quando existir para refletir a reserva
+        dataCompra: boleto.data_travamento || boleto.criado_em || boleto.dataCompra,
         comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
         status: mapStatus(boleto.status)
       }));
@@ -436,7 +437,8 @@ const CompradorPage = () => {
       try {
         
         // Enviar comprovante para o backend (usar rota sem /api/)
-        const response = await fetch(buildApiUrl(`/boletos/${selectedBoleto.numero_controle}/comprovante`), {
+        const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
+        const response = await fetch(buildApiUrl(`/boletos/${ident}/comprovante`), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -457,7 +459,7 @@ const CompradorPage = () => {
         setSelectedBoleto(prev => ({
           ...prev,
           comprovanteUrl: comprovanteUrl,
-          status: 'AGUARDANDO BAIXA'
+          status: 'AGUARDANDO_BAIXA'
         }));
         
         setEtapaCompra(4);

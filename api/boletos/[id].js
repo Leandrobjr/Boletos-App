@@ -94,7 +94,7 @@ module.exports = async (req, res) => {
           isUUID
             ? 'UPDATE boletos SET comprovante_url = $1, status = $2 WHERE id = $3 RETURNING *'
             : 'UPDATE boletos SET comprovante_url = $1, status = $2 WHERE numero_controle = $3 RETURNING *',
-          [comprovante_url, 'AGUARDANDO BAIXA', id]
+          [comprovante_url, 'AGUARDANDO_BAIXA', id]
         );
 
         if (update.rowCount === 0) {
@@ -318,4 +318,4 @@ module.exports = async (req, res) => {
       details: error.message
     });
   }
-}; 
+};
