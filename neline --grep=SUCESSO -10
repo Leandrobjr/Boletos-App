@@ -1,0 +1,51 @@
+[33mcommit d49d2b3c7d738853592b04a2dd40ea10638c328f[m
+Author: BoletoXCrypto <dev@boletoxcrypto.com>
+Date:   Sat Aug 2 19:09:03 2025 -0300
+
+    🔧 FIX CORS: Headers CORS forçados nas Serverless Functions
+
+[1mdiff --git a/backend-bxc/api/hello.js b/backend-bxc/api/hello.js[m
+[1mindex 58f4f833..266c52f0 100644[m
+[1m--- a/backend-bxc/api/hello.js[m
+[1m+++ b/backend-bxc/api/hello.js[m
+[36m@@ -1,13 +1,14 @@[m
+ // API Route para Vercel - Teste de conectividade[m
+ export default async function handler(req, res) {[m
+[31m-  // Headers CORS[m
+[32m+[m[32m  // Headers CORS FORÇADOS[m
+   res.setHeader('Access-Control-Allow-Origin', '*');[m
+   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');[m
+[31m-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');[m
+[31m-  res.setHeader('Access-Control-Allow-Credentials', 'true');[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');[m
+[32m+[m[32m  res.setHeader('Access-Control-Max-Age', '86400');[m
+ [m
+   // Handle preflight requests[m
+   if (req.method === 'OPTIONS') {[m
+[32m+[m[32m    console.log('🔧 CORS Preflight request');[m
+     return res.status(200).end();[m
+   }[m
+ [m
+[1mdiff --git a/backend-bxc/api/perfil.js b/backend-bxc/api/perfil.js[m
+[1mindex 0b6dc16c..05ec225a 100644[m
+[1m--- a/backend-bxc/api/perfil.js[m
+[1m+++ b/backend-bxc/api/perfil.js[m
+[36m@@ -10,14 +10,15 @@[m [mconst pool = new Pool({[m
+ });[m
+ [m
+ export default async function handler(req, res) {[m
+[31m-  // Headers CORS[m
+[32m+[m[32m  // Headers CORS FORÇADOS[m
+   res.setHeader('Access-Control-Allow-Origin', '*');[m
+   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');[m
+[31m-  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');[m
+[31m-  res.setHeader('Access-Control-Allow-Credentials', 'true');[m
+[32m+[m[32m  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');[m
+[32m+[m[32m  res.setHeader('Access-Control-Max-Age', '86400');[m
+ [m
+   // Handle preflight requests[m
+   if (req.method === 'OPTIONS') {[m
+[32m+[m[32m    console.log('🔧 CORS Preflight request');[m
+     return res.status(200).end();[m
+   }[m
+ [m

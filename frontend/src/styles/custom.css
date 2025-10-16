@@ -1,0 +1,264 @@
+/* Estilos personalizados para o BoletoXCrypto */
+
+/* Cores do tema - Shadcn UI */
+:root {
+  --color-button: #16a34a; /* green-600 */
+  --color-header-footer: #84cc16; /* lime-500 */
+  --color-background: #ecfccb; /* lime-200 */
+  --color-text: #525252; /* neutral-600 */
+  --color-error: #dc2626; /* red-600 */
+  
+  /* Sobrescrever variáveis do Shadcn UI */
+  --primary: 142 76% 36%; /* green-600 em HSL */
+  --primary-foreground: 0 0% 100%;
+  
+  --secondary: 84 77% 44%; /* lime-500 em HSL */
+  --secondary-foreground: 0 0% 100%;
+  
+  --background: 83 88% 89%; /* lime-200 em HSL */
+  --foreground: 0 0% 32%; /* neutral-600 em HSL */
+  
+  --destructive: 0 84% 50%; /* red-600 em HSL */
+  --destructive-foreground: 0 0% 100%;
+}
+
+/* Configurações globais */
+* {
+  box-sizing: border-box;
+}
+
+/* Fundo da página - IMPORTANTE: Aplicar em todos os elementos */
+html, 
+body, 
+#root, 
+#root > div,
+main,
+section,
+.container,
+.page-container {
+  background-color: var(--color-background) !important;
+}
+
+/* Aplicar fundo lime-200 em todos os divs */
+/* div {
+  background-color: var(--color-background) !important;
+} */
+
+/* Sobrescrever apenas para elementos específicos que precisam de fundo branco */
+.card,
+.card-content,
+[class*="card-content"],
+input, 
+select, 
+textarea, 
+button,
+table,
+tbody,
+tr,
+td {
+  background-color: white !important;
+}
+
+/* Textos */
+body, p, span, label, input, textarea, select {
+  color: var(--color-text) !important;
+}
+
+/* Campos de formulário */
+input[type="text"],
+input[type="number"],
+input[type="date"],
+input[type="email"],
+input[type="password"],
+textarea,
+select {
+  border-radius: 12px !important;
+  border-width: 2px !important;
+  padding: 12px 16px !important;
+  height: auto !important;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05) !important;
+  font-size: 1rem !important;
+  background-color: white !important;
+}
+
+/* Campo CPF/CNPJ específico - CORREÇÃO IMPORTANTE */
+#cpfCnpj,
+input[name="cpfCnpj"] {
+  width: 280px !important;
+  max-width: 280px !important;
+  min-width: 280px !important;
+  display: inline-block !important;
+  flex: none !important;
+}
+
+/* Botões - VERDE */
+button,
+.btn,
+[type="button"],
+[type="submit"],
+[type="reset"] {
+  border-radius: 12px !important;
+  padding: 14px 24px !important;
+  font-weight: 600 !important;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1) !important;
+  transition: all 0.3s ease !important;
+  background-color: var(--color-button) !important;
+  color: white !important;
+}
+
+/* Aplicar cores do tema aos componentes Shadcn UI */
+.bg-primary {
+  background-color: var(--color-button) !important;
+}
+
+.text-primary {
+  color: var(--color-button) !important;
+}
+
+.border-primary {
+  border-color: var(--color-button) !important;
+}
+
+button:hover,
+.btn:hover,
+[type="button"]:hover,
+[type="submit"]:hover,
+[type="reset"]:hover {
+  transform: translateY(-2px) !important;
+  box-shadow: 0 6px 8px rgba(0, 0, 0, 0.15) !important;
+  filter: brightness(110%) !important;
+}
+
+/* Cards */
+.card {
+  border-radius: 16px !important;
+  border-width: 2px !important;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1) !important;
+  overflow: hidden !important;
+  background-color: white !important;
+}
+
+.card > div:not([class*="card-header"]):not([class*="card-footer"]) {
+  background-color: white !important;
+}
+
+/* Cabeçalho e rodapé dos cards - LIME */
+[class*="card-header"],
+.card-header,
+.card > div:first-child {
+  padding: 16px 24px !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1) !important;
+  background-color: var(--color-header-footer) !important;
+  color: white !important;
+}
+
+[class*="card-footer"],
+.card-footer,
+.card > div:last-child {
+  padding: 16px 24px !important;
+  border-top: 1px solid rgba(0, 0, 0, 0.1) !important;
+  background-color: var(--color-header-footer) !important;
+  color: white !important;
+}
+
+/* Garantir que os títulos nos cabeçalhos dos cards sejam brancos */
+.card-header h1,
+.card-header h2,
+.card-header h3,
+.card-header h4,
+.card-header h5,
+.card-header h6,
+.card-header p,
+.card-header span,
+.card > div:first-child h1,
+.card > div:first-child h2,
+.card > div:first-child h3,
+.card > div:first-child h4,
+.card > div:first-child h5,
+.card > div:first-child h6,
+.card > div:first-child p,
+.card > div:first-child span {
+  color: white !important;
+}
+
+/* Conteúdo dos cards */
+[class*="card-content"],
+.card-content {
+  background-color: white !important;
+  padding: 24px !important;
+}
+
+/* Tabs */
+[role="tablist"] {
+  background-color: rgba(132, 204, 22, 0.3) !important; /* lime-500 com transparência */
+  padding: 8px !important;
+  border-radius: 16px !important;
+  margin-bottom: 24px !important;
+}
+
+[role="tab"] {
+  font-weight: 600 !important;
+  padding: 12px 20px !important;
+  border-radius: 12px !important;
+  transition: all 0.3s ease !important;
+  background-color: transparent !important;
+}
+
+[role="tab"][data-state="active"] {
+  background-color: var(--color-button) !important;
+  color: white !important;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Títulos */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 700 !important;
+  margin-bottom: 1rem !important;
+  color: var(--color-text) !important;
+}
+
+/* Mensagens de erro */
+.text-red-500,
+.text-destructive {
+  color: var(--color-error) !important;
+}
+
+/* Tabelas */
+table {
+  background-color: white !important;
+}
+
+/* Espaçamento geral */
+.p-6 {
+  padding: 2rem !important;
+}
+
+.space-y-4 > * + * {
+  margin-top: 1.5rem !important;
+}
+
+/* Botão de ícone (olho de senha) sempre transparente e cinza */
+.icon-btn,
+.icon-btn:hover,
+.icon-btn:focus {
+  background-color: transparent !important;
+  color: #6b7280 !important; /* gray-500 */
+  box-shadow: none !important;
+}
+
+/* Remove setas de todos os inputs numéricos */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none;
+  margin: 0; 
+}
+input[type=number] {
+  -moz-appearance: textfield;
+}
+
+/* Força o campo de valor a ser texto */
+#valor[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+  -webkit-appearance: none;
+}

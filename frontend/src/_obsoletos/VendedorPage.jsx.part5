@@ -1,0 +1,18 @@
+          <TabsContent value="historico">
+            <Card>
+              <CardHeader className="bg-green-800 text-white">
+                <CardTitle>Histórico de Transações</CardTitle>
+                <CardDescription>Acompanhe todas as suas transações realizadas</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <HistoricoTransacoes tipoUsuario="vendedor" />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+export default VendedorPage;

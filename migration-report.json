@@ -1,0 +1,20 @@
+{
+  "migration": {
+    "date": "2025-09-25T14:27:50.180Z",
+    "totalBoletos": 19,
+    "successful": 19,
+    "failed": 0,
+    "timersCreated": 18
+  },
+  "fees": {
+    "totalProtocolEarnings": 685.8693499999999,
+    "avgBuyerFee": 24.266821052631574,
+    "avgSellerFee": 11.831565789473684
+  },
+  "integrity": {
+    "totalBoletos": 19,
+    "withEscrowId": 19,
+    "withDynamicFees": 19,
+    "withTimers": 18
+  }
+}

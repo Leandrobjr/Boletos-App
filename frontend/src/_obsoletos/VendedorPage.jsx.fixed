@@ -1,0 +1,61 @@
+import { useState } from 'react';
+          </TabsList>
+
+          <TabsContent value="cadastrar">
+            <Card>
+              <CardHeader className="bg-green-900 text-white">
+                <CardTitle className="text-xl">Cadastrar Boleto</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSubmit} className="space-y-4">
+                  <div>
+                    <Label htmlFor="codigoBarras">Código de Barras</Label>
+                    <Input id="codigoBarras" name="codigoBarras" type="text" value={formData.codigoBarras} onChange={handleChange} maxLength={48} className="w-full max-w-[480px]" required />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="cpfCnpj">CPF/CNPJ do Beneficiário</Label>
+                    <Input id="cpfCnpj" name="cpfCnpj" type="text" value={formData.cpfCnpj} onChange={handleChange} maxLength={14} className="w-64" required />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <Label htmlFor="valor">Valor (R$)</Label>
+                      <Input id="valor" name="valor" type="number" step="0.01" min="0" value={formData.valor} onChange={handleChange} className="w-48" required />
+                    </div>
+
+                    <div>
+                      <Label htmlFor="valorUsdt">Valor (USDT)</Label>
+                      <Input id="valorUsdt" type="number" step="0.01" min="0" value={formData.valor ? (parseFloat(formData.valor) / 5.0).toFixed(2) : ''} readOnly className="bg-green-100 border-green-500 w-48" />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="dataVencimento">Data de Vencimento</Label>
+                    <Input id="dataVencimento" name="dataVencimento" type="date" value={formData.dataVencimento} onChange={handleChange} className="w-48" required />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="instituicao">Instituição Emissora</Label>
+                    <Input id="instituicao" name="instituicao" type="text" value={formData.instituicao} onChange={handleChange} className="w-64" required />
+                  </div>
+
+                  <div className="flex justify-center mt-6">
+                    <Button type="submit" className="flex items-center gap-2 px-6 py-3 bg-lime-600 text-white hover:bg-lime-700">
+                      <FaWallet /> Cadastrar e Conectar Carteira
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <!-- os demais TabsContent já estavam com cabeçalhos em green-800 e serão ajustados para green-900 -->
+
+        </Tabs>
+      </div>
+    </div>
+  );
+}
+
+export default VendedorPage;

@@ -1,0 +1,76 @@
+{
+  "version": 2,
+  "functions": {
+    "api/**/*.js": {
+      "runtime": "@vercel/node@4.0.0"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/perfil/([^/]+)",
+      "destination": "/api/perfil/[uid]?uid=$1"
+    },
+    {
+      "source": "/api/boletos/controle/([^/]+)",
+      "destination": "/api/boletos?numero_controle=$1"
+    },
+    {
+      "source": "/api/boletos/comprados/([^/]+)",
+      "destination": "/api/boletos/comprados/[uid]?uid=$1"
+    },
+    {
+      "source": "/api/boletos/usuario/([^/]+)",
+      "destination": "/api/boletos/usuario/[uid]?uid=$1"
+    },
+    {
+      "source": "/api/fees/collect",
+      "destination": "/api/fees/collect"
+    },
+    {
+      "source": "/api/migrate/add-comprador-id",
+      "destination": "/api/migrate/add-comprador-id"
+    },
+    {
+      "source": "/api/migrate-execute",
+      "destination": "/api/migrate-execute"
+    },
+    {
+      "source": "/api/migrate-data",
+      "destination": "/api/migrate-data"
+    },
+    {
+      "source": "/api/destravar-boleto",
+      "destination": "/api/destravar-boleto"
+    },
+    {
+      "source": "/api/timeout-check",
+      "destination": "/api/timeout-check"
+    },
+    {
+      "source": "/api/limpar-boletos-expirados",
+      "destination": "/api/limpar-boletos-expirados"
+    },
+    {
+      "source": "/api/smart-contract/status",
+      "destination": "/api/smart-contract/status"
+    },
+    {
+      "source": "/api/boletos/([^/]+)/destravar",
+      "destination": "/api/boletos/[id]/destravar?id=$1"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
+    }
+  ],
+  "crons": [
+    {
+      "path": "/api/timeout-check",
+      "schedule": "*/5 * * * *"
+    },
+    {
+      "path": "/api/auto-release-72h",
+      "schedule": "0 * * * *" 
+    }
+  ]
+}

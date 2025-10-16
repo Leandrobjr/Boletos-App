@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BXC Boletos</title>
+    
+    <!-- CACHE BUSTING - FORÇAR RECARREGAMENTO -->
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
+    <!-- Permissões para carteiras e storage (resolve tracking prevention) -->
+    <meta http-equiv="Permissions-Policy" content="storage-access=*, camera=*, microphone=*">
+    <meta http-equiv="Cross-Origin-Embedder-Policy" content="unsafe-none">
+    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin-allow-popups">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

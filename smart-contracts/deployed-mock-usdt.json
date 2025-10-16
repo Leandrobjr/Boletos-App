@@ -1,0 +1,15 @@
+{
+  "network": "Polygon Amoy",
+  "chainId": 80002,
+  "contractName": "MockUSDT",
+  "address": "0x213Ae2631a5646A2228648aFa790Bc93f3f0218B",
+  "deployer": "0xEd6e7b900d941De731003E259455c1C1669E9956",
+  "deploymentTime": "2025-09-13T23:55:47.273Z",
+  "details": {
+    "name": "Mock USDT",
+    "symbol": "USDT",
+    "decimals": "6",
+    "totalSupply": "1000000000000",
+    "deployerBalance": "1000000000000"
+  }
+}

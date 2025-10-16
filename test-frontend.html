@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste Contratos Inteligentes - BXC</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+        .success { background-color: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background-color: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background-color: #0056b3; }
+        button:disabled { background-color: #6c757d; cursor: not-allowed; }
+        .contract-info {
+            background-color: #f8f9fa;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+            font-family: monospace;
+            font-size: 12px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Integração - Contratos Inteligentes BXC</h1>
+        <p>Esta página testa a conectividade com os contratos deployados na rede Polygon Amoy.</p>
+        
+        <div id="status" class="status info">Aguardando teste...</div>
+        
+        <h2>Configuração dos Contratos</h2>
+        <div class="contract-info">
+            <strong>Rede:</strong> Polygon Amoy (Chain ID: 80002)<br>
+            <strong>MockUSDT:</strong> 0x754e24f6708CA0313A40f23EE27Cb9CDE06E140D<br>
+            <strong>P2PEscrow:</strong> 0x17688a3610b2e0d78a322c73366Bb4b6A0ACACfB<br>
+            <strong>RPC:</strong> https://rpc-amoy.polygon.technology
+        </div>
+        
+        <h2>Testes</h2>
+        <button onclick="testConnection()">🔗 Testar Conexão</button>
+        <button onclick="testMockUSDT()">🪙 Testar MockUSDT</button>
+        <button onclick="testP2PEscrow()">🔒 Testar P2PEscrow</button>
+        <button onclick="testAll()">🚀 Testar Todos</button>
+        
+        <h2>Resultados</h2>
+        <div id="results"></div>
+    </div>
+
+    <script>
+        // Configuração dos contratos
+        const CONTRACT_CONFIG = {
+            MOCK_USDT: '0x754e24f6708CA0313A40f23EE27Cb9CDE06E140D',
+            P2P_ESCROW: '0x17688a3610b2e0d78a322c73366Bb4b6A0ACACfB',
+            RPC: 'https://rpc-amoy.polygon.technology'
+        };
+
+        // ABI simplificado
+        const MOCK_USDT_ABI = [
+            'function name() view returns (string)',
+            'function symbol() view returns (string)',
+            'function decimals() view returns (uint8)',
+            'function totalSupply() view returns (uint256)'
+        ];
+
+        const P2P_ESCROW_ABI = [
+            'function usdt() view returns (address)'
+        ];
+
+        let provider, mockUSDT, p2pEscrow;
+
+        function updateStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            status.textContent = message;
+            status.className = `status ${type}`;
+        }
+
+        function addResult(title, content, success = true) {
+            const results = document.getElementById('results');
+            const div = document.createElement('div');
+            div.className = `status ${success ? 'success' : 'error'}`;
+            div.innerHTML = `<strong>${title}:</strong> ${content}`;
+            results.appendChild(div);
+        }
+
+        async function testConnection() {
+            try {
+                updateStatus('🔗 Conectando à rede Amoy...', 'info');
+                
+                // Verificar se o MetaMask está disponível
+                if (typeof window.ethereum === 'undefined') {
+                    throw new Error('MetaMask não está instalado');
+                }
+
+                // Solicitar conexão
+                const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+                
+                // Verificar rede
+                const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+                
+                if (chainId !== '0x13881') { // 80001 em hex (Amoy)
+                    throw new Error(`Rede incorreta. Atual: ${chainId}, Esperada: 0x13881 (Amoy)`);
+                }
+
+                updateStatus(`✅ Conectado! Conta: ${accounts[0].substring(0, 10)}...`, 'success');
+                addResult('Conexão', `Conectado à rede Amoy com conta ${accounts[0].substring(0, 10)}...`);
+                
+            } catch (error) {
+                updateStatus(`❌ Erro na conexão: ${error.message}`, 'error');
+                addResult('Conexão', error.message, false);
+            }
+        }
+
+        async function testMockUSDT() {
+            try {
+                updateStatus('🪙 Testando MockUSDT...', 'info');
+                
+                if (!window.ethereum) {
+                    throw new Error('MetaMask não conectado');
+                }
+
+                // Criar provider
+                provider = new ethers.providers.Web3Provider(window.ethereum);
+                mockUSDT = new ethers.Contract(CONTRACT_CONFIG.MOCK_USDT, MOCK_USDT_ABI, provider);
+                
+                // Testar funções
+                const name = await mockUSDT.name();
+                const symbol = await mockUSDT.symbol();
+                const decimals = await mockUSDT.decimals();
+                const totalSupply = await mockUSDT.totalSupply();
+                
+                updateStatus('✅ MockUSDT funcionando!', 'success');
+                addResult('MockUSDT', `Nome: ${name}, Símbolo: ${symbol}, Decimais: ${decimals}, Supply: ${ethers.utils.formatUnits(totalSupply, decimals)}`);
+                
+            } catch (error) {
+                updateStatus(`❌ Erro no MockUSDT: ${error.message}`, 'error');
+                addResult('MockUSDT', error.message, false);
+            }
+        }
+
+        async function testP2PEscrow() {
+            try {
+                updateStatus('🔒 Testando P2PEscrow...', 'info');
+                
+                if (!provider) {
+                    throw new Error('Provider não inicializado');
+                }
+
+                p2pEscrow = new ethers.Contract(CONTRACT_CONFIG.P2P_ESCROW, P2P_ESCROW_ABI, provider);
+                
+                // Testar função usdt()
+                const usdtAddress = await p2pEscrow.usdt();
+                
+                if (usdtAddress.toLowerCase() === CONTRACT_CONFIG.MOCK_USDT.toLowerCase()) {
+                    updateStatus('✅ P2PEscrow funcionando!', 'success');
+                    addResult('P2PEscrow', `Endereço USDT configurado corretamente: ${usdtAddress}`);
+                } else {
+                    throw new Error(`Endereço USDT incorreto. Esperado: ${CONTRACT_CONFIG.MOCK_USDT}, Recebido: ${usdtAddress}`);
+                }
+                
+            } catch (error) {
+                updateStatus(`❌ Erro no P2PEscrow: ${error.message}`, 'error');
+                addResult('P2PEscrow', error.message, false);
+            }
+        }
+
+        async function testAll() {
+            updateStatus('🚀 Executando todos os testes...', 'info');
+            document.getElementById('results').innerHTML = '';
+            
+            await testConnection();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testMockUSDT();
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            await testP2PEscrow();
+            
+            updateStatus('🎯 Todos os testes concluídos!', 'success');
+        }
+
+        // Verificar se o MetaMask está disponível
+        if (typeof window.ethereum !== 'undefined') {
+            updateStatus('✅ MetaMask detectado! Clique em "Testar Conexão" para começar.', 'success');
+        } else {
+            updateStatus('❌ MetaMask não detectado! Instale a extensão para continuar.', 'error');
+        }
+    </script>
+
+    <!-- Ethers.js -->
+    <script src="https://cdn.ethers.io/lib/ethers-5.7.2.umd.min.js" type="application/javascript"></script>
+</body>
+</html>
+
+
+
+
+

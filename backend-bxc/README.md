@@ -1,0 +1,38 @@
+# Backend BXC
+
+Backend simples para APIs do projeto BXC.
+
+## Deploy
+- Runtime: `Node.js 20.x`
+- Entry: `api/index.js`
+- Build: `npm install`
+
+## Status
+- ✅ API criada em `api/index.js`
+- ✅ Vercel configurado
+- ✅ Neon PostgreSQL configurado
+
+## Teste
+- Base: `https://boletos-backend-290725.vercel.app/api`
+- Endpoint: `/api/hello`
+
+## Segurança Administrativa
+- Endpoints sensíveis exigem autorização administrativa:
+  - `POST /api/fees/collect`
+  - `POST /api/migrate-execute`
+  - `POST /api/migrate-data`
+
+### Como autorizar
+Envie pelo menos um dos seguintes cabeçalhos:
+- `Authorization: Bearer <Firebase ID Token>` com claim customizada `{ "admin": true }`
+- `X-App-Admin-Key: <chave>` igual à variável de ambiente `ADMIN_API_KEY`
+- `X-Wallet-Address: <endereço>` presente na lista `ADMIN_WALLETS` (se configurada)
+
+### Variáveis de ambiente
+- `ADMIN_API_KEY`: chave de acesso para automações/admin
+- `ADMIN_WALLETS`: lista de carteiras admin separadas por vírgula (ex.: `0xabc...,0xdef...`)
+- `FIREBASE_PROJECT_ID`, `FIREBASE_CLIENT_EMAIL`, `FIREBASE_PRIVATE_KEY`: necessários para validar o ID Token (Firebase Admin)
+
+### Observações
+- Preflight `OPTIONS` é sempre permitido.
+- Se nenhum método de autorização for válido, o endpoint retorna `403` com dicas de configuração.
