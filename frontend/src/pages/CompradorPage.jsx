@@ -457,7 +457,7 @@ const CompradorPage = () => {
         setSelectedBoleto(prev => ({
           ...prev,
           comprovanteUrl: comprovanteUrl,
-          status: 'AGUARDANDO BAIXA'
+          status: 'AGUARDANDO_BAIXA'
         }));
         
         setEtapaCompra(4);

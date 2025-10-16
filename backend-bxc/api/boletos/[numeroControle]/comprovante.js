@@ -1,0 +1,79 @@
+const { Pool } = require('pg');
+
+// Headers CORS
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Max-Age': '86400'
+};
+
+// Configuração do banco
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require',
+  ssl: { rejectUnauthorized: false }
+});
+
+module.exports = async (req, res) => {
+  // Adicionar headers CORS
+  Object.keys(corsHeaders).forEach(key => {
+    res.setHeader(key, corsHeaders[key]);
+  });
+
+  // Handle preflight requests
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  const { method } = req;
+  const { numeroControle } = req.query;
+
+  console.log(`🚀 API Request: ${method} /api/boletos/${numeroControle}/comprovante`);
+  console.log('📍 Body:', req.body);
+
+  try {
+    if (method !== 'PATCH' && method !== 'POST') {
+      return res.status(405).json({ error: 'Método não permitido' });
+    }
+
+    const { comprovante_url, comprovante, filename, filesize, filetype } = req.body || {};
+    const payload = comprovante_url || comprovante;
+    if (!payload) {
+      return res.status(400).json({ error: 'comprovante_url ou comprovante é obrigatório' });
+    }
+
+    // Verificar existência do boleto
+    const select = await pool.query('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
+    if (select.rows.length === 0) {
+      return res.status(404).json({ error: 'Boleto não encontrado', numero_controle: numeroControle });
+    }
+
+    const boleto = select.rows[0];
+    const statusAtual = boleto.status;
+    if (statusAtual !== 'PENDENTE_PAGAMENTO' && statusAtual !== 'AGUARDANDO_PAGAMENTO') {
+      return res.status(400).json({ error: 'Boleto não está pendente de pagamento', status_atual: statusAtual });
+    }
+
+    // Atualizar para AGUARDANDO_BAIXA e salvar comprovante
+    const update = await pool.query(
+      `UPDATE boletos
+         SET status = 'AGUARDANDO_BAIXA',
+             comprovante_url = $1,
+             comprovante_filename = $2,
+             comprovante_filetype = $3,
+             upload_em = NOW(),
+             tempo_limite_baixa = NOW() + INTERVAL '72 hours'
+       WHERE numero_controle = $4
+       RETURNING *`,
+      [payload, filename || null, filetype || null, numeroControle]
+    );
+
+    const atualizado = update.rows[0];
+    console.log('✅ Comprovante salvo em produção:', atualizado.id || atualizado.numero_controle);
+    return res.status(200).json(atualizado);
+
+  } catch (error) {
+    console.error('❌ Erro ao salvar comprovante (produção):', error);
+    return res.status(500).json({ error: 'Erro interno do servidor', details: error.message });
+  }
+};
