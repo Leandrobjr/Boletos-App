@@ -76,7 +76,7 @@ module.exports = async (req, res) => {
       const result = await pool.query(
         `SELECT * FROM boletos 
          WHERE comprador_id = $1 
-         AND status IN ('PENDENTE_PAGAMENTO', 'AGUARDANDO_BAIXA', 'BAIXADO')
+         AND status IN ('PENDENTE_PAGAMENTO', 'AGUARDANDO_PAGAMENTO', 'AGUARDANDO_BAIXA', 'BAIXADO', 'AGUARDANDO PAGAMENTO')
          ORDER BY criado_em DESC`,
         [uid]
       );

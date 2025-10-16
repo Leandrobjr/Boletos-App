@@ -26,14 +26,31 @@ module.exports = async (req, res) => {
   }
 
   const { method } = req;
-  const { id } = req.query;
+  // Capturar o ID de forma robusta: req.query.id (dinâmico do Vercel) ou parse manual da URL
+  let { id } = req.query || {};
+  if (!id) {
+    try {
+      const url = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+      const parts = url.pathname.split('/').filter(Boolean); // ['api','boletos',':id','comprovante']
+      const idx = parts.indexOf('boletos');
+      if (idx !== -1 && parts[idx + 1]) {
+        id = parts[idx + 1];
+      }
+    } catch (e) {
+      // Ignorar erro de parse; trataremos como ausência de id abaixo
+    }
+  }
 
   console.log(`🚀 API Request: ${method} /api/boletos/${id}/comprovante`);
   console.log('📍 Body:', req.body);
 
   try {
     if (method !== 'PATCH' && method !== 'POST') {
-      return res.status(405).json({ error: 'Método não permitido' });
+      return res.status(405).json({ error: 'Método não permitido', allowed: ['PATCH','POST','OPTIONS'] });
+    }
+
+    if (!id) {
+      return res.status(400).json({ error: 'ID do boleto é obrigatório na URL' });
     }
 
     const { comprovante_url, comprovante, filename, filesize, filetype } = req.body || {};
@@ -50,8 +67,10 @@ module.exports = async (req, res) => {
 
     const boleto = select.rows[0];
     const statusAtual = boleto.status;
-    if (statusAtual !== 'PENDENTE_PAGAMENTO' && statusAtual !== 'AGUARDANDO_PAGAMENTO') {
-      return res.status(400).json({ error: 'Boleto não está pendente de pagamento', status_atual: statusAtual });
+    // Aceitar variações de status esperadas no fluxo
+    const statusOk = ['PENDENTE_PAGAMENTO', 'AGUARDANDO_PAGAMENTO'].includes(statusAtual);
+    if (!statusOk) {
+      return res.status(400).json({ error: 'Boleto não está pendente de pagamento', status_atual: statusAtual, numero_controle: id });
     }
 
     // Atualizar para AGUARDANDO_BAIXA e salvar comprovante
