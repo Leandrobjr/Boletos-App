@@ -77,14 +77,10 @@ module.exports = async (req, res) => {
     const update = await pool.query(
       `UPDATE boletos
          SET status = 'AGUARDANDO_BAIXA',
-             comprovante_url = $1,
-             comprovante_filename = $2,
-             comprovante_filetype = $3,
-             upload_em = NOW(),
-             tempo_limite_baixa = NOW() + INTERVAL '72 hours'
-       WHERE numero_controle = $4
+             comprovante_url = $1
+       WHERE numero_controle = $2
        RETURNING *`,
-      [payload, filename || null, filetype || null, id]
+      [payload, id]
     );
 
     const atualizado = update.rows[0];
