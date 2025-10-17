@@ -29,7 +29,7 @@ import { parseValorBRL } from '../lib/utils';
 import StatusBadge from '../components/ui/status-badge';
 import { useParams, useNavigate } from 'react-router-dom';
 import BalanceRefresher from '../components/BalanceRefresher';
-import { buildApiUrl } from '../config/apiConfig';
+import { buildApiUrl, apiRequest } from '../config/apiConfig';
 // Hook corrigido - sem endereços hardcoded
 import { useBoletoEscrowFixed } from '../hooks/useBoletoEscrowFixed';
 
@@ -1029,23 +1029,19 @@ function VendedorPage() {
 
       // Depois, chamar o backend para baixar o boleto
       const identBaixar = boleto.numeroControle || boleto.numero_controle || boleto.id;
-      const response = await fetch(buildApiUrl(`/boletos/${identBaixar}/baixar`), {
+      const responseData = await apiRequest(`/boletos/${identBaixar}/baixar`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
+        body: {
           user_id: user.uid,
           wallet_address_vendedor: address,
           wallet_address_comprador: compradorAddress,
           tx_hash: result.txHash
-        })
+        }
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || `Erro ${response.status}: ${response.statusText}`);
+      if (responseData && responseData.success === false) {
+        throw new Error(responseData.message || 'Falha ao baixar boleto');
       }
-
-      const responseData = await response.json();
 
       setAlertInfo({
         type: 'success',

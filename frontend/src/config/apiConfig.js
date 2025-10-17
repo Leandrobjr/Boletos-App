@@ -15,6 +15,8 @@ const getCorrectApiUrl = () => {
 
 // URL BASE FIXA - NÃO PODE SER ALTERADA
 const API_BASE_URL = getCorrectApiUrl();
+// BACKUP EM PRODUÇÃO: backend dedicado Vercel
+const API_BACKUP_URL = 'https://boletos-backend-290725.vercel.app/api';
 
 
 
@@ -61,7 +63,7 @@ export const buildApiUrl = (endpoint) => {
 
 // Função para fazer requisições com configuração robusta
 export const apiRequest = async (endpoint, options = {}) => {
-  const url = buildApiUrl(endpoint);
+  const primaryUrl = buildApiUrl(endpoint);
   
   // Preparar headers e serialização automática de body
   const initialHeaders = {
@@ -90,28 +92,38 @@ export const apiRequest = async (endpoint, options = {}) => {
   const maxRetries = 3;
   let lastError;
 
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const response = await fetch(url, defaultOptions);
-      
-      if (!response.ok) {
-        const errorText = await response.text().catch(() => 'Erro desconhecido');
-        throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
-      }
-      
-      const contentType = response.headers.get('content-type') || '';
-      if (contentType.includes('application/json')) {
-        return await response.json();
-      }
-      // Fallback para texto em sucesso
-      return { success: true, text: await response.text() };
-      
-    } catch (error) {
-      lastError = error;
-      
-      if (attempt < maxRetries) {
-        const delay = Math.pow(2, attempt) * 1000;
-        await new Promise(resolve => setTimeout(resolve, delay));
+  // Estratégia de fallback: se produção estiver usando caminho relativo /api, tentar backend dedicado
+  const candidates = [primaryUrl];
+  const isLocal = primaryUrl.includes('localhost');
+  const isRelativeApi = primaryUrl.startsWith('/api');
+  if (!isLocal && isRelativeApi) {
+    candidates.push(`${API_BACKUP_URL}${endpoint}`);
+  }
+
+  for (const url of candidates) {
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      try {
+        const response = await fetch(url, defaultOptions);
+        
+        if (!response.ok) {
+          const errorText = await response.text().catch(() => 'Erro desconhecido');
+          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
+        }
+        
+        const contentType = response.headers.get('content-type') || '';
+        if (contentType.includes('application/json')) {
+          return await response.json();
+        }
+        // Fallback para texto em sucesso
+        return { success: true, text: await response.text() };
+        
+      } catch (error) {
+        lastError = error;
+        
+        if (attempt < maxRetries) {
+          const delay = Math.pow(2, attempt) * 1000;
+          await new Promise(resolve => setTimeout(resolve, delay));
+        }
       }
     }
   }
