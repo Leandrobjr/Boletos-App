@@ -5,7 +5,8 @@ const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
-  'Access-Control-Max-Age': '86400'
+  'Access-Control-Max-Age': '86400',
+  'Content-Type': 'application/json; charset=utf-8'
 };
 
 // Configuração do banco
@@ -85,7 +86,7 @@ module.exports = async (req, res) => {
 
     const atualizado = update.rows[0];
     console.log('✅ Comprovante salvo em produção:', atualizado.id || atualizado.numero_controle);
-    return res.status(200).json(atualizado);
+    return res.status(200).json({ success: true, data: atualizado });
 
   } catch (error) {
     console.error('❌ Erro ao salvar comprovante (produção):', error);

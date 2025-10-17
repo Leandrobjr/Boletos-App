@@ -18,7 +18,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { useBoletoEscrowFixed } from '../hooks/useBoletoEscrowFixed';
 import BalanceRefresher from '../components/BalanceRefresher';
 import StatusBadge from '../components/ui/status-badge';
-import { buildApiUrl } from '../config/apiConfig';
+import API_CONFIG, { buildApiUrl } from '../config/apiConfig';
 import WalletConnector from '../components/wallet/WalletConnector';
 
 // FORCE REBUILD - CORREÇÃO DEFINITIVA LAYOUT E MODAIS - CACHE BUSTER
@@ -422,6 +422,28 @@ const CompradorPage = () => {
     }
 
     const file = comprovante;
+
+    // Validação de segurança do arquivo (tipo e tamanho)
+    const allowedTypes = ['application/pdf','image/png','image/jpeg','image/jpg'];
+    const maxSizeMB = 8;
+    if (!allowedTypes.includes(file.type)) {
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Tipo de arquivo não suportado',
+        description: 'Envie um PDF ou imagem (PNG/JPEG).'
+      });
+      setTimeout(() => setAlertInfo(null), 4000);
+      return;
+    }
+    if (file.size > maxSizeMB * 1024 * 1024) {
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Arquivo muito grande',
+        description: `Limite ${maxSizeMB}MB. Comprime ou envie versão menor.`
+      });
+      setTimeout(() => setAlertInfo(null), 4000);
+      return;
+    }
     
     setAlertInfo({
       type: 'default',
@@ -438,7 +460,7 @@ const CompradorPage = () => {
         
         // Enviar comprovante para o backend (usar rota sem /api/)
         const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
-        const response = await fetch(buildApiUrl(`/boletos/${ident}/comprovante`), {
+        const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.COMPROVANTE_BOLETO(ident)), {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
@@ -448,12 +470,37 @@ const CompradorPage = () => {
             filetype: file.type
           })
         });
+
+        // Log da requisição para depuração
+        console.log('📤 Enviando comprovante para:', buildApiUrl(`/boletos/${ident}/comprovante`));
         
         if (!response.ok) {
-          throw new Error('Erro ao enviar comprovante');
+          const errorText = await response.text().catch(() => null);
+          console.error('❌ Falha ao enviar comprovante:', response.status, response.statusText, errorText || '');
+          throw new Error(`Erro ao enviar comprovante: ${response.status} ${response.statusText}`);
         }
         
-        const boletoAtualizado = await response.json();
+        // Tentar parsear JSON, mas tratar 200 como sucesso mesmo sem JSON
+        let boletoAtualizado = null;
+        let rawText = null;
+        const contentType = response.headers.get('content-type') || '';
+        try {
+          if (contentType.includes('application/json')) {
+            boletoAtualizado = await response.json();
+          } else {
+            rawText = await response.text();
+          }
+        } catch (parseErr) {
+          console.warn('⚠️ Resposta não-JSON ou parse falhou. Tratando como sucesso.', parseErr);
+        }
+        
+        // Log de sucesso claro no console
+        console.log('✅ Comprovante enviado com sucesso', {
+          status: response.status,
+          contentType,
+          data: boletoAtualizado || null,
+          text: rawText || null,
+        });
         
         // Atualizar o boleto selecionado com a URL do comprovante
         setSelectedBoleto(prev => ({

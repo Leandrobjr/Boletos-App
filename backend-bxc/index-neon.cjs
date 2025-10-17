@@ -349,7 +349,7 @@ app.patch('/boletos/controle/:numero_controle/comprovante', async (req, res) => 
     if (!boleto) return res.status(404).json({ error: 'Boleto não encontrado' });
     const updated = await getQuery(
       'UPDATE boletos SET comprovante_url = $1, status = $2 WHERE id = $3 RETURNING *',
-      [comprovante_url, 'AGUARDANDO BAIXA', boleto.id]
+      [comprovante_url, 'AGUARDANDO_BAIXA', boleto.id]
     );
     return res.json({ success: true, data: updated });
   } catch (e) {

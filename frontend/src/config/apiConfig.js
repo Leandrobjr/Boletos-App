@@ -63,17 +63,28 @@ export const buildApiUrl = (endpoint) => {
 export const apiRequest = async (endpoint, options = {}) => {
   const url = buildApiUrl(endpoint);
   
+  // Preparar headers e serialização automática de body
+  const initialHeaders = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    ...(options.headers || {})
+  };
+  
+  let body = options.body;
+  let headers = { ...initialHeaders };
+  if (body && typeof body === 'object' && !(body instanceof FormData)) {
+    headers['Content-Type'] = 'application/json';
+    body = JSON.stringify(body);
+  }
+  
   const defaultOptions = {
-    headers: {
-      'Content-Type': 'application/json',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      ...options.headers
-    },
+    headers,
     mode: 'cors',
     credentials: 'omit',
-    ...options
+    method: options.method || 'GET',
+    body,
   };
 
   const maxRetries = 3;
@@ -88,8 +99,12 @@ export const apiRequest = async (endpoint, options = {}) => {
         throw new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
       }
       
-      const data = await response.json();
-      return data;
+      const contentType = response.headers.get('content-type') || '';
+      if (contentType.includes('application/json')) {
+        return await response.json();
+      }
+      // Fallback para texto em sucesso
+      return { success: true, text: await response.text() };
       
     } catch (error) {
       lastError = error;
