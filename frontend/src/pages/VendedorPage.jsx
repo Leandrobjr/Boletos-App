@@ -1003,38 +1003,30 @@ function VendedorPage() {
       if (!boleto.escrow_id || !boleto.tx_hash) {
         const identDetalhe = boleto.id || boleto.numeroControle || boleto.numero_controle;
         let detObj = null;
+        // Estratégia: evitar a rota por path (tem retornado 400) e usar apenas queries locais
         try {
-          // Primeiro: tentar por path param (apenas via rewrite local)
-          detObj = await apiRequest(`/boletos/${identDetalhe}`, { disableBackup: true });
-        } catch (ePath) {
-          try {
-            // Fallback robusto: tentar por query param (apenas via rewrite local)
-            const detalhe2 = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
-            detObj = detalhe2?.data?.find?.(d => d.id === identDetalhe) || detalhe2?.data?.[0] || detalhe2;
-          } catch (eQuery) {
-            // Segunda tentativa: usar numeroControle como possível id
-            const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || null;
-            const queryVariants = [];
-            if (numeroCand) {
-              queryVariants.push(`/boletos?id=${numeroCand}`);
-              queryVariants.push(`/boletos?numeroControle=${numeroCand}`);
-              queryVariants.push(`/boletos?numero_controle=${numeroCand}`);
+          const detalhePorId = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
+          detObj = detalhePorId?.data?.find?.(d => d.id === identDetalhe) || detalhePorId?.data?.[0] || detalhePorId;
+        } catch (eId) {
+          const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || identDetalhe;
+          const queryVariants = [
+            `/boletos?id=${numeroCand}`,
+            `/boletos?numeroControle=${numeroCand}`,
+            `/boletos?numero_controle=${numeroCand}`,
+          ];
+          for (const q of queryVariants) {
+            try {
+              const resp = await apiRequest(q, { disableBackup: true });
+              const maybe = resp?.data?.find?.(d => (
+                d.id === identDetalhe || d.id === numeroCand ||
+                d.numeroControle === numeroCand || d.numero_controle === numeroCand
+              )) || resp?.data?.[0] || resp;
+              if (maybe) { detObj = maybe; break; }
+            } catch (eVar) {
+              // continua tentando
             }
-            // Tentar variantes de query
-            for (const q of queryVariants) {
-              try {
-                const resp = await apiRequest(q, { disableBackup: true });
-                const maybe = resp?.data?.find?.(d => (
-                  d.id === identDetalhe || d.id === numeroCand ||
-                  d.numeroControle === numeroCand || d.numero_controle === numeroCand
-                )) || resp?.data?.[0] || resp;
-                if (maybe) { detObj = maybe; break; }
-              } catch (eVar) {
-                // continua tentando
-              }
-            }
-            if (!detObj) console.warn('⚠️ Falha ao carregar detalhes do boleto (path e múltiplas queries falharam):', ePath, eQuery);
           }
+          if (!detObj) console.warn('⚠️ Falha ao carregar detalhes do boleto via queries (id/numeroControle):', eId);
         }
         if (detObj) {
           const escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? boleto.escrow_id;
