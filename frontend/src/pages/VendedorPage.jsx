@@ -1007,8 +1007,9 @@ function VendedorPage() {
         try {
           console.debug('🔎 [DETALHE] Tentando detalhe via query id=', identDetalhe);
           const detalhePorId = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
-          detObj = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid === identDetalhe)) || detalhePorId?.data?.[0] || detalhePorId;
-          if (detObj) console.debug('✅ [DETALHE] Detalhe encontrado via id');
+          const found = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid === identDetalhe)) || null;
+          if (Array.isArray(detalhePorId?.data)) console.debug('ℹ️ [DETALHE] Resposta id possui', detalhePorId.data.length, 'registros');
+          if (found) { detObj = found; console.debug('✅ [DETALHE] Detalhe encontrado via id'); }
         } catch (eId) {
           const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || identDetalhe;
           const queryVariants = [
@@ -1024,35 +1025,104 @@ function VendedorPage() {
                 d.id === identDetalhe || d.id === numeroCand ||
                 d.uuid === identDetalhe || d.uuid === numeroCand ||
                 d.numeroControle === numeroCand || d.numero_controle === numeroCand
-              )) || resp?.data?.[0] || resp;
+              )) || null;
+              if (Array.isArray(resp?.data)) console.debug('ℹ️ [DETALHE] Resposta variante possui', resp.data.length, 'registros');
               if (maybe) { detObj = maybe; console.debug('✅ [DETALHE] Detalhe encontrado via variante de query'); break; }
             } catch (eVar) {
               // continua tentando
             }
           }
-          // Fallback final: buscar lista completa e filtrar client-side
-          if (!detObj) {
-            try {
-              console.debug('🔎 [DETALHE] Fallback final: consultando lista completa /boletos');
-              const listResp = await apiRequest('/boletos', { disableBackup: true });
-              const arr = Array.isArray(listResp?.data) ? listResp.data : (Array.isArray(listResp) ? listResp : []);
-              detObj = arr.find(d => (
-                d?.id === identDetalhe || d?.id === numeroCand ||
-                d?.uuid === identDetalhe || d?.uuid === numeroCand ||
-                d?.numeroControle === numeroCand || d?.numero_controle === numeroCand
-              )) || null;
-              if (detObj) console.debug('✅ [DETALHE] Detalhe obtido da lista completa');
-            } catch (eList) {
-              console.warn('⚠️ Falha ao consultar lista completa de boletos:', eList);
-            }
-          }
+          // Fallback por comprador: consultar boletos comprados do usuário e filtrar
+           if (!detObj && boleto?.comprador_id) {
+             try {
+               console.debug('🔎 [DETALHE] Fallback comprador: /boletos/comprados/', boleto.comprador_id);
+               const compradosResp = await apiRequest(`/boletos/comprados/${boleto.comprador_id}`, { disableBackup: true });
+               const arrC = Array.isArray(compradosResp?.data) ? compradosResp.data : (Array.isArray(compradosResp) ? compradosResp : []);
+               console.debug('ℹ️ [DETALHE] Comprados possui', arrC.length, 'registros');
+               detObj = arrC.find(d => (
+                 d?.id === identDetalhe || d?.uuid === identDetalhe ||
+                 d?.numero_controle === numeroCand || d?.numeroControle === numeroCand
+               )) || null;
+               if (detObj) console.debug('✅ [DETALHE] Detalhe obtido em comprados');
+             } catch (eCompr) {
+               console.warn('⚠️ Falha ao consultar comprados do usuário:', boleto.comprador_id, eCompr);
+             }
+           }
+           // Fallback final: buscar lista completa e filtrar client-side
+           if (!detObj) {
+             try {
+               console.debug('🔎 [DETALHE] Fallback final: consultando lista completa /boletos');
+               const listResp = await apiRequest('/boletos', { disableBackup: true });
+               const arr = Array.isArray(listResp?.data) ? listResp.data : (Array.isArray(listResp) ? listResp : []);
+               console.debug('ℹ️ [DETALHE] Lista completa possui', arr.length, 'registros');
+               detObj = arr.find(d => (
+                 d?.id === identDetalhe || d?.id === numeroCand ||
+                 d?.uuid === identDetalhe || d?.uuid === numeroCand ||
+                 d?.numeroControle === numeroCand || d?.numero_controle === numeroCand
+               )) || null;
+               if (detObj) console.debug('✅ [DETALHE] Detalhe obtido da lista completa');
+             } catch (eList) {
+               console.warn('⚠️ Falha ao consultar lista completa de boletos:', eList);
+             }
+           }
           if (!detObj) console.warn('⚠️ Falha ao carregar detalhes do boleto via queries (id/numeroControle):', eId);
         }
         if (detObj) {
-          const escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? detObj.escrow_uuid ?? boleto.escrow_id;
-          const txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? detObj.txhash ?? boleto.tx_hash;
+          console.debug('ℹ️ [DETALHE] detObj keys:', Object.keys(detObj || {}));
+          let escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? detObj.escrow_uuid ?? boleto.escrow_id;
+          let txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? detObj.txhash ?? boleto.tx_hash;
           const idResolved = detObj.id ?? detObj.uuid ?? boleto.id;
           const numCtrlResolved = detObj.numero_controle ?? detObj.numeroControle ?? boleto.numero_controle ?? boleto.numeroControle;
+
+          // Enriquecer caso escrow/tx ainda estejam ausentes
+          if (!escrowResolved && numCtrlResolved) {
+            try {
+              console.debug('🔎 [DETALHE] Enriquecendo via numero_controle=', numCtrlResolved);
+              const byNumCtrl = await apiRequest(`/boletos?numero_controle=${numCtrlResolved}`, { disableBackup: true });
+              const arrN = Array.isArray(byNumCtrl?.data) ? byNumCtrl.data : (Array.isArray(byNumCtrl) ? byNumCtrl : []);
+              console.debug('ℹ️ [DETALHE] numero_controle lookup retornou', arrN.length, 'registros');
+              const matchN = arrN.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
+              if (matchN) {
+                escrowResolved = matchN.escrow_id ?? matchN.escrowId ?? matchN.escrow ?? matchN.contractEscrowId ?? matchN.escrow_uuid ?? escrowResolved;
+                txResolved = matchN.tx_hash ?? matchN.txHash ?? matchN.hash ?? matchN.txhash ?? txResolved;
+                console.debug('✅ [DETALHE] Enriquecido via numero_controle');
+              }
+            } catch (eNum) {
+              console.warn('⚠️ Falha ao enriquecer por numero_controle:', eNum);
+            }
+          }
+          if (!escrowResolved && boleto?.comprador_id) {
+            try {
+              console.debug('🔎 [DETALHE] Enriquecendo via comprados do usuário', boleto.comprador_id);
+              const compradosResp2 = await apiRequest(`/boletos/comprados/${boleto.comprador_id}`, { disableBackup: true });
+              const arrC2 = Array.isArray(compradosResp2?.data) ? compradosResp2.data : (Array.isArray(compradosResp2) ? compradosResp2 : []);
+              const matchC = arrC2.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
+              if (matchC) {
+                escrowResolved = matchC.escrow_id ?? matchC.escrowId ?? matchC.escrow ?? matchC.contractEscrowId ?? matchC.escrow_uuid ?? escrowResolved;
+                txResolved = matchC.tx_hash ?? matchC.txHash ?? matchC.hash ?? matchC.txhash ?? txResolved;
+                console.debug('✅ [DETALHE] Enriquecido via comprados');
+              }
+            } catch (eCompr2) {
+              console.warn('⚠️ Falha ao enriquecer via comprados:', eCompr2);
+            }
+          }
+          if (!escrowResolved) {
+            try {
+              console.debug('🔎 [DETALHE] Enriquecendo via lista completa');
+              const listResp2 = await apiRequest('/boletos', { disableBackup: true });
+              const arr2 = Array.isArray(listResp2?.data) ? listResp2.data : (Array.isArray(listResp2) ? listResp2 : []);
+              const matchL = arr2.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
+              if (matchL) {
+                escrowResolved = matchL.escrow_id ?? matchL.escrowId ?? matchL.escrow ?? matchL.contractEscrowId ?? matchL.escrow_uuid ?? escrowResolved;
+                txResolved = matchL.tx_hash ?? matchL.txHash ?? matchL.hash ?? matchL.txhash ?? txResolved;
+                console.debug('✅ [DETALHE] Enriquecido via lista completa');
+              }
+            } catch (eList2) {
+              console.warn('⚠️ Falha ao enriquecer via lista completa:', eList2);
+            }
+          }
+
+          console.debug('🔧 [DETALHE] Normalizado', { escrowResolved, txResolved, idResolved, numCtrlResolved });
           boleto = { ...boleto, id: idResolved, numero_controle: numCtrlResolved, escrow_id: escrowResolved, tx_hash: txResolved };
         }
       }
@@ -1089,7 +1159,8 @@ function VendedorPage() {
       }
 
       // Depois, chamar o backend para baixar o boleto
-      const identBaixar = boleto.id || boleto.numeroControle || boleto.numero_controle;
+      // A API de baixar/liberar espera numero_controle no path
+      const identBaixar = boleto.numero_controle || boleto.numeroControle || boleto.id;
       const responseData = await apiRequest(`/boletos/${identBaixar}/baixar`, {
         method: 'PATCH',
         body: {
@@ -1134,16 +1205,33 @@ function VendedorPage() {
       }, 3000);
 
     } catch (error) {
-      console.error('Erro ao baixar boleto:', error);
+      const snapshot = {
+        boletoId,
+        id: boleto?.id,
+        numero_controle: boleto?.numero_controle ?? boleto?.numeroControle,
+        escrow_id: boleto?.escrow_id,
+        tx_hash: boleto?.tx_hash,
+        comprador_wallet: boleto?.wallet_address,
+        comprador_id: boleto?.comprador_id
+      };
+      const identBaixarSnap = snapshot.numero_controle || snapshot.id;
+      console.error('⛔ [BAIXA] Erro ao baixar boleto:', { snapshot, identBaixar: identBaixarSnap }, error);
+      if (error?.stack) console.debug('🧩 [STACK] ', error.stack);
       
       // Limpar estados de loading
       setBoletoBaixandoId(null);
       setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
       
+      const friendly = (msg => {
+        if (!msg) return 'Não foi possível baixar o boleto. Tente novamente.';
+        if (msg.includes('escrow')) return 'Escrow ausente no boleto. Tente recarregar a lista e repetir a operação.';
+        if (msg.includes('comprador')) return 'Carteira do comprador não encontrada. Conecte a carteira correta e tente novamente.';
+        return msg;
+      })(error?.message);
       setAlertInfo({
         type: 'destructive',
         title: 'Erro ao baixar boleto',
-        description: error.message || 'Não foi possível baixar o boleto. Tente novamente.'
+        description: friendly
       });
       setTimeout(() => setAlertInfo(null), 5000);
     }
