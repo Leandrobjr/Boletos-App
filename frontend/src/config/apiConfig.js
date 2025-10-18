@@ -79,9 +79,7 @@ export const apiRequest = async (endpoint, options = {}) => {
 
   const initialHeaders = {
     'Content-Type': 'application/json',
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Wallet-Address',
+    'Accept': 'application/json',
     ...(options.headers || {}),
     ...extraHeaders,
   };
