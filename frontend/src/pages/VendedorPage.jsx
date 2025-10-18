@@ -1005,8 +1005,10 @@ function VendedorPage() {
         let detObj = null;
         // Estratégia: evitar a rota por path (tem retornado 400) e usar apenas queries locais
         try {
+          console.debug('🔎 [DETALHE] Tentando detalhe via query id=', identDetalhe);
           const detalhePorId = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
-          detObj = detalhePorId?.data?.find?.(d => d.id === identDetalhe) || detalhePorId?.data?.[0] || detalhePorId;
+          detObj = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid === identDetalhe)) || detalhePorId?.data?.[0] || detalhePorId;
+          if (detObj) console.debug('✅ [DETALHE] Detalhe encontrado via id');
         } catch (eId) {
           const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || identDetalhe;
           const queryVariants = [
@@ -1016,22 +1018,42 @@ function VendedorPage() {
           ];
           for (const q of queryVariants) {
             try {
+              console.debug('🔎 [DETALHE] Tentando detalhe via query variante:', q);
               const resp = await apiRequest(q, { disableBackup: true });
               const maybe = resp?.data?.find?.(d => (
                 d.id === identDetalhe || d.id === numeroCand ||
+                d.uuid === identDetalhe || d.uuid === numeroCand ||
                 d.numeroControle === numeroCand || d.numero_controle === numeroCand
               )) || resp?.data?.[0] || resp;
-              if (maybe) { detObj = maybe; break; }
+              if (maybe) { detObj = maybe; console.debug('✅ [DETALHE] Detalhe encontrado via variante de query'); break; }
             } catch (eVar) {
               // continua tentando
+            }
+          }
+          // Fallback final: buscar lista completa e filtrar client-side
+          if (!detObj) {
+            try {
+              console.debug('🔎 [DETALHE] Fallback final: consultando lista completa /boletos');
+              const listResp = await apiRequest('/boletos', { disableBackup: true });
+              const arr = Array.isArray(listResp?.data) ? listResp.data : (Array.isArray(listResp) ? listResp : []);
+              detObj = arr.find(d => (
+                d?.id === identDetalhe || d?.id === numeroCand ||
+                d?.uuid === identDetalhe || d?.uuid === numeroCand ||
+                d?.numeroControle === numeroCand || d?.numero_controle === numeroCand
+              )) || null;
+              if (detObj) console.debug('✅ [DETALHE] Detalhe obtido da lista completa');
+            } catch (eList) {
+              console.warn('⚠️ Falha ao consultar lista completa de boletos:', eList);
             }
           }
           if (!detObj) console.warn('⚠️ Falha ao carregar detalhes do boleto via queries (id/numeroControle):', eId);
         }
         if (detObj) {
-          const escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? boleto.escrow_id;
-          const txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? boleto.tx_hash;
-          boleto = { ...boleto, escrow_id: escrowResolved, tx_hash: txResolved };
+          const escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? detObj.escrow_uuid ?? boleto.escrow_id;
+          const txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? detObj.txhash ?? boleto.tx_hash;
+          const idResolved = detObj.id ?? detObj.uuid ?? boleto.id;
+          const numCtrlResolved = detObj.numero_controle ?? detObj.numeroControle ?? boleto.numero_controle ?? boleto.numeroControle;
+          boleto = { ...boleto, id: idResolved, numero_controle: numCtrlResolved, escrow_id: escrowResolved, tx_hash: txResolved };
         }
       }
 
