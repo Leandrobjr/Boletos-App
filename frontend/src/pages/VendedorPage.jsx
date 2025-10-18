@@ -153,7 +153,9 @@ function VendedorPage() {
           comprovante_url: boleto.comprovante_url,
           comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
           comprovante: boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante,
-          comprador_id: boleto.comprador_id
+          comprador_id: boleto.comprador_id,
+          escrow_id: boleto.escrow_id,
+          wallet_address: boleto.wallet_address || boleto.walletAddress
         };
       });
       
@@ -973,12 +975,14 @@ function VendedorPage() {
       return;
     }
 
-    // Verificar se há endereço do comprador
-    if (!boleto.wallet_address && !boleto.comprador_id) {
+    // Verificar se há endereço do comprador (apenas endereço Ethereum válido)
+    const candidatoEndereco = boleto.wallet_address || boleto.walletAddress || '';
+    const enderecoValido = /^0x[a-fA-F0-9]{40}$/.test(String(candidatoEndereco));
+    if (!enderecoValido) {
       setAlertInfo({
         type: 'destructive',
         title: 'Dados incompletos',
-        description: 'Endereço da carteira do comprador não encontrado.'
+        description: 'Endereço da carteira do comprador não encontrado ou inválido.'
       });
       setTimeout(() => setAlertInfo(null), 3000);
       
@@ -995,16 +999,39 @@ function VendedorPage() {
     });
 
     try {
-      
-      // Verificar se há escrow_id no boleto
-      if (!boleto.escrow_id) {
-        throw new Error('ID do escrow não encontrado no boleto. Não é possível liberar os USDT.');
+      // Garantir escrow_id: se ausente, criar automaticamente e persistir
+      let escrowId = boleto.escrow_id;
+      if (!escrowId) {
+        const valorUsdtNum = Number(
+          boleto.valor_usdt ?? (typeof brlToUsdt === 'function' ? brlToUsdt(Number(boleto.valor || 0)) : 0)
+        );
+
+        const escrowCreate = await createEscrow({ valorUSDT: valorUsdtNum });
+        if (!escrowCreate?.success || !escrowCreate?.escrowId) {
+          throw new Error('Falha ao criar escrow automaticamente para este boleto.');
+        }
+        escrowId = escrowCreate.escrowId;
+
+        // Persistir no backend (melhor para rastreabilidade)
+        const identEscrow = boleto.numeroControle || boleto.numero_controle || boleto.id;
+        try {
+          await apiRequest(`/boletos/${identEscrow}/escrow`, {
+            method: 'PATCH',
+            body: {
+              user_id: user.uid,
+              escrow_id: escrowId,
+              tx_hash: escrowCreate.txHash
+            }
+          });
+        } catch (_) {}
+
+        boleto.escrow_id = escrowId;
       }
 
-      // Verificar se há endereço do comprador
-      const compradorAddress = boleto.wallet_address || boleto.comprador_id;
-      if (!compradorAddress) {
-        throw new Error('Endereço da carteira do comprador não encontrado. Não é possível liberar os USDT.');
+      // Verificar e usar endereço de carteira válido do comprador
+      const compradorAddress = candidatoEndereco;
+      if (!/^0x[a-fA-F0-9]{40}$/.test(String(compradorAddress))) {
+        throw new Error('Endereço da carteira do comprador inválido. Não é possível liberar os USDT.');
       }
 
       console.log('🔄 [DEBUG] Registrando comprador no contrato:', compradorAddress);

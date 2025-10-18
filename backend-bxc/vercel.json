@@ -63,6 +63,10 @@
       "destination": "/api/boletos/[id]/baixar?id=$1"
     },
     {
+      "source": "/api/boletos/([^/]+)/escrow",
+      "destination": "/api/boletos/[id]/escrow?id=$1"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }
