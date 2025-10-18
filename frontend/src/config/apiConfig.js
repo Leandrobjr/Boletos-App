@@ -73,9 +73,11 @@ export const apiRequest = async (endpoint, options = {}) => {
   const idToken = (typeof localStorage !== 'undefined' ? localStorage.getItem('idToken') : null) || null;
 
   // Preparar headers e serialização automática de body
+  const method = (options.method || 'GET').toUpperCase();
+  const mutatingMethods = ['POST','PUT','PATCH','DELETE'];
   const extraHeaders = {};
-  if (walletAddress) extraHeaders['X-Wallet-Address'] = walletAddress;
   if (idToken) extraHeaders['Authorization'] = `Bearer ${idToken}`;
+  if (walletAddress && mutatingMethods.includes(method)) extraHeaders['X-Wallet-Address'] = walletAddress;
 
   const initialHeaders = {
     'Content-Type': 'application/json',
@@ -95,7 +97,7 @@ export const apiRequest = async (endpoint, options = {}) => {
     headers,
     mode: 'cors',
     credentials: 'omit',
-    method: options.method || 'GET',
+    method,
     body,
   };
 
