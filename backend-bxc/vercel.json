@@ -31,6 +31,10 @@
       "destination": "/api/migrate/add-comprador-id"
     },
     {
+      "source": "/api/migrate/add-escrow-id",
+      "destination": "/api/migrate/add-escrow-id"
+    },
+    {
       "source": "/api/migrate-execute",
       "destination": "/api/migrate-execute"
     },
