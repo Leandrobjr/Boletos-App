@@ -80,7 +80,6 @@ export const apiRequest = async (endpoint, options = {}) => {
   if (walletAddress && mutatingMethods.includes(method)) extraHeaders['X-Wallet-Address'] = walletAddress;
 
   const initialHeaders = {
-    'Content-Type': 'application/json',
     'Accept': 'application/json',
     ...(options.headers || {}),
     ...extraHeaders,
@@ -108,7 +107,8 @@ export const apiRequest = async (endpoint, options = {}) => {
   const candidates = [primaryUrl];
   const isLocal = primaryUrl.includes('localhost');
   const isRelativeApi = primaryUrl.startsWith('/api');
-  if (!isLocal && isRelativeApi) {
+  const disableBackup = options.disableBackup === true;
+  if (!isLocal && isRelativeApi && !disableBackup) {
     candidates.push(`${API_BACKUP_URL}${endpoint}`);
   }
 

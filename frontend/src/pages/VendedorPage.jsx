@@ -1004,12 +1004,12 @@ function VendedorPage() {
         const identDetalhe = boleto.id || boleto.numeroControle || boleto.numero_controle;
         let detObj = null;
         try {
-          // Primeiro: tentar por path param
-          detObj = await apiRequest(`/boletos/${identDetalhe}`);
+          // Primeiro: tentar por path param (apenas via rewrite local)
+          detObj = await apiRequest(`/boletos/${identDetalhe}`, { disableBackup: true });
         } catch (ePath) {
           try {
-            // Fallback robusto: tentar por query param
-            const detalhe2 = await apiRequest(`/boletos?id=${identDetalhe}`);
+            // Fallback robusto: tentar por query param (apenas via rewrite local)
+            const detalhe2 = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
             detObj = detalhe2?.data?.find?.(d => d.id === identDetalhe) || detalhe2?.data?.[0] || detalhe2;
           } catch (eQuery) {
             console.warn('⚠️ Falha ao carregar detalhes do boleto (path e query falharam):', ePath, eQuery);
