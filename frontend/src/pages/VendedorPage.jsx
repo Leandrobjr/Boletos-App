@@ -999,6 +999,27 @@ function VendedorPage() {
 
     try {
       
+      // Garantir dados completos do boleto (carregar detalhes se necessário)
+      if (!boleto.escrow_id || !boleto.tx_hash) {
+        const identDetalhe = boleto.id || boleto.numeroControle || boleto.numero_controle;
+        try {
+          // Tenta buscar por path param
+          const detalhe1 = await apiRequest(`/boletos/${identDetalhe}`);
+          if (detalhe1 && (detalhe1.escrow_id || detalhe1.tx_hash)) {
+            boleto = { ...boleto, escrow_id: detalhe1.escrow_id || boleto.escrow_id, tx_hash: detalhe1.tx_hash || boleto.tx_hash };
+          } else {
+            // Fallback: tenta por query param
+            const detalhe2 = await apiRequest(`/boletos?id=${identDetalhe}`);
+            const detObj = detalhe2?.data?.find?.(d => d.id === identDetalhe) || detalhe2?.data?.[0] || detalhe2;
+            if (detObj && (detObj.escrow_id || detObj.tx_hash)) {
+              boleto = { ...boleto, escrow_id: detObj.escrow_id || boleto.escrow_id, tx_hash: detObj.tx_hash || boleto.tx_hash };
+            }
+          }
+        } catch (e) {
+          console.warn('⚠️ Falha ao carregar detalhes do boleto, prosseguindo com dados atuais:', e);
+        }
+      }
+
       // Verificar se há escrow_id no boleto
       if (!boleto.escrow_id) {
         throw new Error('ID do escrow não encontrado no boleto. Não é possível liberar os USDT.');
