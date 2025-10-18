@@ -1028,7 +1028,7 @@ function VendedorPage() {
       }
 
       // Depois, chamar o backend para baixar o boleto
-      const identBaixar = boleto.numeroControle || boleto.numero_controle || boleto.id;
+      const identBaixar = boleto.id || boleto.numeroControle || boleto.numero_controle;
       const responseData = await apiRequest(`/boletos/${identBaixar}/baixar`, {
         method: 'PATCH',
         body: {

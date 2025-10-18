@@ -65,13 +65,25 @@ export const buildApiUrl = (endpoint) => {
 export const apiRequest = async (endpoint, options = {}) => {
   const primaryUrl = buildApiUrl(endpoint);
   
+  // Captura de credenciais do cliente (se disponíveis)
+  const walletAddress = (window?.bxcWalletAddress) 
+    || (window?.ethereum?.selectedAddress)
+    || (typeof localStorage !== 'undefined' ? localStorage.getItem('walletAddress') : null)
+    || null;
+  const idToken = (typeof localStorage !== 'undefined' ? localStorage.getItem('idToken') : null) || null;
+
   // Preparar headers e serialização automática de body
+  const extraHeaders = {};
+  if (walletAddress) extraHeaders['X-Wallet-Address'] = walletAddress;
+  if (idToken) extraHeaders['Authorization'] = `Bearer ${idToken}`;
+
   const initialHeaders = {
     'Content-Type': 'application/json',
     'Access-Control-Allow-Origin': '*',
     'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, PATCH, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    ...(options.headers || {})
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Wallet-Address',
+    ...(options.headers || {}),
+    ...extraHeaders,
   };
   
   let body = options.body;
