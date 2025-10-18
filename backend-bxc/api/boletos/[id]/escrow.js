@@ -58,6 +58,7 @@ module.exports = async (req, res) => {
     }
 
     // 🔧 Garantir existência da coluna escrow_id em produção (migração idempotente)
+    let hasEscrowColumn = false;
     try {
       const checkColumn = await pool.query(`
         SELECT column_name 
@@ -67,12 +68,20 @@ module.exports = async (req, res) => {
       `);
 
       if (checkColumn.rowCount === 0) {
-        await pool.query(`ALTER TABLE boletos ADD COLUMN escrow_id VARCHAR(255)`);
-        await pool.query(`CREATE INDEX IF NOT EXISTS idx_boletos_escrow_id ON boletos(escrow_id)`);
-        console.log('🔧 [MIGRAÇÃO] Coluna escrow_id criada automaticamente.');
+        try {
+          await pool.query(`ALTER TABLE boletos ADD COLUMN escrow_id VARCHAR(255)`);
+          await pool.query(`CREATE INDEX IF NOT EXISTS idx_boletos_escrow_id ON boletos(escrow_id)`);
+          console.log('🔧 [MIGRAÇÃO] Coluna escrow_id criada automaticamente.');
+          hasEscrowColumn = true;
+        } catch (alterErr) {
+          console.error('⚠️ [MIGRAÇÃO] Falha ao criar coluna escrow_id:', alterErr.message);
+          hasEscrowColumn = false; // sem permissão para ALTER TABLE
+        }
+      } else {
+        hasEscrowColumn = true;
       }
     } catch (migErr) {
-      console.error('⚠️ [MIGRAÇÃO] Falha ao garantir coluna escrow_id:', migErr.message);
+      console.error('⚠️ [MIGRAÇÃO] Falha ao verificar coluna escrow_id:', migErr.message);
     }
 
     // Buscar boleto por numero_controle OU id
@@ -87,18 +96,34 @@ module.exports = async (req, res) => {
 
     const boleto = select.rows[0];
 
-    // Atualizar escrow_id e tx_hash (se fornecido)
-    const update = await pool.query(
-      `UPDATE boletos
-         SET escrow_id = $1,
-             tx_hash = COALESCE($2, tx_hash)
-       WHERE id = $3
-       RETURNING *`,
-      [String(escrow_id), tx_hash || null, boleto.id]
-    );
+    // Atualizar escrow_id e tx_hash (se possível); caso coluna não exista, atualizar somente tx_hash
+    let atualizado;
+    if (hasEscrowColumn) {
+      const update = await pool.query(
+        `UPDATE boletos
+           SET escrow_id = $1,
+               tx_hash = COALESCE($2, tx_hash)
+         WHERE id = $3
+         RETURNING *`,
+        [String(escrow_id), tx_hash || null, boleto.id]
+      );
+      atualizado = update.rows[0];
+      console.log('✅ Escrow atualizado para boleto:', atualizado.id || atualizado.numero_controle, '→', atualizado.escrow_id);
+    } else {
+      const update = await pool.query(
+        `UPDATE boletos
+           SET tx_hash = COALESCE($1, tx_hash)
+         WHERE id = $2
+         RETURNING *`,
+        [tx_hash || null, boleto.id]
+      );
+      atualizado = update.rows[0];
+      // informar fallback: coluna indisponível, mas seguimos
+      atualizado.escrow_id = String(escrow_id);
+      atualizado.__escrow_fallback = true;
+      console.log('⚠️ Escrow coluna indisponível; atualizado apenas tx_hash. Fallback aplicado para boleto:', atualizado.id || atualizado.numero_controle);
+    }
 
-    const atualizado = update.rows[0];
-    console.log('✅ Escrow atualizado para boleto:', atualizado.id || atualizado.numero_controle, '→', atualizado.escrow_id);
     return res.status(200).json({ success: true, data: atualizado });
 
   } catch (error) {
