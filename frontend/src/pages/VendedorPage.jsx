@@ -1012,11 +1012,34 @@ function VendedorPage() {
             const detalhe2 = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
             detObj = detalhe2?.data?.find?.(d => d.id === identDetalhe) || detalhe2?.data?.[0] || detalhe2;
           } catch (eQuery) {
-            console.warn('⚠️ Falha ao carregar detalhes do boleto (path e query falharam):', ePath, eQuery);
+            // Segunda tentativa: usar numeroControle como possível id
+            const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || null;
+            const queryVariants = [];
+            if (numeroCand) {
+              queryVariants.push(`/boletos?id=${numeroCand}`);
+              queryVariants.push(`/boletos?numeroControle=${numeroCand}`);
+              queryVariants.push(`/boletos?numero_controle=${numeroCand}`);
+            }
+            // Tentar variantes de query
+            for (const q of queryVariants) {
+              try {
+                const resp = await apiRequest(q, { disableBackup: true });
+                const maybe = resp?.data?.find?.(d => (
+                  d.id === identDetalhe || d.id === numeroCand ||
+                  d.numeroControle === numeroCand || d.numero_controle === numeroCand
+                )) || resp?.data?.[0] || resp;
+                if (maybe) { detObj = maybe; break; }
+              } catch (eVar) {
+                // continua tentando
+              }
+            }
+            if (!detObj) console.warn('⚠️ Falha ao carregar detalhes do boleto (path e múltiplas queries falharam):', ePath, eQuery);
           }
         }
-        if (detObj && (detObj.escrow_id || detObj.tx_hash)) {
-          boleto = { ...boleto, escrow_id: detObj.escrow_id || boleto.escrow_id, tx_hash: detObj.tx_hash || boleto.tx_hash };
+        if (detObj) {
+          const escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? boleto.escrow_id;
+          const txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? boleto.tx_hash;
+          boleto = { ...boleto, escrow_id: escrowResolved, tx_hash: txResolved };
         }
       }
 
