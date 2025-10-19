@@ -1010,6 +1010,7 @@ function VendedorPage() {
           const detalhePorId = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
           const found = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid === identDetalhe)) || null;
           if (Array.isArray(detalhePorId?.data)) console.debug('ℹ️ [DETALHE] Resposta id possui', detalhePorId.data.length, 'registros');
+          if (Array.isArray(detalhePorId?.data)) console.debug('🔎 [DETALHE] IDs/UUIDs (amostra id):', detalhePorId.data.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
           if (found) { detObj = found; console.debug('✅ [DETALHE] Detalhe encontrado via id'); }
         } catch (err) {
           eId = err;
@@ -1031,6 +1032,7 @@ function VendedorPage() {
                 d.numeroControle === numeroCand || d.numero_controle === numeroCand
               )) || null;
               if (Array.isArray(resp?.data)) console.debug('ℹ️ [DETALHE] Resposta variante possui', resp.data.length, 'registros');
+              if (Array.isArray(resp?.data)) console.debug('🔎 [DETALHE] IDs/UUIDs (amostra variante):', resp.data.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
               if (maybe) { detObj = maybe; console.debug('✅ [DETALHE] Detalhe encontrado via variante de query'); break; }
             } catch (eVar) {
               // continua tentando
@@ -1044,6 +1046,7 @@ function VendedorPage() {
             const compradosResp = await apiRequest(`/boletos/comprados/${boleto.comprador_id}`, { disableBackup: true });
             const arrC = Array.isArray(compradosResp?.data) ? compradosResp.data : (Array.isArray(compradosResp) ? compradosResp : []);
             console.debug('ℹ️ [DETALHE] Comprados possui', arrC.length, 'registros');
+            console.debug('🔎 [DETALHE] IDs/UUIDs (amostra comprados):', arrC.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
             detObj = arrC.find(d => (
               d?.id === identDetalhe || d?.uuid === identDetalhe ||
               d?.numero_controle === numeroCand || d?.numeroControle === numeroCand
@@ -1060,6 +1063,7 @@ function VendedorPage() {
             const listResp = await apiRequest('/boletos', { disableBackup: true });
             const arr = Array.isArray(listResp?.data) ? listResp.data : (Array.isArray(listResp) ? listResp : []);
             console.debug('ℹ️ [DETALHE] Lista completa possui', arr.length, 'registros');
+            console.debug('🔎 [DETALHE] IDs/UUIDs (amostra lista):', arr.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
             detObj = arr.find(d => (
               d?.id === identDetalhe || d?.id === numeroCand ||
               d?.uuid === identDetalhe || d?.uuid === numeroCand ||
