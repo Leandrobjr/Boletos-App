@@ -1077,7 +1077,7 @@ function VendedorPage() {
         if (!detObj) console.warn('⚠️ [DETALHE] Não foi possível localizar detalhe após id/variantes/comprados/lista completa', { identDetalhe, numeroCand, eId });
         if (detObj) {
           console.debug('ℹ️ [DETALHE] detObj keys:', Object.keys(detObj || {}));
-          let escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? detObj.escrow_uuid ?? boleto.escrow_id;
+          const pickNonEmpty = (...vals) => {\n  for (const v of vals) {\n    if (v !== undefined && v !== null) {\n      const s = typeof v === 'string' ? v.trim() : String(v);\n      if (s.length > 0) return s;\n    }\n  }\n  return null;\n};\n\nlet escrowResolved = pickNonEmpty(\n  detObj?.escrow_id,\n  detObj?.escrowId,\n  detObj?.escrow,\n  detObj?.contractEscrowId,\n  detObj?.escrow_uuid,\n  boleto?.escrow_id\n);
           let txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? detObj.txhash ?? boleto.tx_hash;
           const idResolved = detObj.id ?? detObj.uuid ?? boleto.id;
           const numCtrlResolved = detObj.numero_controle ?? detObj.numeroControle ?? boleto.numero_controle ?? boleto.numeroControle;
@@ -1091,7 +1091,7 @@ function VendedorPage() {
               console.debug('ℹ️ [DETALHE] numero_controle lookup retornou', arrN.length, 'registros');
               const matchN = arrN.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
               if (matchN) {
-                escrowResolved = matchN.escrow_id ?? matchN.escrowId ?? matchN.escrow ?? matchN.contractEscrowId ?? matchN.escrow_uuid ?? escrowResolved;
+                escrowResolved = pickNonEmpty(matchN?.escrow_id, matchN?.escrowId, matchN?.escrow, matchN?.contractEscrowId, matchN?.escrow_uuid, escrowResolved);
                 txResolved = matchN.tx_hash ?? matchN.txHash ?? matchN.hash ?? matchN.txhash ?? txResolved;
                 console.debug('✅ [DETALHE] Enriquecido via numero_controle');
               }
@@ -1106,7 +1106,7 @@ function VendedorPage() {
               const arrC2 = Array.isArray(compradosResp2?.data) ? compradosResp2.data : (Array.isArray(compradosResp2) ? compradosResp2 : []);
               const matchC = arrC2.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
               if (matchC) {
-                escrowResolved = matchC.escrow_id ?? matchC.escrowId ?? matchC.escrow ?? matchC.contractEscrowId ?? matchC.escrow_uuid ?? escrowResolved;
+                escrowResolved = pickNonEmpty(matchC?.escrow_id, matchC?.escrowId, matchC?.escrow, matchC?.contractEscrowId, matchC?.escrow_uuid, escrowResolved);
                 txResolved = matchC.tx_hash ?? matchC.txHash ?? matchC.hash ?? matchC.txhash ?? txResolved;
                 console.debug('✅ [DETALHE] Enriquecido via comprados');
               }
@@ -1121,7 +1121,7 @@ function VendedorPage() {
               const arr2 = Array.isArray(listResp2?.data) ? listResp2.data : (Array.isArray(listResp2) ? listResp2 : []);
               const matchL = arr2.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
               if (matchL) {
-                escrowResolved = matchL.escrow_id ?? matchL.escrowId ?? matchL.escrow ?? matchL.contractEscrowId ?? matchL.escrow_uuid ?? escrowResolved;
+                escrowResolved = pickNonEmpty(matchL?.escrow_id, matchL?.escrowId, matchL?.escrow, matchL?.contractEscrowId, matchL?.escrow_uuid, escrowResolved);
                 txResolved = matchL.tx_hash ?? matchL.txHash ?? matchL.hash ?? matchL.txhash ?? txResolved;
                 console.debug('✅ [DETALHE] Enriquecido via lista completa');
               }
@@ -1948,3 +1948,4 @@ function mapStatus(status) {
 
 
 export default VendedorPage;
+
