@@ -1077,7 +1077,17 @@ function VendedorPage() {
         if (!detObj) console.warn('⚠️ [DETALHE] Não foi possível localizar detalhe após id/variantes/comprados/lista completa', { identDetalhe, numeroCand, eId });
         if (detObj) {
           console.debug('ℹ️ [DETALHE] detObj keys:', Object.keys(detObj || {}));
-          const pickNonEmpty = (...vals) => {\n  for (const v of vals) {\n    if (v !== undefined && v !== null) {\n      const s = typeof v === 'string' ? v.trim() : String(v);\n      if (s.length > 0) return s;\n    }\n  }\n  return null;\n};\n\nconst collectEscrowCandidatesDeep = (o) => {
+          const pickNonEmpty = (...vals) => {
+            for (const v of vals) {
+              if (v !== undefined && v !== null) {
+                const s = typeof v === 'string' ? v.trim() : String(v);
+                if (s.length > 0) return s;
+              }
+            }
+            return null;
+          };
+
+          const collectEscrowCandidatesDeep = (o) => {
   try {
     const results = [];
     const pick = (...vals) => vals.map(v => typeof v === 'string' ? v.trim() : v).filter(v => v !== undefined && v !== null).map(v => String(v)).filter(s => s.length > 0);
@@ -1110,21 +1120,67 @@ const resolveEscrowId = (obj, fallback = null) => {
   const fromRoot = pickNonEmpty(
     obj?.escrow_id,
     obj?.escrowId,
-    obj?.escrow,
+    obj?.escrow?.id,
+    obj?.escrow?.uuid,
+    obj?.escrow?.escrow_id,
+    obj?.escrow?.escrowId,
+    obj?.contract?.escrow_id,
+    obj?.contract?.escrowId,
     obj?.contractEscrowId,
     obj?.escrow_uuid
   );
   if (fromRoot) return fromRoot;
+
   const inTrans = Array.isArray(obj?.transacoes)
-    ? obj.transacoes.map(t => pickNonEmpty(t?.escrow_id, t?.escrowId)).filter(Boolean)
+    ? obj.transacoes
+        .map(t => pickNonEmpty(
+          t?.escrow_id,
+          t?.escrowId,
+          t?.escrow?.id,
+          t?.escrow?.uuid,
+          t?.escrow?.escrow_id,
+          t?.escrow?.escrowId,
+          t?.contract?.escrow_id,
+          t?.contract?.escrowId
+        ))
+        .filter(Boolean)
     : [];
+
   const inDisp = Array.isArray(obj?.disputas)
-    ? obj.disputas.map(d => pickNonEmpty(d?.escrow_id, d?.escrowId)).filter(Boolean)
+    ? obj.disputas
+        .map(d => pickNonEmpty(
+          d?.escrow_id,
+          d?.escrowId,
+          d?.escrow?.id,
+          d?.escrow?.uuid,
+          d?.escrow?.escrow_id,
+          d?.escrow?.escrowId,
+          d?.contract?.escrow_id,
+          d?.contract?.escrowId
+        ))
+        .filter(Boolean)
     : [];
+
   const inTxs = Array.isArray(obj?.transactions)
-    ? obj.transactions.map(t => pickNonEmpty(t?.escrow_id, t?.escrowId)).filter(Boolean)
+    ? obj.transactions
+        .map(t => pickNonEmpty(
+          t?.escrow_id,
+          t?.escrowId,
+          t?.escrow?.id,
+          t?.escrow?.uuid,
+          t?.escrow?.escrow_id,
+          t?.escrow?.escrowId,
+          t?.contract?.escrow_id,
+          t?.contract?.escrowId
+        ))
+        .filter(Boolean)
     : [];
-  const chain = [...inTrans, ...inDisp, ...inTxs];
+
+  const deep = (typeof collectEscrowCandidatesDeep === 'function')
+    ? (collectEscrowCandidatesDeep(obj) || [])
+    : [];
+
+  const chain = [...deep, ...inTrans, ...inDisp, ...inTxs];
   return pickNonEmpty(chain[0], fallback);
 };
 
