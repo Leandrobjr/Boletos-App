@@ -1004,14 +1004,18 @@ function VendedorPage() {
         const identDetalhe = boleto.id || boleto.numeroControle || boleto.numero_controle;
         let detObj = null;
         // Estratégia: evitar a rota por path (tem retornado 400) e usar apenas queries locais
+        console.debug('🔎 [DETALHE] Tentando detalhe via query id=', identDetalhe);
+        let eId = null;
         try {
-          console.debug('🔎 [DETALHE] Tentando detalhe via query id=', identDetalhe);
           const detalhePorId = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
           const found = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid === identDetalhe)) || null;
           if (Array.isArray(detalhePorId?.data)) console.debug('ℹ️ [DETALHE] Resposta id possui', detalhePorId.data.length, 'registros');
           if (found) { detObj = found; console.debug('✅ [DETALHE] Detalhe encontrado via id'); }
-        } catch (eId) {
-          const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || identDetalhe;
+        } catch (err) {
+          eId = err;
+        }
+        const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || identDetalhe;
+        if (!detObj) {
           const queryVariants = [
             `/boletos?id=${numeroCand}`,
             `/boletos?numeroControle=${numeroCand}`,
@@ -1032,41 +1036,41 @@ function VendedorPage() {
               // continua tentando
             }
           }
-          // Fallback por comprador: consultar boletos comprados do usuário e filtrar
-           if (!detObj && boleto?.comprador_id) {
-             try {
-               console.debug('🔎 [DETALHE] Fallback comprador: /boletos/comprados/', boleto.comprador_id);
-               const compradosResp = await apiRequest(`/boletos/comprados/${boleto.comprador_id}`, { disableBackup: true });
-               const arrC = Array.isArray(compradosResp?.data) ? compradosResp.data : (Array.isArray(compradosResp) ? compradosResp : []);
-               console.debug('ℹ️ [DETALHE] Comprados possui', arrC.length, 'registros');
-               detObj = arrC.find(d => (
-                 d?.id === identDetalhe || d?.uuid === identDetalhe ||
-                 d?.numero_controle === numeroCand || d?.numeroControle === numeroCand
-               )) || null;
-               if (detObj) console.debug('✅ [DETALHE] Detalhe obtido em comprados');
-             } catch (eCompr) {
-               console.warn('⚠️ Falha ao consultar comprados do usuário:', boleto.comprador_id, eCompr);
-             }
-           }
-           // Fallback final: buscar lista completa e filtrar client-side
-           if (!detObj) {
-             try {
-               console.debug('🔎 [DETALHE] Fallback final: consultando lista completa /boletos');
-               const listResp = await apiRequest('/boletos', { disableBackup: true });
-               const arr = Array.isArray(listResp?.data) ? listResp.data : (Array.isArray(listResp) ? listResp : []);
-               console.debug('ℹ️ [DETALHE] Lista completa possui', arr.length, 'registros');
-               detObj = arr.find(d => (
-                 d?.id === identDetalhe || d?.id === numeroCand ||
-                 d?.uuid === identDetalhe || d?.uuid === numeroCand ||
-                 d?.numeroControle === numeroCand || d?.numero_controle === numeroCand
-               )) || null;
-               if (detObj) console.debug('✅ [DETALHE] Detalhe obtido da lista completa');
-             } catch (eList) {
-               console.warn('⚠️ Falha ao consultar lista completa de boletos:', eList);
-             }
-           }
-          if (!detObj) console.warn('⚠️ Falha ao carregar detalhes do boleto via queries (id/numeroControle):', eId);
         }
+        // Fallback por comprador: consultar boletos comprados do usuário e filtrar
+        if (!detObj && boleto?.comprador_id) {
+          try {
+            console.debug('🔎 [DETALHE] Fallback comprador: /boletos/comprados/', boleto.comprador_id);
+            const compradosResp = await apiRequest(`/boletos/comprados/${boleto.comprador_id}`, { disableBackup: true });
+            const arrC = Array.isArray(compradosResp?.data) ? compradosResp.data : (Array.isArray(compradosResp) ? compradosResp : []);
+            console.debug('ℹ️ [DETALHE] Comprados possui', arrC.length, 'registros');
+            detObj = arrC.find(d => (
+              d?.id === identDetalhe || d?.uuid === identDetalhe ||
+              d?.numero_controle === numeroCand || d?.numeroControle === numeroCand
+            )) || null;
+            if (detObj) console.debug('✅ [DETALHE] Detalhe obtido em comprados');
+          } catch (eCompr) {
+            console.warn('⚠️ Falha ao consultar comprados do usuário:', boleto.comprador_id, eCompr);
+          }
+        }
+        // Fallback final: buscar lista completa e filtrar client-side
+        if (!detObj) {
+          try {
+            console.debug('🔎 [DETALHE] Fallback final: consultando lista completa /boletos');
+            const listResp = await apiRequest('/boletos', { disableBackup: true });
+            const arr = Array.isArray(listResp?.data) ? listResp.data : (Array.isArray(listResp) ? listResp : []);
+            console.debug('ℹ️ [DETALHE] Lista completa possui', arr.length, 'registros');
+            detObj = arr.find(d => (
+              d?.id === identDetalhe || d?.id === numeroCand ||
+              d?.uuid === identDetalhe || d?.uuid === numeroCand ||
+              d?.numeroControle === numeroCand || d?.numero_controle === numeroCand
+            )) || null;
+            if (detObj) console.debug('✅ [DETALHE] Detalhe obtido da lista completa');
+          } catch (eList) {
+            console.warn('⚠️ Falha ao consultar lista completa de boletos:', eList);
+          }
+        }
+        if (!detObj) console.warn('⚠️ [DETALHE] Não foi possível localizar detalhe após id/variantes/comprados/lista completa', { identDetalhe, numeroCand, eId });
         if (detObj) {
           console.debug('ℹ️ [DETALHE] detObj keys:', Object.keys(detObj || {}));
           let escrowResolved = detObj.escrow_id ?? detObj.escrowId ?? detObj.escrow ?? detObj.contractEscrowId ?? detObj.escrow_uuid ?? boleto.escrow_id;
