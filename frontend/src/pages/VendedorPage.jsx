@@ -1077,7 +1077,36 @@ function VendedorPage() {
         if (!detObj) console.warn('⚠️ [DETALHE] Não foi possível localizar detalhe após id/variantes/comprados/lista completa', { identDetalhe, numeroCand, eId });
         if (detObj) {
           console.debug('ℹ️ [DETALHE] detObj keys:', Object.keys(detObj || {}));
-          const pickNonEmpty = (...vals) => {\n  for (const v of vals) {\n    if (v !== undefined && v !== null) {\n      const s = typeof v === 'string' ? v.trim() : String(v);\n      if (s.length > 0) return s;\n    }\n  }\n  return null;\n};\n\nconst resolveEscrowId = (obj, fallback = null) => {
+          const pickNonEmpty = (...vals) => {\n  for (const v of vals) {\n    if (v !== undefined && v !== null) {\n      const s = typeof v === 'string' ? v.trim() : String(v);\n      if (s.length > 0) return s;\n    }\n  }\n  return null;\n};\n\nconst collectEscrowCandidatesDeep = (o) => {
+  try {
+    const results = [];
+    const pick = (...vals) => vals.map(v => typeof v === 'string' ? v.trim() : v).filter(v => v !== undefined && v !== null).map(v => String(v)).filter(s => s.length > 0);
+    const walk = (x) => {
+      if (!x || typeof x !== 'object') return;
+      results.push(...pick(x.escrow_id, x.escrowId, x.contractEscrowId, x.contract_escrow_id, x.escrow_uuid));
+      if (x.escrow && typeof x.escrow === 'object') {
+        results.push(...pick(x.escrow.id, x.escrow.uuid, x.escrow.escrow_id, x.escrow.escrowId));
+      }
+      if (x.contract && typeof x.contract === 'object') {
+        results.push(...pick(x.contract.escrow_id, x.contract.escrowId));
+      }
+      Object.keys(x).forEach(k => {
+        const v = x[k];
+        const escrowish = /escrow/i.test(k) || /contractEscrow/i.test(k);
+        if (escrowish) {
+          if (typeof v === 'string') results.push(...pick(v));
+          if (typeof v === 'object') results.push(...pick(v?.id, v?.uuid, v?.escrow_id, v?.escrowId));
+        }
+        if (Array.isArray(v)) v.forEach(walk);
+        else if (typeof v === 'object') walk(v);
+      });
+    };
+    walk(o);
+    return results;
+  } catch { return []; }
+};
+
+const resolveEscrowId = (obj, fallback = null) => {
   const fromRoot = pickNonEmpty(
     obj?.escrow_id,
     obj?.escrowId,
@@ -1099,7 +1128,11 @@ function VendedorPage() {
   return pickNonEmpty(chain[0], fallback);
 };
 
-let escrowResolved = resolveEscrowId(detObj, boleto?.escrow_id);
+let 
+escrowResolved = resolveEscrowId(detObj,
+boleto?.escrow_id);
+console.debug('[DETALHE] escrow-like keys (detObj):', (function keysWithEscrow(o){try{const acc=[]; const walk=(x,p='')=>{ if(!x||typeof x!=='object') return; Object.keys(x).forEach(k=>{ const v=x[k]; const path=p?`${p}.${k}`:k; if(/escrow/i.test(k)||/contractEscrow/i.test(k)) acc.push(path); if(typeof v==='object') walk(v,path);});}; walk(o); return acc.slice(0,50);}catch{return[]}})(detObj));
+console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesDeep(detObj) || []).slice(0,10));
           let txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? detObj.txhash ?? boleto.tx_hash;
           const idResolved = detObj.id ?? detObj.uuid ?? boleto.id;
           const numCtrlResolved = detObj.numero_controle ?? detObj.numeroControle ?? boleto.numero_controle ?? boleto.numeroControle;
@@ -1970,6 +2003,3 @@ function mapStatus(status) {
 
 
 export default VendedorPage;
-
-
-
