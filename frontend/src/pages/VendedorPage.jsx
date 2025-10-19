@@ -1241,6 +1241,36 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
             }
           }
 
+          // Último fallback: tentar rotas de detalhe e resolvedor de escrow
+          if (!escrowResolved) {
+            const resolverCandidates = [
+              `/boletos/${idResolved}`,
+              `/boletos/${numCtrlResolved}`,
+              `/boletos/detalhe/${idResolved}`,
+              `/boletos/detalhe/${numCtrlResolved}`,
+              `/escrows/resolve?numero_controle=${numCtrlResolved}`,
+              `/escrows/resolve?id=${idResolved}`,
+              `/escrow/resolve?numero_controle=${numCtrlResolved}`,
+              `/escrow/by_tx?tx_hash=${txResolved}`,
+            ];
+            for (const rc of resolverCandidates) {
+              try {
+                console.debug('🔎 [DETALHE] Tentando resolvedor:', rc);
+                const r = await apiRequest(rc, { disableBackup: true });
+                const data = r?.data ?? r;
+                const pickObj = Array.isArray(data) ? data.find(d => d?.id === idResolved || d?.numero_controle === numCtrlResolved || d?.uuid === idResolved) : data;
+                const cand = pickObj || data;
+                if (cand && typeof cand === 'object') {
+                  const esc = resolveEscrowId(cand, escrowResolved);
+                  const txc = cand?.tx_hash ?? cand?.txHash ?? cand?.hash ?? cand?.txhash ?? txResolved;
+                  if (esc) { escrowResolved = esc; txResolved = txc; console.debug('✅ [DETALHE] Resolvedor obteve escrow'); break; }
+                }
+              } catch (eRes) {
+                // ignora e segue
+              }
+            }
+          }
+
           console.debug('🔧 [DETALHE] Normalizado', { escrowResolved, txResolved, idResolved, numCtrlResolved });
           boleto = { ...boleto, id: idResolved, numero_controle: numCtrlResolved, escrow_id: escrowResolved, tx_hash: txResolved };
         }
