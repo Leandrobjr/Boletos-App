@@ -1,0 +1,8 @@
+﻿Boleto: 1760744831361
+PATCH success: True
+PATCH escrow_id: 0x2c3f1a87b19c48d4a3c2b5e6f7a8b9c0d1e2f3a4
+PATCH tx_hash: 0x9e1c2b3a4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8
+GET file escrow_id: 0x2c3f1a87b19c48d4a3c2b5e6f7a8b9c0d1e2f3a4
+GET file tx_hash: 0x9e1c2b3a4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8
+GET live escrow_id: 0x2c3f1a87b19c48d4a3c2b5e6f7a8b9c0d1e2f3a4
+GET live tx_hash: 0x9e1c2b3a4d5e6f708192a3b4c5d6e7f8091a2b3c4d5e6f708192a3b4c5d6e7f8
