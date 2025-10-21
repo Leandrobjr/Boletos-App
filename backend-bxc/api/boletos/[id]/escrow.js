@@ -56,9 +56,7 @@ module.exports = async (req, res) => {
     if (!escrow_id || String(escrow_id).trim() === '') {
       return res.status(400).json({ error: 'escrow_id é obrigatório no corpo da requisição' });
     }
-
-<<<<<<< HEAD
-=======
+HEAD
     // 🔧 Garantir existência da coluna escrow_id em produção (migração idempotente)
     try {
       const checkColumn = await pool.query(`
@@ -76,8 +74,7 @@ module.exports = async (req, res) => {
     } catch (migErr) {
       console.error('⚠️ [MIGRAÇÃO] Falha ao garantir coluna escrow_id:', migErr.message);
     }
-
->>>>>>> master
+ master
     // Buscar boleto por numero_controle OU id
     const select = await pool.query(
       `SELECT * FROM boletos WHERE numero_controle = $1 OR id::text = $1 LIMIT 1`,
@@ -90,11 +87,10 @@ module.exports = async (req, res) => {
 
     const boleto = select.rows[0];
 
-<<<<<<< HEAD
+ HEAD
     // Atualizar escrow_id e tx_hash
-=======
     // Atualizar escrow_id e tx_hash (se fornecido)
->>>>>>> master
+ master
     const update = await pool.query(
       `UPDATE boletos
          SET escrow_id = $1,
@@ -106,10 +102,8 @@ module.exports = async (req, res) => {
 
     const atualizado = update.rows[0];
     console.log('✅ Escrow atualizado para boleto:', atualizado.id || atualizado.numero_controle, '→', atualizado.escrow_id);
-<<<<<<< HEAD
-
-=======
->>>>>>> master
+ HEAD
+ master
     return res.status(200).json({ success: true, data: atualizado });
 
   } catch (error) {
