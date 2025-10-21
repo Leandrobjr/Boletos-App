@@ -92,17 +92,17 @@ function VendedorPage() {
   }, [ownerAddress, address]);
 
   const handleWithdrawFees = async () => {
-    try {
-      setAlertInfo({ type: 'info', title: 'Coletando taxas', message: 'Executando saque de taxas acumuladas...' });
-      const res = await withdrawProtocolEarnings();
-      if (!res?.success) throw new Error(res?.error || 'Falha ao sacar taxas');
-      setAlertInfo({ type: 'success', title: 'Taxas coletadas', message: `TX: ${res.txHash.substring(0,10)}...` });
-    } catch (e) {
-      setAlertInfo({ type: 'destructive', title: 'Erro ao coletar taxas', message: e.message });
-    } finally {
-      setTimeout(() => setAlertInfo(null), 6000);
-    }
-  };
+  try {
+    setAlertInfo({ type: 'info', title: 'Coletando taxas', message: 'Executando saque de taxas acumuladas...' });
+    const res = await withdrawProtocolEarnings();
+    if (!res?.success) throw new Error(res?.error || 'Falha ao sacar taxas');
+    setAlertInfo({ type: 'success', title: 'Taxas coletadas', message: `TX: ${res.txHash.substring(0,10)}...` });
+  } catch (e) {
+    setAlertInfo({ type: 'destructive', title: 'Erro ao coletar taxas', message: e.message });
+  } finally {
+    setTimeout(() => setAlertInfo(null), 6000);
+  }
+};
 
   // Função para abrir o modal de conexão da carteira
   const handleWalletConnection = () => {
