@@ -1377,7 +1377,7 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
         });
       }, 3000);
 
-    } catch (error) {
+     catch (error) {
       const snapshot = {
         boletoId,
         id: boleto?.id,
