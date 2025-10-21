@@ -1005,7 +1005,7 @@ HEAD
         let eId = null;
         try {
           const detalhePorId = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
-          const found = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid  identDetalhe)) || null;
+          const found = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid === identDetalhe)) || null;
           if (Array.isArray(detalhePorId?.data)) console.debug('ℹ️ [DETALHE] Resposta id possui', detalhePorId.data.length, 'registros');
           if (Array.isArray(detalhePorId?.data)) console.debug('🔎 [DETALHE] IDs/UUIDs (amostra id):', detalhePorId.data.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
           if (found) { detObj = found; console.debug('✅ [DETALHE] Detalhe encontrado via id'); }
