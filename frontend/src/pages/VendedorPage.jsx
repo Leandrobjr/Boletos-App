@@ -502,16 +502,12 @@ function VendedorPage() {
   };
 
   const handlePay = (boleto) => {
-    const boletosAtualizados = boletos.map((b) =>
-      b.id === boleto.id ? { ...b, status: 'BAIXADO' } : b
-    );
-    setBoletos(boletosAtualizados);
-    setAlertInfo({
-      type: 'success',
-      title: 'Pagamento realizado',
-      message: `O boleto ${boleto.numeroBoleto} foi pago com sucesso.`
-    });
-  };
+  setAlertInfo({
+    type: 'success',
+    title: 'Pagamento realizado',
+    message: `O boleto ${boleto.numeroBoleto} foi pago com sucesso.`
+  });
+};
 
   const formatarMoeda = (valor) => {
     let limpo = String(valor).replace(/\D/g, "");
