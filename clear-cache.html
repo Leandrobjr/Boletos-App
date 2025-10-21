@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Limpeza de Cache - BoletoXCrypto</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 30px;
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .step {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 10px;
+            border-left: 4px solid #00ff88;
+        }
+        .button {
+            background: #00ff88;
+            color: #333;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: bold;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+        .button:hover {
+            background: #00cc6a;
+            transform: translateY(-2px);
+        }
+        .status {
+            margin: 20px 0;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .success { background: rgba(0, 255, 136, 0.2); }
+        .error { background: rgba(255, 0, 0, 0.2); }
+        .info { background: rgba(0, 136, 255, 0.2); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧹 Limpeza de Cache - BoletoXCrypto</h1>
+        
+        <div class="step">
+            <h3>1. Limpeza Automática do Navegador</h3>
+            <p>Clique no botão abaixo para limpar automaticamente o cache do navegador:</p>
+            <button class="button" onclick="clearBrowserCache()">🗑️ Limpar Cache do Navegador</button>
+        </div>
+
+        <div class="step">
+            <h3>2. Limpeza Manual (Recomendado)</h3>
+            <p>Para uma limpeza mais completa, siga estes passos:</p>
+            <ul>
+                <li><strong>Chrome/Edge:</strong> Ctrl+Shift+Delete → Selecionar "Todo o período" → Marcar todas as opções → Limpar dados</li>
+                <li><strong>Firefox:</strong> Ctrl+Shift+Delete → Selecionar "Tudo" → Marcar todas as opções → Limpar agora</li>
+                <li><strong>Safari:</strong> Cmd+Option+E → Desenvolver → Esvaziar caches</li>
+            </ul>
+        </div>
+
+        <div class="step">
+            <h3>3. Forçar Recarregamento</h3>
+            <p>Após limpar o cache, force o recarregamento da aplicação:</p>
+            <button class="button" onclick="forceReload()">🔄 Recarregar Aplicação</button>
+            <button class="button" onclick="hardReload()">⚡ Recarregamento Forçado</button>
+        </div>
+
+        <div class="step">
+            <h3>4. Verificar Status dos Endpoints</h3>
+            <p>Teste se os endpoints problemáticos foram corrigidos:</p>
+            <button class="button" onclick="testEndpoints()">🔍 Testar Endpoints</button>
+        </div>
+
+        <div id="status" class="status info" style="display: none;">
+            <p id="statusMessage">Aguardando ação...</p>
+        </div>
+    </div>
+
+    <script>
+        function showStatus(message, type = 'info') {
+            const status = document.getElementById('status');
+            const statusMessage = document.getElementById('statusMessage');
+            
+            statusMessage.textContent = message;
+            status.className = `status ${type}`;
+            status.style.display = 'block';
+            
+            setTimeout(() => {
+                status.style.display = 'none';
+            }, 5000);
+        }
+
+        function clearBrowserCache() {
+            showStatus('🧹 Limpando cache do navegador...', 'info');
+            
+            // Limpar localStorage
+            localStorage.clear();
+            
+            // Limpar sessionStorage
+            sessionStorage.clear();
+            
+            // Limpar cookies (limitado por segurança)
+            document.cookie.split(";").forEach(function(c) { 
+                document.cookie = c.replace(/^ +/, "").replace(/=.*/, "=;expires=" + new Date().toUTCString() + ";path=/"); 
+            });
+            
+            // Tentar limpar cache do service worker
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                    for(let registration of registrations) {
+                        registration.unregister();
+                    }
+                });
+            }
+            
+            showStatus('✅ Cache do navegador limpo! Recarregue a página.', 'success');
+        }
+
+        function forceReload() {
+            showStatus('🔄 Recarregando aplicação...', 'info');
+            setTimeout(() => {
+                window.location.href = window.location.origin;
+            }, 1000);
+        }
+
+        function hardReload() {
+            showStatus('⚡ Fazendo recarregamento forçado...', 'info');
+            setTimeout(() => {
+                window.location.reload(true);
+            }, 1000);
+        }
+
+        async function testEndpoints() {
+            showStatus('🔍 Testando endpoints...', 'info');
+            
+            const endpoints = [
+                '/api/boletos/detalhe',
+                '/api/escrows/resolve',
+                '/api/escrow/resolve'
+            ];
+            
+            let results = [];
+            
+            for (const endpoint of endpoints) {
+                try {
+                    const response = await fetch(endpoint);
+                    const status = response.ok ? '✅' : '❌';
+                    results.push(`${status} ${endpoint} (${response.status})`);
+                } catch (error) {
+                    results.push(`❌ ${endpoint} (Erro: ${error.message})`);
+                }
+            }
+            
+            const message = 'Resultados dos testes:\\n' + results.join('\\n');
+            showStatus(message, results.every(r => r.includes('✅')) ? 'success' : 'error');
+        }
+
+        // Auto-executar limpeza básica ao carregar a página
+        window.addEventListener('load', function() {
+            showStatus('🚀 Página de limpeza carregada. Clique nos botões para limpar o cache.', 'info');
+        });
+    </script>
+</body>
+</html>
