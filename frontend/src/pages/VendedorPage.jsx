@@ -1366,48 +1366,48 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
         return newState;
       });
       
-      // Limpar estados após 3 segundos
-      setTimeout(() => {
-        console.log('🧹 Limpando estados após 3 segundos para:', boletoId);
-        setBoletoBaixandoId(null);
-        setStatusBaixa(prev => {
-          const newState = { ...prev, [boletoId]: null };
-          console.log('🔄 Estados limpos:', newState);
-          return newState;
-        });
-
-      }  catch (error) {
-      const snapshot = {
-        boletoId,
-        id: boleto?.id,
-        numero_controle: boleto?.numero_controle ?? boleto?.numeroControle,
-        escrow_id: boleto?.escrow_id,
-        tx_hash: boleto?.tx_hash,
-        comprador_wallet: boleto?.wallet_address,
-        comprador_id: boleto?.comprador_id
-      };
-      const identBaixarSnap = snapshot.numero_controle || snapshot.id;
-      console.error('⛔ [BAIXA] Erro ao baixar boleto:', { snapshot, identBaixar: identBaixarSnap }, error);
-      if (error?.stack) console.debug('🧩 [STACK] ', error.stack);
-      
-      // Limpar estados de loading
-      setBoletoBaixandoId(null);
-      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
-      
-      const friendly = (msg => {
-        if (!msg) return 'Não foi possível baixar o boleto. Tente novamente.';
-        if (msg.includes('escrow')) return 'Escrow ausente no boleto. Tente recarregar a lista e repetir a operação.';
-        if (msg.includes('comprador')) return 'Carteira do comprador não encontrada. Conecte a carteira correta e tente novamente.';
-        return msg;
-      })(error?.message);
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Erro ao baixar boleto',
-        description: friendly
-      });
-      setTimeout(() => setAlertInfo(null), 5000);
-    }
-  };
+     // Limpar estados após 3 segundos 
+setTimeout(() => { 
+  try { 
+    console.log('🧹 Limpando estados após 3 segundos para:', boletoId); 
+    setBoletoBaixandoId(null); 
+    setStatusBaixa(prev => { 
+      const newState = { ...prev, [boletoId]: null }; 
+      console.log('🔄 Estados limpos:', newState); 
+      return newState; 
+    }); 
+  } catch (error) { 
+    const snapshot = { 
+      boletoId, 
+      id: boleto?.id, 
+      numero_controle: boleto?.numero_controle ?? boleto?.numeroControle, 
+      escrow_id: boleto?.escrow_id, 
+      tx_hash: boleto?.tx_hash, 
+      comprador_wallet: boleto?.wallet_address, 
+      comprador_id: boleto?.comprador_id 
+    }; 
+    const identBaixarSnap = snapshot.numero_controle || snapshot.id; 
+    console.error('⛔ [BAIXA] Erro ao baixar boleto:', { snapshot, identBaixar: identBaixarSnap }, error); 
+    if (error?.stack) console.debug('🧩 [STACK] ', error.stack); 
+    
+    // Limpar estados de loading 
+    setBoletoBaixandoId(null); 
+    setStatusBaixa(prev => ({ ...prev, [boletoId]: null })); 
+    
+    const friendly = (msg => { 
+      if (!msg) return 'Não foi possível baixar o boleto. Tente novamente.'; 
+      if (msg.includes('escrow')) return 'Escrow ausente no boleto. Tente recarregar a lista e repetir a operação.'; 
+      if (msg.includes('comprador')) return 'Carteira do comprador não encontrada. Conecte a carteira correta e tente novamente.'; 
+      return msg; 
+    })(error?.message); 
+    setAlertInfo({ 
+      type: 'destructive', 
+      title: 'Erro ao baixar boleto', 
+      description: friendly 
+    }); 
+    setTimeout(() => setAlertInfo(null), 5000); 
+  } 
+}, 3000);
 
 
 
