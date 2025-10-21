@@ -108,66 +108,67 @@ const handleWithdrawFees = async () => {
     connectWallet();
   };
 
-  // Função para buscar boletos do backend (OTIMIZADA)
-  const fetchBoletos = async () => {
-    console.log('🚀 [DEBUG] fetchBoletos chamada, user:', user?.uid);
-    if (!user?.uid) {
-      console.log('❌ [DEBUG] Sem usuário, retornando');
-      return;
-    }
-    
-    setLoadingBoletos(true);
-    try {
-      console.log('🔍 [VENDEDOR] Buscando boletos para usuário:', user.uid);
-      
-      // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
-      const timestamp = Date.now();
-      const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}?t=${timestamp}`), {
-        headers: {
-          'Cache-Control': 'no-cache, no-store, must-revalidate',
-          'Pragma': 'no-cache',
-          'Expires': '0'
-        }
-      });
-      if (!res.ok) {
-        throw new Error(`Erro ${res.status}: ${res.statusText}`);
-      }
-      const data = await res.json();
-      
-      // Verificar se data tem a propriedade 'data' (array de boletos)
-      const boletosArray = data.data || data;
-      
-      const boletosMapeados = boletosArray.map(boleto => {
-        const statusMapeado = mapStatus(boleto.status);
-        
-      return {
-  ...boleto,
-  numeroControle: boleto.numero_controle,
-  codigoBarras: boleto.codigo_barras,
-  cpfCnpj: boleto.cpf_cnpj,
-  vencimento: boleto.vencimento,
-  valor: boleto.valor_brl || boleto.valor || 0,
-  valor_usdt: boleto.valor_usdt || 0,
-  status: statusMapeado,
-  comprovante_url: boleto.comprovante_url,
-  comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
-  comprovante: boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante,
-  comprador_id: boleto.comprador_id,
-  escrow_id: boleto.escrow_id || boleto.escrowId || null,
-  tx_hash: boleto.tx_hash || boleto.txHash || null,
-  wallet_address: boleto.wallet_address || boleto.walletAddress
-};      
-      setBoletos(boletosMapeados);
-      setBoletosCache(boletosMapeados); // Atualizar cache
-    } catch (error) {
-      console.error('Erro ao buscar boletos:', error);
-      setBoletos([]);
-      // Não mostrar alerta aqui para não poluir a interface
-    } finally {
-      setLoadingBoletos(false);
-    }
-  };
+ // Função para buscar boletos do backend (OTIMIZADA)
+const fetchBoletos = async () => {
+  console.log('🚀 [DEBUG] fetchBoletos chamada, user:', user?.uid);
+  if (!user?.uid) {
+    console.log('❌ [DEBUG] Sem usuário, retornando');
+    return;
+  }
 
+  setLoadingBoletos(true);
+  try {
+    console.log('🔍 [VENDEDOR] Buscando boletos para usuário:', user.uid);
+
+    // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
+    const timestamp = Date.now();
+    const res = await fetch(buildApiUrl(`/boletos/usuario/${user.uid}?t=${timestamp}`), {
+      headers: {
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      }
+    });
+    if (!res.ok) {
+      throw new Error(`Erro ${res.status}: ${res.statusText}`);
+    }
+    const data = await res.json();
+
+    // Verificar se data tem a propriedade 'data' (array de boletos)
+    const boletosArray = data.data || data;
+
+    const boletosMapeados = boletosArray.map(boleto => {
+      const statusMapeado = mapStatus(boleto.status);
+
+      return {
+        ...boleto,
+        numeroControle: boleto.numero_controle,
+        codigoBarras: boleto.codigo_barras,
+        cpfCnpj: boleto.cpf_cnpj,
+        vencimento: boleto.vencimento,
+        valor: boleto.valor_brl || boleto.valor || 0,
+        valor_usdt: boleto.valor_usdt || 0,
+        status: statusMapeado,
+        comprovante_url: boleto.comprovante_url,
+        comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
+        comprovante: boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante,
+        comprador_id: boleto.comprador_id,
+        escrow_id: boleto.escrow_id || boleto.escrowId || null,
+        tx_hash: boleto.tx_hash || boleto.txHash || null,
+        wallet_address: boleto.wallet_address || boleto.walletAddress
+      };
+    });
+
+    setBoletos(boletosMapeados);
+    setBoletosCache(boletosMapeados); // Atualizar cache
+    // Não mostrar alerta aqui para não poluir a interface
+  } catch (error) {
+    console.error('Erro ao buscar boletos:', error);
+    setBoletos([]);
+  } finally {
+    setLoadingBoletos(false);
+  }
+};
   // Monitorar mudanças no selectedComprovante e showComprovanteModal
   useEffect(() => {
     if (showComprovanteModal && selectedComprovante) {
