@@ -2098,17 +2098,16 @@ setTimeout(() => {
   );
 }
 
-function mapStatus(status) {
-  switch ((status || '').toLowerCase()) {
-    case 'pendente': return 'DISPONIVEL';
-    case 'pago': return 'BAIXADO';
-    case 'reservado': return 'AGUARDANDO PAGAMENTO';
-    case 'aguardando_baixa': return 'AGUARDANDO BAIXA';
-    case 'cancelado': return 'EXCLUIDO';
-    default: return status ? status.toUpperCase() : status;
-  }
+function mapStatus(status) { 
+  switch ((status || '').toLowerCase()) { 
+    case 'pendente': return 'DISPONIVEL'; 
+    case 'pago': return 'BAIXADO'; 
+    case 'reservado': return 'AGUARDANDO PAGAMENTO'; 
+    case 'aguardando_baixa': return 'AGUARDANDO BAIXA'; 
+    case 'cancelado': return 'EXCLUIDO'; 
+    default: return status ? status.toUpperCase() : status; 
+  } 
 }
-
 
 
 export default VendedorPage;
