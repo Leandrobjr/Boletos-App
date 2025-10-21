@@ -152,18 +152,13 @@ function VendedorPage() {
           status: statusMapeado,
           comprovante_url: boleto.comprovante_url,
           comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
-          comprovante: boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante,
-          comprador_id: boleto.comprador_id,
- HEAD
-          // Garantir que o ID do escrow e o tx_hash estejam presentes no objeto
-         {
-          escrow_id: boleto.escrow_id || boleto.escrowId || null,
-          tx_hash: boleto.tx_hash || boleto.txHash || null
-         }
-          wallet_address: boleto.wallet_address || boleto.walletAddress
-master
-        };
-      });
+ {
+  comprovante: boleto.comprovante_url || boleto.comprovanteUrl || boleto.comprovante,
+  comprador_id: boleto.comprador_id,
+  escrow_id: boleto.escrow_id || boleto.escrowId || null,
+  tx_hash: boleto.tx_hash || boleto.txHash || null,
+  wallet_address: boleto.wallet_address || boleto.walletAddress
+}
       
       setBoletos(boletosMapeados);
       setBoletosCache(boletosMapeados); // Atualizar cache
