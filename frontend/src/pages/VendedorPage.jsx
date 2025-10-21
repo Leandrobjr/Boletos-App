@@ -1375,7 +1375,6 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
           console.log('🔄 Estados limpos:', newState);
           return newState;
         });
-      }, 3000);
 
       }  catch (error) {
       const snapshot = {
