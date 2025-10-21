@@ -62,36 +62,35 @@ function VendedorPage() {
     ownerAddress
   } = useBoletoEscrowFixed();
   
-  // Estados de conexão da carteira (agora vêm do hook)
-  
   // Função para conectar carteira (agora vem do hook)
-  
-  // Hook corrigido não precisa de checkConnection
-  const intervalRef = useRef();
-  const [success, setSuccess] = useState(false);
-  const [buttonMessage, setButtonMessage] = useState('Cadastrar e Travar USDT');
-  const [buttonError, setButtonError] = useState(false);
-  const [showCotacao, setShowCotacao] = useState(false);
-  const [dropdownSide, setDropdownSide] = useState({});
-  const [processandoBaixa, setProcessandoBaixa] = useState(false);
-  const [boletoParaBaixar, setBoletoParaBaixar] = useState(null);
-  const [showWalletInput, setShowWalletInput] = useState(false);
-  const [walletAddressInput, setWalletAddressInput] = useState('');
-  const [boletoParaInput, setBoletoParaInput] = useState(null);
-  const [dropdownOpen, setDropdownOpen] = useState({});
-  const [showComprovanteModal, setShowComprovanteModal] = useState(false);
-  const [selectedComprovante, setSelectedComprovante] = useState(null);
-  const [destravamentoTimer, setDestravamentoTimer] = useState(null);
-  const [loadingBoletos, setLoadingBoletos] = useState(false);
-  const isOwner = useMemo(() => {
-    if (!address) return false;
-    const addr = address.toLowerCase();
-    const knownOwner = '0x9950764ad4548e9106e3106c954a87d8b3cf64a7';
-    if (addr === knownOwner) return true;
-    return ownerAddress && ownerAddress.toLowerCase() === addr;
-  }, [ownerAddress, address]);
 
-  const handleWithdrawFees = async () => {
+// Hook corrigido não precisa de checkConnection
+const intervalRef = useRef();
+const [success, setSuccess] = useState(false);
+const [buttonMessage, setButtonMessage] = useState('Cadastrar e Travar USDT');
+const [buttonError, setButtonError] = useState(false);
+const [showCotacao, setShowCotacao] = useState(false);
+const [dropdownSide, setDropdownSide] = useState({});
+const [processandoBaixa, setProcessandoBaixa] = useState(false);
+const [boletoParaBaixar, setBoletoParaBaixar] = useState(null);
+const [showWalletInput, setShowWalletInput] = useState(false);
+const [walletAddressInput, setWalletAddressInput] = useState('');
+const [boletoParaInput, setBoletoParaInput] = useState(null);
+const [dropdownOpen, setDropdownOpen] = useState({});
+const [showComprovanteModal, setShowComprovanteModal] = useState(false);
+const [selectedComprovante, setSelectedComprovante] = useState(null);
+const [destravamentoTimer, setDestravamentoTimer] = useState(null);
+const [loadingBoletos, setLoadingBoletos] = useState(false);
+
+const isOwner = useMemo(() => {
+  if (!address) return false;
+  const addr = address.toLowerCase();
+  const knownOwner = '0x9950764ad4548e9106e3106c954a87d8b3cf64a7';
+  if (addr === knownOwner) return true;
+  return ownerAddress && ownerAddress.toLowerCase() === addr;
+}, [ownerAddress, address]);
+
+const handleWithdrawFees = async () => {
   try {
     setAlertInfo({ type: 'info', title: 'Coletando taxas', message: 'Executando saque de taxas acumuladas...' });
     const res = await withdrawProtocolEarnings();
