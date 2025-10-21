@@ -1420,8 +1420,17 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
           setTimeout(() => setAlertInfo(null), 5000); 
         } 
       }, 3000);
-
-
+    } catch (error) {
+      console.error('Erro ao processar baixa do boleto:', error);
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Erro',
+        description: 'Erro ao processar baixa do boleto.'
+      });
+      setBoletoBaixandoId(null);
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+    }
+  };
 
   // Função para resetar o formulário e estado do botão
   const resetForm = () => {
