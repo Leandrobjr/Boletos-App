@@ -33,18 +33,6 @@ import { buildApiUrl, apiRequest } from '../config/apiConfig';
 // Hook corrigido - sem endereços hardcoded
 import { useBoletoEscrowFixed } from '../hooks/useBoletoEscrowFixed';
 
-// Função auxiliar para mapear status
-function mapStatus(status) {
-  switch ((status || '').toLowerCase()) {
-    case 'pendente': return 'DISPONIVEL';
-    case 'pago': return 'BAIXADO';
-    case 'reservado': return 'AGUARDANDO PAGAMENTO';
-    case 'aguardando_baixa': return 'AGUARDANDO BAIXA';
-    case 'cancelado': return 'EXCLUIDO';
-    default: return status ? status.toUpperCase() : status;
-  }
-}
-
 function VendedorPage() {
   const { user } = useAuth();
   const { tab } = useParams();
@@ -1006,6 +994,8 @@ const fetchBoletos = async () => {
     });
 
     try {
+HEAD
+      
       // Garantir dados completos do boleto (carregar detalhes se necessário)
       if (!boleto.escrow_id || !boleto.tx_hash) {
         const identDetalhe = boleto.id || boleto.numeroControle || boleto.numero_controle;
@@ -1286,8 +1276,6 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
       // Verificar se há escrow_id no boleto
       if (!boleto.escrow_id) {
         throw new Error('ID do escrow não encontrado no boleto. Não é possível liberar os USDT.');
-      }
-      
       // Garantir escrow_id: se ausente, criar automaticamente e persistir
       let escrowId = boleto.escrow_id;
       if (!escrowId) {
@@ -1319,14 +1307,14 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
 
       // Verificar e usar endereço de carteira válido do comprador
       const compradorAddress = candidatoEndereco;
-      if (!/^0x[a-fA-F0-9]{40}$/.test(String(candidatoEndereco))) {
+      if (!/^0x[a-fA-F0-9]{40}$/.test(String(compradorAddress))) {
         throw new Error('Endereço da carteira do comprador inválido. Não é possível liberar os USDT.');
       }
 
-      console.log('🔄 [DEBUG] Registrando comprador no contrato:', candidatoEndereco);
+      console.log('🔄 [DEBUG] Registrando comprador no contrato:', compradorAddress);
       
       // PRIMEIRO: Registrar o comprador no escrow
-      const registerResult = await registerBuyer(boleto.escrow_id, candidatoEndereco);
+      const registerResult = await registerBuyer(boleto.escrow_id, compradorAddress);
       
       if (!registerResult.success) {
         throw new Error('Falha ao registrar comprador no contrato');
@@ -1351,7 +1339,7 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
         body: {
           user_id: user.uid,
           wallet_address_vendedor: address,
-          wallet_address_comprador: candidatoEndereco,
+          wallet_address_comprador: compradorAddress,
           tx_hash: result.txHash
         }
       });
@@ -1363,7 +1351,7 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
       setAlertInfo({
         type: 'success',
         title: 'Boleto baixado com sucesso!',
-        description: `USDT liberados para o comprador (${candidatoEndereco.substring(0, 6)}...${candidatoEndereco.substring(candidatoEndereco.length - 4)}). TX: ${result.txHash.substring(0, 10)}...`
+        description: `USDT liberados para o comprador (${compradorAddress.substring(0, 6)}...${compradorAddress.substring(compradorAddress.length - 4)}). TX: ${result.txHash.substring(0, 10)}...`
       });
       setTimeout(() => setAlertInfo(null), 5000);
 
@@ -1378,28 +1366,51 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
         return newState;
       });
       
-      // Limpar estados após 3 segundos 
-      setTimeout(() => { 
-        console.log('🧹 Limpando estados após 3 segundos para:', boletoId); 
-        setBoletoBaixandoId(null); 
-        setStatusBaixa(prev => { 
-          const newState = { ...prev, [boletoId]: null }; 
-          console.log('🔄 Estados limpos:', newState); 
-          return newState; 
-        }); 
+      // Limpar estados após 3 segundos
+      setTimeout(() => {
+        console.log('🧹 Limpando estados após 3 segundos para:', boletoId);
+        setBoletoBaixandoId(null);
+        setStatusBaixa(prev => {
+          const newState = { ...prev, [boletoId]: null };
+          console.log('🔄 Estados limpos:', newState);
+          return newState;
+        });
       }, 3000);
+
+     catch (error) {
+      const snapshot = {
+        boletoId,
+        id: boleto?.id,
+        numero_controle: boleto?.numero_controle ?? boleto?.numeroControle,
+        escrow_id: boleto?.escrow_id,
+        tx_hash: boleto?.tx_hash,
+        comprador_wallet: boleto?.wallet_address,
+        comprador_id: boleto?.comprador_id
+      };
+      const identBaixarSnap = snapshot.numero_controle || snapshot.id;
+      console.error('⛔ [BAIXA] Erro ao baixar boleto:', { snapshot, identBaixar: identBaixarSnap }, error);
+      if (error?.stack) console.debug('🧩 [STACK] ', error.stack);
       
-    } catch (error) {
-      console.error('Erro ao processar baixa do boleto:', error);
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Erro',
-        description: 'Erro ao processar baixa do boleto.'
-      });
+      // Limpar estados de loading
       setBoletoBaixandoId(null);
       setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
+      
+      const friendly = (msg => {
+        if (!msg) return 'Não foi possível baixar o boleto. Tente novamente.';
+        if (msg.includes('escrow')) return 'Escrow ausente no boleto. Tente recarregar a lista e repetir a operação.';
+        if (msg.includes('comprador')) return 'Carteira do comprador não encontrada. Conecte a carteira correta e tente novamente.';
+        return msg;
+      })(error?.message);
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Erro ao baixar boleto',
+        description: friendly
+      });
+      setTimeout(() => setAlertInfo(null), 5000);
     }
   };
+
+
 
   // Função para resetar o formulário e estado do botão
   const resetForm = () => {
@@ -2087,5 +2098,18 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
     </div>
   );
 }
+
+function mapStatus(status) {
+  switch ((status || '').toLowerCase()) {
+    case 'pendente': return 'DISPONIVEL';
+    case 'pago': return 'BAIXADO';
+    case 'reservado': return 'AGUARDANDO PAGAMENTO';
+    case 'aguardando_baixa': return 'AGUARDANDO BAIXA';
+    case 'cancelado': return 'EXCLUIDO';
+    default: return status ? status.toUpperCase() : status;
+  }
+}
+
+
 
 export default VendedorPage;
