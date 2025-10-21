@@ -156,9 +156,10 @@ function VendedorPage() {
           comprador_id: boleto.comprador_id,
  HEAD
           // Garantir que o ID do escrow e o tx_hash estejam presentes no objeto
+         {
           escrow_id: boleto.escrow_id || boleto.escrowId || null,
           tx_hash: boleto.tx_hash || boleto.txHash || null
-          escrow_id: boleto.escrow_id,
+         }
           wallet_address: boleto.wallet_address || boleto.walletAddress
 master
         };
