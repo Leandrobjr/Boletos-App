@@ -1303,7 +1303,6 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
         } catch (_) {}
 
         boleto.escrow_id = escrowId;
-master
       }
 
       // Verificar e usar endereço de carteira válido do comprador
