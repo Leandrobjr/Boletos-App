@@ -1286,6 +1286,8 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
       // Verificar se há escrow_id no boleto
       if (!boleto.escrow_id) {
         throw new Error('ID do escrow não encontrado no boleto. Não é possível liberar os USDT.');
+      }
+      
       // Garantir escrow_id: se ausente, criar automaticamente e persistir
       let escrowId = boleto.escrow_id;
       if (!escrowId) {
@@ -1386,6 +1388,7 @@ console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesD
           return newState; 
         }); 
       }, 3000);
+      
     } catch (error) {
       console.error('Erro ao processar baixa do boleto:', error);
       setAlertInfo({
