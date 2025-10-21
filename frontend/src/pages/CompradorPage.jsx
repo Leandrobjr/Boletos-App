@@ -225,62 +225,28 @@ const CompradorPage = () => {
     try {
       console.log('🔄 [DEBUG] Iniciando conexão da carteira...');
       
-      // Verificar se MetaMask está disponível
-      if (!window.ethereum) {
-        throw new Error('MetaMask não detectado. Instale a extensão MetaMask.');
+      // Usar diretamente o hook useBoletoEscrowFixed
+      const result = await connectWallet();
+      
+      if (result.success) {
+        setAlertInfo({
+          type: 'success',
+          title: 'Carteira conectada!',
+          description: 'Agora você pode escolher um boleto para comprar.'
+        });
+        setTimeout(() => setAlertInfo(null), 3000);
+      } else {
+        throw new Error(result.error || 'Erro desconhecido ao conectar carteira');
       }
-      
-      console.log('✅ [DEBUG] MetaMask detectado');
-      
-      // Solicitar conexão
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-      
-      if (!accounts || accounts.length === 0) {
-        throw new Error('Nenhuma conta disponível');
-      }
-      
-      const selectedAccount = accounts[0];
-      console.log('✅ [DEBUG] Conta conectada:', selectedAccount);
-      
-      // Verificar rede
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      const isCorrectNetwork = parseInt(chainId, 16) === 80002; // Polygon Amoy
-      
-      if (!isCorrectNetwork) {
-        console.log('⚠️ [DEBUG] Rede incorreta. Tentando trocar...');
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: '0x13882' }] // 0x13882 = 80002 em hex
-          });
-        } catch (switchError) {
-          console.error('❌ [DEBUG] Erro ao trocar rede:', switchError);
-          throw new Error('Erro ao trocar para a rede Polygon Amoy');
-        }
-      }
-      
-      console.log('✅ [DEBUG] Rede configurada corretamente');
-      
-      // Chamar o hook original
-      await connectWallet();
-      
-      setAlertInfo({
-        type: 'success',
-        title: 'Carteira conectada!',
-        description: 'Agora você pode escolher um boleto para comprar.'
-      });
-      setTimeout(() => setAlertInfo(null), 3000);
       
     } catch (error) {
       console.error('❌ [DEBUG] Erro ao conectar carteira:', error);
       setAlertInfo({
         type: 'destructive',
         title: 'Erro de conexão',
-        description: error.message || 'Erro ao conectar carteira. Verifique se ela está instalada e desbloqueada.'
+        description: error.message || 'Não foi possível conectar a carteira'
       });
-      setTimeout(() => setAlertInfo(null), 3000);
+      setTimeout(() => setAlertInfo(null), 5000);
     }
   };
 
