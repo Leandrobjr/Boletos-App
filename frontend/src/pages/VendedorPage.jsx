@@ -1006,8 +1006,6 @@ const fetchBoletos = async () => {
     });
 
     try {
-HEAD
-      
       // Garantir dados completos do boleto (carregar detalhes se necessário)
       if (!boleto.escrow_id || !boleto.tx_hash) {
         const identDetalhe = boleto.id || boleto.numeroControle || boleto.numero_controle;
