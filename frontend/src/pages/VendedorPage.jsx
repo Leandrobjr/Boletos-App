@@ -33,6 +33,18 @@ import { buildApiUrl, apiRequest } from '../config/apiConfig';
 // Hook corrigido - sem endereços hardcoded
 import { useBoletoEscrowFixed } from '../hooks/useBoletoEscrowFixed';
 
+// Função auxiliar para mapear status
+function mapStatus(status) {
+  switch ((status || '').toLowerCase()) {
+    case 'pendente': return 'DISPONIVEL';
+    case 'pago': return 'BAIXADO';
+    case 'reservado': return 'AGUARDANDO PAGAMENTO';
+    case 'aguardando_baixa': return 'AGUARDANDO BAIXA';
+    case 'cancelado': return 'EXCLUIDO';
+    default: return status ? status.toUpperCase() : status;
+  }
+}
+
 function VendedorPage() {
   const { user } = useAuth();
   const { tab } = useParams();
@@ -2097,17 +2109,5 @@ setTimeout(() => {
     </div>
   );
 }
-
-function mapStatus(status) { 
-  switch ((status || '').toLowerCase()) { 
-    case 'pendente': return 'DISPONIVEL'; 
-    case 'pago': return 'BAIXADO'; 
-    case 'reservado': return 'AGUARDANDO PAGAMENTO'; 
-    case 'aguardando_baixa': return 'AGUARDANDO BAIXA'; 
-    case 'cancelado': return 'EXCLUIDO'; 
-    default: return status ? status.toUpperCase() : status; 
-  } 
-}
-
 
 export default VendedorPage;
