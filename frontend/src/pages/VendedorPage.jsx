@@ -1029,8 +1029,10 @@ const fetchBoletos = async () => {
         throw new Error('Status do boleto não encontrado ou inválido.');
       }
       
-      if (boleto.status.trim() !== 'AGUARDANDO BAIXA') {
-        throw new Error(`Status inválido: "${boleto.status}". Só é possível baixar boletos com status "AGUARDANDO BAIXA".`);
+      // Normalizar status da mesma forma que o backend (espaços -> underscores)
+      const normalizedStatus = String(boleto.status || '').replace(/\s+/g, '_').toUpperCase();
+      if (normalizedStatus !== 'AGUARDANDO_BAIXA') {
+        throw new Error(`Status inválido: "${boleto.status}". Só é possível baixar boletos com status "AGUARDANDO BAIXA" ou "AGUARDANDO_BAIXA".`);
       }
 
       // 4. Validar endereço do comprador
