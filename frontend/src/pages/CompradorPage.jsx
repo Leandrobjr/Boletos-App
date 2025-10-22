@@ -633,9 +633,9 @@ const CompradorPage = () => {
     }
 
     try {
-      // CORREÇÃO: URL DIRETA PARA O BACKEND FUNCIONANDO
+      // CORREÇÃO: URL CORRETA PARA O BACKEND FUNCIONANDO
       const timestamp = Date.now();
-      const url = `https://boletos-backend-290725.vercel.app/api/boletos?status=DISPONIVEL&t=${timestamp}`;
+      const url = `https://boletos-app-mocha.vercel.app/api/boletos?status=DISPONIVEL&t=${timestamp}`;
       console.log('🌐 URL da requisição (CORRIGIDA):', url);
       
       const headers = {
