@@ -1042,56 +1042,45 @@ const fetchBoletos = async () => {
         description: 'Aguarde enquanto processamos a baixa do boleto e liberamos os USDT para o comprador.'
       });
 
-      // 9. Registrar o comprador no escrow com validação adicional
+      // 9. Registrar o comprador no escrow
       console.log('🔄 [BAIXA] Registrando comprador no contrato...');
       
-      if (!registerBuyer || typeof registerBuyer !== 'function') {
-        throw new Error('Função registerBuyer não disponível. Verifique a conexão com o contrato.');
+      // Verificar se a função registerBuyer está disponível
+      if (!registerBuyer) {
+        throw new Error('Função registerBuyer não está disponível. Verifique a conexão da carteira.');
       }
       
       const registerResult = await registerBuyer(boleto.escrow_id, enderecoLimpo);
       
-      if (!registerResult || typeof registerResult !== 'object') {
-        throw new Error('Resposta inválida do registro do comprador no contrato.');
-      }
-      
-      if (!registerResult.success) {
-        const errorMsg = registerResult.error || registerResult.message || 'Erro desconhecido';
-        throw new Error(`Falha ao registrar comprador no contrato: ${errorMsg}`);
+      if (!registerResult?.success) {
+        throw new Error(`Falha ao registrar comprador: ${registerResult?.error || 'Erro desconhecido'}`);
       }
 
       console.log('✅ [BAIXA] Comprador registrado. Liberando pagamento...');
 
-      // 10. Liberar os USDT do contrato inteligente para o COMPRADOR com validação
-      if (!releaseEscrow || typeof releaseEscrow !== 'function') {
-        throw new Error('Função releaseEscrow não disponível. Verifique a conexão com o contrato.');
+      // 10. Liberar os USDT do contrato inteligente para o COMPRADOR
+      // Verificar se a função releaseEscrow está disponível
+      if (!releaseEscrow) {
+        throw new Error('Função releaseEscrow não está disponível. Verifique a conexão da carteira.');
       }
       
       const result = await releaseEscrow({
         escrowId: boleto.escrow_id
       });
       
-      if (!result || typeof result !== 'object') {
-        throw new Error('Resposta inválida da liberação do escrow.');
-      }
-      
-      if (!result.success) {
-        const errorMsg = result.error || result.message || 'Erro desconhecido';
-        throw new Error(`Falha ao liberar USDT do contrato para o comprador: ${errorMsg}`);
-      }
-      
-      if (!result.txHash || typeof result.txHash !== 'string') {
-        throw new Error('Hash da transação não retornado pela liberação do escrow.');
+      if (!result?.success) {
+        throw new Error(`Falha ao liberar USDT: ${result?.error || 'Erro desconhecido'}`);
       }
 
       console.log('✅ [BAIXA] USDT liberados. TX Hash:', result.txHash);
       console.log('🔄 [BAIXA] Atualizando backend...');
 
-      // 11. Atualizar o backend com validação robusta
+      // 11. Atualizar o backend
       const identBaixar = boleto.numero_controle || boleto.numeroControle || boleto.id;
       
-      if (!apiRequest || typeof apiRequest !== 'function') {
-        throw new Error('Função apiRequest não disponível. Verifique a conexão com a API.');
+      // Verificar se a função apiRequest está disponível
+      if (!apiRequest) {
+        throw new Error('Função apiRequest não está disponível. Verifique a configuração da API.');
       }
       
       const responseData = await apiRequest(`/boletos/${identBaixar}/baixar`, {
@@ -1104,9 +1093,8 @@ const fetchBoletos = async () => {
         }
       });
 
-      if (responseData && responseData.success === false) {
-        const errorMsg = responseData.message || responseData.error || 'Erro desconhecido';
-        throw new Error(`Falha ao baixar boleto no backend: ${errorMsg}`);
+      if (responseData?.success === false) {
+        throw new Error(`Falha ao baixar boleto no backend: ${responseData.message || 'Erro desconhecido'}`);
       }
 
       console.log('✅ [BAIXA] Backend atualizado. Baixa concluída com sucesso!');
