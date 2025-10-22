@@ -55,7 +55,7 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'ID do boleto é obrigatório na URL' });
     }
 
-    const { tx_hash, wallet_address_vendedor, wallet_address_comprador, user_id } = req.body || {};
+    const { tx_hash, wallet_address_vendedor, wallet_address_comprador, user_id, escrow_id } = req.body || {};
 
     // Buscar boleto por numero_controle OU id
     const select = await pool.query(
@@ -75,15 +75,16 @@ module.exports = async (req, res) => {
       return res.status(400).json({ error: 'Boleto não está aguardando baixa', status_atual: boleto.status });
     }
 
-    // Atualizar para BAIXADO e registrar tx_hash (se fornecido)
+    // Atualizar para BAIXADO e registrar tx_hash e escrow_id (se fornecidos)
     const update = await pool.query(
       `UPDATE boletos
          SET status = 'BAIXADO',
              tx_hash = COALESCE($1, tx_hash),
+             escrow_id = COALESCE($2, escrow_id),
              updated_at = NOW()
-       WHERE id = $2
+       WHERE id = $3
        RETURNING *`,
-      [tx_hash || null, boleto.id]
+      [tx_hash || null, escrow_id || null, boleto.id]
     );
 
     const atualizado = update.rows[0];
