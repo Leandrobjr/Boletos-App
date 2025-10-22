@@ -1121,11 +1121,22 @@ const fetchBoletos = async () => {
       console.log('✅ [BAIXA] Comprador registrado. Liberando pagamento...');
 
       // 11. Liberar os USDT do contrato inteligente para o COMPRADOR
-      const result = await releaseEscrow({
+      console.log('🔄 [BAIXA] Iniciando liberação do escrow...');
+      console.log('🔄 [BAIXA] Escrow ID para liberação:', boleto.escrow_id);
+      
+      // Adicionar timeout para evitar travamento infinito
+      const releasePromise = releaseEscrow({
         escrowId: boleto.escrow_id
       });
       
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => reject(new Error('Timeout: Liberação do escrow demorou mais de 60 segundos')), 60000);
+      });
+      
+      const result = await Promise.race([releasePromise, timeoutPromise]);
+      
       if (!result?.success) {
+        console.error('❌ [BAIXA] Falha na liberação do escrow:', result);
         throw new Error(`Falha ao liberar USDT: ${result?.error || 'Erro desconhecido'}`);
       }
 
