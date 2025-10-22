@@ -62,12 +62,24 @@ export const buildApiUrl = (endpoint) => {
 };
 
 // Helper: fetch com timeout por tentativa
-const fetchWithTimeout = async (url, options = {}, timeoutMs = 12000) => {
+const fetchWithTimeout = async (url, options = {}, timeoutMs = 20000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
+    console.log(`🌐 [API] Fazendo requisição para: ${url}`);
+    console.log(`🌐 [API] Método: ${options.method || 'GET'}`);
+    console.log(`🌐 [API] Headers:`, options.headers);
+    console.log(`🌐 [API] Body:`, options.body);
+    
     const resp = await fetch(url, { ...options, signal: controller.signal });
+    
+    console.log(`🌐 [API] Resposta recebida - Status: ${resp.status}`);
+    console.log(`🌐 [API] Headers da resposta:`, Object.fromEntries(resp.headers.entries()));
+    
     return resp;
+  } catch (error) {
+    console.error(`❌ [API] Erro na requisição para ${url}:`, error);
+    throw error;
   } finally {
     clearTimeout(timer);
   }
@@ -127,10 +139,16 @@ export const apiRequest = async (endpoint, options = {}) => {
   for (const url of candidates) {
     for (let attempt = 1; attempt <= maxRetries; attempt++) {
       try {
-        const response = await fetchWithTimeout(url, defaultOptions, 12000);
+        const response = await fetchWithTimeout(url, defaultOptions, 20000);
+        
+        console.log(`🔍 [API] Processando resposta de ${url}`);
+        console.log(`🔍 [API] Status da resposta: ${response.status}`);
+        console.log(`🔍 [API] OK: ${response.ok}`);
         
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Erro desconhecido');
+          console.error(`❌ [API] Resposta não OK - Status: ${response.status}, Texto: ${errorText}`);
+          
           // Não repetir em erros 4xx (cliente)
           if (response.status >= 400 && response.status < 500) {
             lastError = new Error(`HTTP ${response.status}: ${response.statusText} - ${errorText}`);
@@ -140,17 +158,26 @@ export const apiRequest = async (endpoint, options = {}) => {
         }
         
         const contentType = response.headers.get('content-type') || '';
+        console.log(`🔍 [API] Content-Type: ${contentType}`);
+        
         if (contentType.includes('application/json')) {
-          return await response.json();
+          const jsonData = await response.json();
+          console.log(`✅ [API] Dados JSON recebidos:`, jsonData);
+          return jsonData;
         }
+        
         // Fallback para texto em sucesso
-        return { success: true, text: await response.text() };
+        const textData = await response.text();
+        console.log(`✅ [API] Dados de texto recebidos:`, textData);
+        return { success: true, text: textData };
         
       } catch (error) {
+        console.error(`❌ [API] Erro na tentativa ${attempt}/${maxRetries} para ${url}:`, error);
         lastError = error;
         // Em AbortError ou network error, aplicar backoff exponencial
         if (attempt < maxRetries) {
           const delay = Math.pow(2, attempt) * 1000; // 2s, 4s
+          console.log(`⏳ [API] Aguardando ${delay}ms antes da próxima tentativa...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }
