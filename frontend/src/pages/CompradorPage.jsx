@@ -129,17 +129,17 @@ const CompradorPage = () => {
     }
   }, [meusBoletos, tempoRestante]);
 
-  // Função para buscar boletos do usuário autenticado (ULTRA OTIMIZADA)
+  // Função para buscar boletos do usuário autenticado (CORRIGIDA)
   const fetchMeusBoletos = async () => {
     if (!user?.uid) return;
     
     try {
-      console.log('🔍 [COMPRADOR] Buscando boletos do usuário:', user.uid);
-      
       // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
       const timestamp = Date.now();
       const walletQuery = address ? `&wallet=${encodeURIComponent(address)}` : '';
-      const res = await fetch(buildApiUrl(`/boletos/comprados/${user.uid}?t=${timestamp}${walletQuery}`), {
+      const url = buildApiUrl(`/boletos/comprados/${user.uid}?t=${timestamp}${walletQuery}`);
+      
+      const res = await fetch(url, {
         headers: {
           'Cache-Control': 'no-cache, no-store, must-revalidate',
           'Pragma': 'no-cache',
@@ -147,8 +147,14 @@ const CompradorPage = () => {
         }
       });
       
-      if (!res.ok) throw new Error('Erro ao buscar boletos do usuário');
+      if (!res.ok) {
+        console.error('Erro HTTP ao buscar meus boletos:', res.status, res.statusText);
+        throw new Error(`Erro ${res.status}: ${res.statusText}`);
+      }
+      
       const data = await res.json();
+      console.log('Meus boletos - dados recebidos:', data);
+      
       const lista = Array.isArray(data) ? data : (data?.data || []);
       
       const boletosMapeados = lista.map(boleto => ({
@@ -157,18 +163,16 @@ const CompradorPage = () => {
         codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
         valor: boleto.valor_brl || boleto.valor || 0,
         valor_usdt: boleto.valor_usdt || 0,
-        // Usar data_travamento quando existir para refletir a reserva
         dataCompra: boleto.data_travamento || boleto.criado_em || boleto.dataCompra,
         comprovanteUrl: boleto.comprovante_url || boleto.comprovanteUrl,
         status: mapStatus(boleto.status)
       }));
       
+      console.log('Meus boletos mapeados:', boletosMapeados.length);
       setMeusBoletos(boletosMapeados);
-      // Atualizar cache
-      setBoletosCache(boletosMapeados);
-      setCacheTime(Date.now());
+      
     } catch (error) {
-      console.error('Erro ao buscar boletos:', error);
+      console.error('Erro ao buscar meus boletos:', error);
       setMeusBoletos([]);
     }
   };
@@ -223,44 +227,32 @@ const CompradorPage = () => {
 
   const handleConectarCarteira = async () => {
     try {
-      console.log('🔄 [COMPRADOR] Iniciando conexão da carteira...');
-      
-      // Verificar se o hook está disponível
-      if (!connectWallet) {
-        console.error('❌ [COMPRADOR] Hook connectWallet não disponível');
-        throw new Error('Sistema de carteira não inicializado. Recarregue a página.');
-      }
-      
-      // Usar diretamente o hook useBoletoEscrowFixed
+      setAlertInfo({
+        type: 'default',
+        title: 'Conectando carteira...',
+        description: 'Aguarde enquanto conectamos sua carteira.'
+      });
+
       const result = await connectWallet();
       
-      console.log('📊 [COMPRADOR] Resultado da conexão:', result);
-      
       if (result.success) {
-        console.log('✅ [COMPRADOR] Carteira conectada com sucesso!');
         setAlertInfo({
           type: 'success',
           title: 'Carteira conectada!',
-          description: `Conectado com sucesso! Endereço: ${result.address?.substring(0, 6)}...${result.address?.substring(result.address.length - 4)}`
+          description: `Endereço: ${result.address.slice(0, 6)}...${result.address.slice(-4)}`
         });
         setTimeout(() => setAlertInfo(null), 3000);
       } else {
-        console.error('❌ [COMPRADOR] Falha na conexão:', result.error);
         throw new Error(result.error || 'Erro desconhecido ao conectar carteira');
       }
       
     } catch (error) {
-      console.error('❌ [COMPRADOR] Erro ao conectar carteira:', error);
-      
-      // Mensagens de erro mais específicas
       let errorMessage = error.message || 'Não foi possível conectar a carteira';
       
       if (error.message?.includes('User rejected')) {
         errorMessage = 'Conexão cancelada pelo usuário. Aceite a conexão para continuar.';
       } else if (error.message?.includes('No Ethereum provider')) {
         errorMessage = 'Nenhuma carteira detectada. Instale MetaMask ou outra carteira compatível.';
-      } else if (error.message?.includes('network')) {
-        errorMessage = 'Erro de rede. Verifique sua conexão e tente novamente.';
       }
       
       setAlertInfo({
@@ -631,11 +623,9 @@ const CompradorPage = () => {
     if (!user?.uid) return;
 
     try {
-      console.log('🔍 [COMPRADOR] Buscando boletos disponíveis...');
-      
       // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
       const timestamp = Date.now();
-      const url = buildApiUrl(`/boletos?t=${timestamp}`);
+      const url = buildApiUrl(`/boletos?status=DISPONIVEL&t=${timestamp}`);
       
       const headers = {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -645,27 +635,34 @@ const CompradorPage = () => {
       
       const res = await fetch(url, { headers });
       
-      if (!res.ok) throw new Error('Erro ao buscar boletos disponíveis');
+      if (!res.ok) {
+        console.error('Erro HTTP:', res.status, res.statusText);
+        throw new Error(`Erro ${res.status}: ${res.statusText}`);
+      }
+      
       const data = await res.json();
+      console.log('Dados recebidos da API:', data);
       
       const lista = Array.isArray(data) ? data : (data?.data || []);
 
-      const boletosMapeados = lista.map(boleto => {
-        const statusMapeado = boleto.status === 'DISPONIVEL' ? 'DISPONIVEL' : boleto.status;
-        return {
-          ...boleto,
-          numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
-          codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
-          valor: boleto.valor_brl || boleto.valor || 0,
-          valor_usdt: boleto.valor_usdt || 0,
-          dataVencimento: boleto.vencimento || boleto.dataVencimento,
-          beneficiario: boleto.cpf_cnpj || boleto.beneficiario,
-          status: statusMapeado
-        };
-      });
+      const boletosMapeados = lista.map(boleto => ({
+        ...boleto,
+        numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+        codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
+        valor: boleto.valor_brl || boleto.valor || 0,
+        valor_usdt: boleto.valor_usdt || 0,
+        dataVencimento: boleto.vencimento || boleto.dataVencimento,
+        beneficiario: boleto.cpf_cnpj || boleto.beneficiario,
+        status: boleto.status
+      }));
 
-      const boletosDisponiveis = boletosMapeados.filter(boleto => boleto.status === 'DISPONIVEL');
+      const boletosDisponiveis = boletosMapeados.filter(boleto => 
+        boleto.status === 'DISPONIVEL' || boleto.status === 'disponivel'
+      );
+      
+      console.log('Boletos disponíveis encontrados:', boletosDisponiveis.length);
       setBoletosDisponiveis(boletosDisponiveis);
+      
     } catch (error) {
       console.error('Erro ao buscar boletos disponíveis:', error);
       setBoletosDisponiveis([]);

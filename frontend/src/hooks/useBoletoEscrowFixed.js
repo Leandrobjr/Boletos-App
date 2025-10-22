@@ -1,10 +1,10 @@
 /**
- * 🔧 HOOK CORRIGIDO - SEM ENDEREÇOS HARDCODED
+ * 🔧 HOOK CORRIGIDO - VERSÃO SIMPLIFICADA E ESTÁVEL
  * 
- * Solução profissional para o problema de carteiras fixas
+ * Solução profissional para conexão de carteira
  * 
  * @author Engenheiro Sênior
- * @version 3.0.0
+ * @version 4.0.0
  */
 
 import { useState, useCallback, useEffect } from 'react';
@@ -47,7 +47,7 @@ const P2P_ESCROW_ABI = [
 ];
 
 export const useBoletoEscrowFixed = () => {
-  // 🔧 ESTADOS LIMPOS - SEM VALORES HARDCODED
+  // Estados básicos
   const [isConnected, setIsConnected] = useState(false);
   const [address, setAddress] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -55,107 +55,55 @@ export const useBoletoEscrowFixed = () => {
   const [networkCorrect, setNetworkCorrect] = useState(false);
   const [ownerAddress, setOwnerAddress] = useState('');
 
-  // 🔌 CONECTAR CARTEIRA - VERSÃO PROFISSIONAL
+  // 🔌 CONECTAR CARTEIRA - VERSÃO SIMPLIFICADA
   const connectWallet = useCallback(async () => {
     try {
       setIsLoading(true);
       setError(null);
       
-      console.log('🔄 [WALLET] Iniciando processo de conexão...');
-      
-      // Limpar estado anterior
-      setAddress('');
-      setIsConnected(false);
-
       // Verificar se existe ethereum provider
       if (!window.ethereum) {
-        console.error('❌ [WALLET] Nenhum provider ethereum detectado');
-        throw new Error('Nenhuma carteira detectada. Instale MetaMask, Rabby ou outra carteira compatível!');
+        throw new Error('Nenhuma carteira detectada. Instale MetaMask ou outra carteira compatível!');
       }
 
-      console.log('✅ [WALLET] Provider ethereum detectado:', window.ethereum.isMetaMask ? 'MetaMask' : 'Outro');
-
-      // Verificar se já existe conexão
-      let accounts = [];
-      try {
-        accounts = await window.ethereum.request({ method: 'eth_accounts' });
-        console.log('🔍 [WALLET] Contas já conectadas:', accounts.length);
-      } catch (error) {
-        console.warn('⚠️ [WALLET] Erro ao verificar contas existentes:', error);
-      }
-
-      // Se não há contas conectadas, solicitar conexão
-      if (!accounts || accounts.length === 0) {
-        console.log('🔌 [WALLET] Solicitando conexão...');
-        try {
-          accounts = await window.ethereum.request({
-            method: 'eth_requestAccounts'
-          });
-        } catch (requestError) {
-          console.error('❌ [WALLET] Usuário rejeitou a conexão:', requestError);
-          if (requestError.code === 4001) {
-            throw new Error('Conexão rejeitada pelo usuário. Aceite a conexão para continuar.');
-          }
-          throw new Error('Erro ao solicitar conexão com a carteira.');
-        }
-      }
+      // Solicitar conexão
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts'
+      });
 
       if (!accounts || accounts.length === 0) {
         throw new Error('Nenhuma conta disponível na carteira');
       }
 
       const selectedAccount = accounts[0];
-      console.log('✅ [WALLET] Conta selecionada:', selectedAccount);
 
       // Verificar rede atual
-      let chainId;
-      try {
-        chainId = await window.ethereum.request({ method: 'eth_chainId' });
-        console.log('🌐 [WALLET] Rede atual:', chainId, '(decimal:', parseInt(chainId, 16), ')');
-      } catch (error) {
-        console.error('❌ [WALLET] Erro ao verificar rede:', error);
-        throw new Error('Erro ao verificar a rede da carteira');
-      }
-
+      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
       const currentNetworkId = parseInt(chainId, 16);
       const isCorrectNetwork = currentNetworkId === DEV_CONFIG.NETWORK.id;
       
       if (!isCorrectNetwork) {
-        console.warn('⚠️ [WALLET] Rede incorreta. Atual:', currentNetworkId, 'Esperada:', DEV_CONFIG.NETWORK.id);
-        console.log('🔄 [WALLET] Tentando trocar para Polygon Amoy...');
-        
         try {
           await window.ethereum.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: `0x${DEV_CONFIG.NETWORK.id.toString(16)}` }]
           });
-          console.log('✅ [WALLET] Rede trocada com sucesso');
         } catch (switchError) {
-          console.error('❌ [WALLET] Erro ao trocar rede:', switchError);
-          
-          // Se a rede não existe, tentar adicionar
           if (switchError.code === 4902) {
-            console.log('🔄 [WALLET] Tentando adicionar rede Polygon Amoy...');
-            try {
-              await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: `0x${DEV_CONFIG.NETWORK.id.toString(16)}`,
-                  chainName: 'Polygon Amoy Testnet',
-                  nativeCurrency: {
-                    name: 'MATIC',
-                    symbol: 'MATIC',
-                    decimals: 18
-                  },
-                  rpcUrls: ['https://rpc-amoy.polygon.technology'],
-                  blockExplorerUrls: ['https://amoy.polygonscan.com/']
-                }]
-              });
-              console.log('✅ [WALLET] Rede Polygon Amoy adicionada com sucesso');
-            } catch (addError) {
-              console.error('❌ [WALLET] Erro ao adicionar rede:', addError);
-              throw new Error('Não foi possível configurar a rede Polygon Amoy. Configure manualmente.');
-            }
+            await window.ethereum.request({
+              method: 'wallet_addEthereumChain',
+              params: [{
+                chainId: `0x${DEV_CONFIG.NETWORK.id.toString(16)}`,
+                chainName: 'Polygon Amoy Testnet',
+                nativeCurrency: {
+                  name: 'MATIC',
+                  symbol: 'MATIC',
+                  decimals: 18
+                },
+                rpcUrls: ['https://rpc-amoy.polygon.technology'],
+                blockExplorerUrls: ['https://amoy.polygonscan.com/']
+              }]
+            });
           } else {
             throw new Error('Troque para a rede Polygon Amoy para continuar.');
           }
@@ -165,27 +113,21 @@ export const useBoletoEscrowFixed = () => {
       // Definir estados
       setAddress(selectedAccount);
       setIsConnected(true);
-      setNetworkCorrect(isCorrectNetwork);
-
-      console.log('✅ [WALLET] Conexão estabelecida com sucesso!');
-      console.log('📍 [WALLET] Endereço:', selectedAccount);
-      console.log('🌐 [WALLET] Rede correta:', isCorrectNetwork);
+      setNetworkCorrect(true);
       
-      // Carregar owner do contrato para habilitar ações administrativas
+      // Carregar owner do contrato
       try {
         const provider = new ethers.BrowserProvider(window.ethereum);
         const escrowRead = new ethers.Contract(DEV_CONFIG.P2P_ESCROW, P2P_ESCROW_ABI, await provider.getSigner());
         const currentOwner = await escrowRead.owner();
         setOwnerAddress(currentOwner);
-        console.log('👑 [WALLET] Owner do contrato:', currentOwner);
       } catch (ownerError) {
-        console.warn('⚠️ [WALLET] Erro ao carregar owner do contrato:', ownerError);
+        console.warn('Erro ao carregar owner do contrato:', ownerError);
       }
       
       return { success: true, address: selectedAccount };
 
     } catch (error) {
-      console.error('❌ [WALLET] Erro ao conectar carteira:', error);
       setError(error.message);
       setIsConnected(false);
       setAddress('');
@@ -197,7 +139,6 @@ export const useBoletoEscrowFixed = () => {
 
   // 🔄 DESCONECTAR CARTEIRA
   const disconnectWallet = useCallback(() => {
-    console.log('🔴 [FIXED] Desconectando carteira...');
     setIsConnected(false);
     setAddress('');
     setNetworkCorrect(false);
