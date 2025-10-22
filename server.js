@@ -1023,13 +1023,14 @@ app.post('/api/boletos/:numeroControle/comprovante', async (req, res) => {
 app.patch('/boletos/:numeroControle/baixar', async (req, res) => {
   try {
     const numeroControle = req.params.numeroControle;
-    const { user_id, wallet_address_vendedor, wallet_address_comprador, tx_hash } = req.body;
+    const { user_id, wallet_address_vendedor, wallet_address_comprador, tx_hash, escrow_id } = req.body;
     
     console.log('📍 PATCH /boletos/:numeroControle/baixar:', numeroControle);
     console.log('👤 Vendedor:', user_id);
     console.log('💳 Carteira vendedor:', wallet_address_vendedor);
     console.log('💳 Carteira comprador:', wallet_address_comprador);
     console.log('🔗 TX Hash:', tx_hash);
+    console.log('🔒 Escrow ID:', escrow_id);
     
     // Buscar boleto no storage
     const boletoIndex = boletosStorage.findIndex(b => b.numero_controle === numeroControle);
@@ -1042,16 +1043,23 @@ app.patch('/boletos/:numeroControle/baixar', async (req, res) => {
       return res.status(400).json({ error: 'Boleto não está aguardando baixa' });
     }
     
+    // Validar se escrow_id foi fornecido
+    if (!escrow_id) {
+      return res.status(400).json({ error: 'escrow_id é obrigatório para baixar o boleto' });
+    }
+    
     // Atualizar status do boleto para BAIXADO
     boletosStorage[boletoIndex].status = 'BAIXADO';
     boletosStorage[boletoIndex].baixado_em = new Date().toISOString();
     boletosStorage[boletoIndex].baixado_por = user_id;
     boletosStorage[boletoIndex].wallet_address_vendedor = wallet_address_vendedor;
     boletosStorage[boletoIndex].tx_hash_baixa = tx_hash;
+    boletosStorage[boletoIndex].escrow_id = escrow_id; // ✅ INCLUIR ESCROW_ID
+    saveStorage(); // Persistir dados
     
     const boletoBaixado = boletosStorage[boletoIndex];
     
-    console.log('✅ Boleto baixado:', boletoBaixado.id);
+    console.log('✅ Boleto baixado com escrow_id:', boletoBaixado.id, 'Escrow:', escrow_id);
     res.status(200).json(boletoBaixado);
   } catch (error) {
     console.error('❌ Erro ao baixar boleto:', error);

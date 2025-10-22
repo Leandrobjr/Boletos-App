@@ -10,13 +10,13 @@ const getCorrectApiUrl = () => {
   }
 
   // PRODUÇÃO: SEMPRE usar backend dedicado Vercel - TESTADO E FUNCIONANDO
-  return 'https://boletos-backend-290725.vercel.app/api';
+  return 'https://boletos-app-mocha.vercel.app/api';
 };
 
 // URL BASE FIXA - NÃO PODE SER ALTERADA
 const API_BASE_URL = getCorrectApiUrl();
 // BACKUP EM PRODUÇÃO: backend dedicado Vercel
-const API_BACKUP_URL = 'https://boletos-backend-290725.vercel.app/api';
+const API_BACKUP_URL = 'https://boletos-app-mocha.vercel.app/api';
 
 
 
@@ -130,7 +130,7 @@ export const apiRequest = async (endpoint, options = {}) => {
   // Estratégia de fallback: usar caminho relativo como backup
   const candidates = [primaryUrl];
   const isLocal = primaryUrl.includes('localhost');
-  const isVercelBackend = primaryUrl.includes('boletos-backend-290725.vercel.app');
+  const isVercelBackend = primaryUrl.includes('boletos-app-mocha.vercel.app');
   const disableBackup = options.disableBackup === true;
   if (!isLocal && isVercelBackend && !disableBackup) {
     candidates.push('/api' + endpoint);
