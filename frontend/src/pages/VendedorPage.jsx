@@ -964,438 +964,191 @@ const fetchBoletos = async () => {
   const processarBaixaBoleto = async (boleto) => {
     const boletoId = boleto.id || boleto.numeroControle || boleto.numero_controle;
     
-    // Verificar se está na rede correta
-    // Validação de rede será feita pelo hook DEV
-
-    // Verificar se o boleto tem status "AGUARDANDO BAIXA"
-    if (boleto.status !== 'AGUARDANDO BAIXA') {
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Status inválido',
-        description: 'Só é possível baixar boletos com status "AGUARDANDO BAIXA".'
-      });
-      setTimeout(() => setAlertInfo(null), 3000);
-      
-      // Limpar estados de loading
-      setBoletoBaixandoId(null);
-      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
-      return;
-    }
-
-    // Verificar se há endereço do comprador (apenas endereço Ethereum válido)
-    const candidatoEndereco = boleto.wallet_address || boleto.walletAddress || '';
-    const enderecoValido = /^0x[a-fA-F0-9]{40}$/.test(String(candidatoEndereco));
-    if (!enderecoValido) {
-      setAlertInfo({
-        type: 'destructive',
-        title: 'Dados incompletos',
-        description: 'Endereço da carteira do comprador não encontrado ou inválido.'
-      });
-      setTimeout(() => setAlertInfo(null), 3000);
-      
-      // Limpar estados de loading
-      setBoletoBaixandoId(null);
-      setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
-      return;
-    }
-
-    setAlertInfo({
-      type: 'default',
-      title: 'Baixando boleto...',
-      description: 'Aguarde enquanto processamos a baixa do boleto e liberamos os USDT para o comprador.'
+    console.log('🚀 [BAIXA] Iniciando baixa do boleto:', boletoId);
+    console.log('🔍 [BAIXA] Dados do boleto:', {
+      id: boleto.id,
+      numero_controle: boleto.numero_controle,
+      numeroControle: boleto.numeroControle,
+      status: boleto.status,
+      escrow_id: boleto.escrow_id,
+      wallet_address: boleto.wallet_address,
+      walletAddress: boleto.walletAddress
     });
 
     try {
-      // Garantir dados completos do boleto (carregar detalhes se necessário)
-      if (!boleto.escrow_id || !boleto.tx_hash) {
-        const identDetalhe = boleto.id || boleto.numeroControle || boleto.numero_controle;
-        let detObj = null;
-        // Estratégia: evitar a rota por path (tem retornado 400) e usar apenas queries locais
-        console.debug('🔎 [DETALHE] Tentando detalhe via query id=', identDetalhe);
-        let eId = null;
-        try {
-          const detalhePorId = await apiRequest(`/boletos?id=${identDetalhe}`, { disableBackup: true });
-          const found = detalhePorId?.data?.find?.(d => (d.id === identDetalhe || d.uuid === identDetalhe)) || null;
-          if (Array.isArray(detalhePorId?.data)) console.debug('ℹ️ [DETALHE] Resposta id possui', detalhePorId.data.length, 'registros');
-          if (Array.isArray(detalhePorId?.data)) console.debug('🔎 [DETALHE] IDs/UUIDs (amostra id):', detalhePorId.data.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
-          if (found) { detObj = found; console.debug('✅ [DETALHE] Detalhe encontrado via id'); }
-        } catch (err) {
-          eId = err;
-        }
-        const numeroCand = boleto.numeroControle || boleto.numero_controle || boleto.numero || identDetalhe;
-        if (!detObj) {
-          const queryVariants = [
-            `/boletos?id=${numeroCand}`,
-            `/boletos?numeroControle=${numeroCand}`,
-            `/boletos?numero_controle=${numeroCand}`,
-          ];
-          for (const q of queryVariants) {
-            try {
-              console.debug('🔎 [DETALHE] Tentando detalhe via query variante:', q);
-              const resp = await apiRequest(q, { disableBackup: true });
-              const maybe = resp?.data?.find?.(d => (
-                d.id === identDetalhe || d.id === numeroCand ||
-                d.uuid === identDetalhe || d.uuid === numeroCand ||
-                d.numeroControle === numeroCand || d.numero_controle === numeroCand
-              )) || null;
-              if (Array.isArray(resp?.data)) console.debug('ℹ️ [DETALHE] Resposta variante possui', resp.data.length, 'registros');
-              if (Array.isArray(resp?.data)) console.debug('🔎 [DETALHE] IDs/UUIDs (amostra variante):', resp.data.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
-              if (maybe) { detObj = maybe; console.debug('✅ [DETALHE] Detalhe encontrado via variante de query'); break; }
-            } catch (eVar) {
-              // continua tentando
-            }
-          }
-        }
-        // Fallback por comprador: consultar boletos comprados do usuário e filtrar
-        if (!detObj && boleto?.comprador_id) {
-          try {
-            console.debug('🔎 [DETALHE] Fallback comprador: /boletos/comprados/', boleto.comprador_id);
-            const compradosResp = await apiRequest(`/boletos/comprados/${boleto.comprador_id}`, { disableBackup: true });
-            const arrC = Array.isArray(compradosResp?.data) ? compradosResp.data : (Array.isArray(compradosResp) ? compradosResp : []);
-            console.debug('ℹ️ [DETALHE] Comprados possui', arrC.length, 'registros');
-            console.debug('🔎 [DETALHE] IDs/UUIDs (amostra comprados):', arrC.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
-            detObj = arrC.find(d => (
-              d?.id === identDetalhe || d?.uuid === identDetalhe ||
-              d?.numero_controle === numeroCand || d?.numeroControle === numeroCand
-            )) || null;
-            if (detObj) console.debug('✅ [DETALHE] Detalhe obtido em comprados');
-          } catch (eCompr) {
-            console.warn('⚠️ Falha ao consultar comprados do usuário:', boleto.comprador_id, eCompr);
-          }
-        }
-        // Fallback final: buscar lista completa e filtrar client-side
-        if (!detObj) {
-          try {
-            console.debug('🔎 [DETALHE] Fallback final: consultando lista completa /boletos');
-            const listResp = await apiRequest('/boletos', { disableBackup: true });
-            const arr = Array.isArray(listResp?.data) ? listResp.data : (Array.isArray(listResp) ? listResp : []);
-            console.debug('ℹ️ [DETALHE] Lista completa possui', arr.length, 'registros');
-            console.debug('🔎 [DETALHE] IDs/UUIDs (amostra lista):', arr.slice(0,10).map(d => ({ id: d.id, uuid: d.uuid, numero_controle: d.numero_controle, numeroControle: d.numeroControle, escrow_id: d.escrow_id })));
-            detObj = arr.find(d => (
-              d?.id === identDetalhe || d?.id === numeroCand ||
-              d?.uuid === identDetalhe || d?.uuid === numeroCand ||
-              d?.numeroControle === numeroCand || d?.numero_controle === numeroCand
-            )) || null;
-            if (detObj) console.debug('✅ [DETALHE] Detalhe obtido da lista completa');
-          } catch (eList) {
-            console.warn('⚠️ Falha ao consultar lista completa de boletos:', eList);
-          }
-        }
-        if (!detObj) console.warn('⚠️ [DETALHE] Não foi possível localizar detalhe após id/variantes/comprados/lista completa', { identDetalhe, numeroCand, eId });
-        if (detObj) {
-          console.debug('ℹ️ [DETALHE] detObj keys:', Object.keys(detObj || {}));
-          const pickNonEmpty = (...vals) => {
-            for (const v of vals) {
-              if (v !== undefined && v !== null) {
-                const s = typeof v === 'string' ? v.trim() : String(v);
-                if (s.length > 0) return s;
-              }
-            }
-            return null;
-          };
-
-          const collectEscrowCandidatesDeep = (o) => {
-  try {
-    const results = [];
-    const pick = (...vals) => vals.map(v => typeof v === 'string' ? v.trim() : v).filter(v => v !== undefined && v !== null).map(v => String(v)).filter(s => s.length > 0);
-    const walk = (x) => {
-      if (!x || typeof x !== 'object') return;
-      results.push(...pick(x.escrow_id, x.escrowId, x.contractEscrowId, x.contract_escrow_id, x.escrow_uuid));
-      if (x.escrow && typeof x.escrow === 'object') {
-        results.push(...pick(x.escrow.id, x.escrow.uuid, x.escrow.escrow_id, x.escrow.escrowId));
-      }
-      if (x.contract && typeof x.contract === 'object') {
-        results.push(...pick(x.contract.escrow_id, x.contract.escrowId));
-      }
-      Object.keys(x).forEach(k => {
-        const v = x[k];
-        const escrowish = /escrow/i.test(k) || /contractEscrow/i.test(k);
-        if (escrowish) {
-          if (typeof v === 'string') results.push(...pick(v));
-          if (typeof v === 'object') results.push(...pick(v?.id, v?.uuid, v?.escrow_id, v?.escrowId));
-        }
-        if (Array.isArray(v)) v.forEach(walk);
-        else if (typeof v === 'object') walk(v);
-      });
-    };
-    walk(o);
-    return results;
-  } catch { return []; }
-};
-
-const resolveEscrowId = (obj, fallback = null) => {
-  const fromRoot = pickNonEmpty(
-    obj?.escrow_id,
-    obj?.escrowId,
-    obj?.escrow?.id,
-    obj?.escrow?.uuid,
-    obj?.escrow?.escrow_id,
-    obj?.escrow?.escrowId,
-    obj?.contract?.escrow_id,
-    obj?.contract?.escrowId,
-    obj?.contractEscrowId,
-    obj?.escrow_uuid
-  );
-  if (fromRoot) return fromRoot;
-
-  const inTrans = Array.isArray(obj?.transacoes)
-    ? obj.transacoes
-        .map(t => pickNonEmpty(
-          t?.escrow_id,
-          t?.escrowId,
-          t?.escrow?.id,
-          t?.escrow?.uuid,
-          t?.escrow?.escrow_id,
-          t?.escrow?.escrowId,
-          t?.contract?.escrow_id,
-          t?.contract?.escrowId
-        ))
-        .filter(Boolean)
-    : [];
-
-  const inDisp = Array.isArray(obj?.disputas)
-    ? obj.disputas
-        .map(d => pickNonEmpty(
-          d?.escrow_id,
-          d?.escrowId,
-          d?.escrow?.id,
-          d?.escrow?.uuid,
-          d?.escrow?.escrow_id,
-          d?.escrow?.escrowId,
-          d?.contract?.escrow_id,
-          d?.contract?.escrowId
-        ))
-        .filter(Boolean)
-    : [];
-
-  const inTxs = Array.isArray(obj?.transactions)
-    ? obj.transactions
-        .map(t => pickNonEmpty(
-          t?.escrow_id,
-          t?.escrowId,
-          t?.escrow?.id,
-          t?.escrow?.uuid,
-          t?.escrow?.escrow_id,
-          t?.escrow?.escrowId,
-          t?.contract?.escrow_id,
-          t?.contract?.escrowId
-        ))
-        .filter(Boolean)
-    : [];
-
-  const deep = (typeof collectEscrowCandidatesDeep === 'function')
-    ? (collectEscrowCandidatesDeep(obj) || [])
-    : [];
-
-  const chain = [...deep, ...inTrans, ...inDisp, ...inTxs];
-  return pickNonEmpty(chain[0], fallback);
-};
-
-let 
-escrowResolved = resolveEscrowId(detObj,
-boleto?.escrow_id);
-console.debug('[DETALHE] escrow-like keys (detObj):', (function keysWithEscrow(o){try{const acc=[]; const walk=(x,p='')=>{ if(!x||typeof x!=='object') return; Object.keys(x).forEach(k=>{ const v=x[k]; const path=p?`${p}.${k}`:k; if(/escrow/i.test(k)||/contractEscrow/i.test(k)) acc.push(path); if(typeof v==='object') walk(v,path);});}; walk(o); return acc.slice(0,50);}catch{return[]}})(detObj));
-console.debug('[DETALHE] escrow candidates (detObj):', (collectEscrowCandidatesDeep(detObj) || []).slice(0,10));
-          let txResolved = detObj.tx_hash ?? detObj.txHash ?? detObj.hash ?? detObj.txhash ?? boleto.tx_hash;
-          const idResolved = detObj.id ?? detObj.uuid ?? boleto.id;
-          const numCtrlResolved = detObj.numero_controle ?? detObj.numeroControle ?? boleto.numero_controle ?? boleto.numeroControle;
-
-          // Enriquecer caso escrow/tx ainda estejam ausentes
-          if (!escrowResolved && numCtrlResolved) {
-            try {
-              console.debug('🔎 [DETALHE] Enriquecendo via numero_controle=', numCtrlResolved);
-              const byNumCtrl = await apiRequest(`/boletos?numero_controle=${numCtrlResolved}`, { disableBackup: true });
-              const arrN = Array.isArray(byNumCtrl?.data) ? byNumCtrl.data : (Array.isArray(byNumCtrl) ? byNumCtrl : []);
-              console.debug('ℹ️ [DETALHE] numero_controle lookup retornou', arrN.length, 'registros');
-              const matchN = arrN.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
-              if (matchN) {
-                escrowResolved = resolveEscrowId(matchN, escrowResolved);
-                txResolved = matchN.tx_hash ?? matchN.txHash ?? matchN.hash ?? matchN.txhash ?? txResolved;
-                console.debug('✅ [DETALHE] Enriquecido via numero_controle');
-              }
-            } catch (eNum) {
-              console.warn('⚠️ Falha ao enriquecer por numero_controle:', eNum);
-            }
-          }
-          if (!escrowResolved && boleto?.comprador_id) {
-            try {
-              console.debug('🔎 [DETALHE] Enriquecendo via comprados do usuário', boleto.comprador_id);
-              const compradosResp2 = await apiRequest(`/boletos/comprados/${boleto.comprador_id}`, { disableBackup: true });
-              const arrC2 = Array.isArray(compradosResp2?.data) ? compradosResp2.data : (Array.isArray(compradosResp2) ? compradosResp2 : []);
-              const matchC = arrC2.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
-              if (matchC) {
-                escrowResolved = resolveEscrowId(matchC, escrowResolved);
-                txResolved = matchC.tx_hash ?? matchC.txHash ?? matchC.hash ?? matchC.txhash ?? txResolved;
-                console.debug('✅ [DETALHE] Enriquecido via comprados');
-              }
-            } catch (eCompr2) {
-              console.warn('⚠️ Falha ao enriquecer via comprados:', eCompr2);
-            }
-          }
-          if (!escrowResolved) {
-            try {
-              console.debug('🔎 [DETALHE] Enriquecendo via lista completa');
-              const listResp2 = await apiRequest('/boletos', { disableBackup: true });
-              const arr2 = Array.isArray(listResp2?.data) ? listResp2.data : (Array.isArray(listResp2) ? listResp2 : []);
-              const matchL = arr2.find(d => (d?.numero_controle === numCtrlResolved || d?.numeroControle === numCtrlResolved || d?.id === idResolved || d?.uuid === idResolved));
-              if (matchL) {
-                escrowResolved = resolveEscrowId(matchL, escrowResolved);
-                txResolved = matchL.tx_hash ?? matchL.txHash ?? matchL.hash ?? matchL.txhash ?? txResolved;
-                console.debug('✅ [DETALHE] Enriquecido via lista completa');
-              }
-            } catch (eList2) {
-              console.warn('⚠️ Falha ao enriquecer via lista completa:', eList2);
-            }
-          }
-
-          // Último fallback: tentar rotas de detalhe e resolvedor de escrow
-          if (!escrowResolved) {
-            const resolverCandidates = [
-              `/boletos/${idResolved}`,
-              `/boletos/${numCtrlResolved}`,
-              `/boletos/detalhe/${idResolved}`,
-              `/boletos/detalhe/${numCtrlResolved}`,
-              `/escrows/resolve?numero_controle=${numCtrlResolved}`,
-              `/escrows/resolve?id=${idResolved}`,
-              `/escrow/resolve?numero_controle=${numCtrlResolved}`,
-              `/escrow/by_tx?tx_hash=${txResolved}`,
-            ];
-            for (const rc of resolverCandidates) {
-              try {
-                console.debug('🔎 [DETALHE] Tentando resolvedor:', rc);
-                const r = await apiRequest(rc, { disableBackup: true });
-                const data = r?.data ?? r;
-                const pickObj = Array.isArray(data) ? data.find(d => d?.id === idResolved || d?.numero_controle === numCtrlResolved || d?.uuid === idResolved) : data;
-                const cand = pickObj || data;
-                if (cand && typeof cand === 'object') {
-                  const esc = resolveEscrowId(cand, escrowResolved);
-                  const txc = cand?.tx_hash ?? cand?.txHash ?? cand?.hash ?? cand?.txhash ?? txResolved;
-                  if (esc) { escrowResolved = esc; txResolved = txc; console.debug('✅ [DETALHE] Resolvedor obteve escrow'); break; }
-                }
-              } catch (eRes) {
-                // ignora e segue
-              }
-            }
-          }
-
-          console.debug('🔧 [DETALHE] Normalizado', { escrowResolved, txResolved, idResolved, numCtrlResolved });
-          boleto = { ...boleto, id: idResolved, numero_controle: numCtrlResolved, escrow_id: escrowResolved, tx_hash: txResolved };
-        }
+      // VALIDAÇÕES ROBUSTAS PRÉ-PROCESSAMENTO
+      
+      // 1. Validar se o boleto existe e tem dados mínimos
+      if (!boleto || typeof boleto !== 'object') {
+        throw new Error('Dados do boleto inválidos ou não fornecidos.');
       }
 
-      // Verificar se há escrow_id no boleto
+      // 2. Validar identificador do boleto
+      if (!boletoId) {
+        throw new Error('Identificador do boleto não encontrado (id, numero_controle ou numeroControle).');
+      }
+
+      // 3. Validar status do boleto
+      if (!boleto.status || typeof boleto.status !== 'string') {
+        throw new Error('Status do boleto não encontrado ou inválido.');
+      }
+      
+      if (boleto.status.trim() !== 'AGUARDANDO BAIXA') {
+        throw new Error(`Status inválido: "${boleto.status}". Só é possível baixar boletos com status "AGUARDANDO BAIXA".`);
+      }
+
+      // 4. Validar endereço do comprador
+      const candidatoEndereco = boleto.wallet_address || boleto.walletAddress || '';
+      if (!candidatoEndereco || typeof candidatoEndereco !== 'string') {
+        throw new Error('Endereço da carteira do comprador não encontrado.');
+      }
+      
+      const enderecoLimpo = candidatoEndereco.trim();
+      if (!/^0x[a-fA-F0-9]{40}$/.test(enderecoLimpo)) {
+        throw new Error(`Endereço da carteira do comprador inválido: "${enderecoLimpo}". Deve ser um endereço Ethereum válido.`);
+      }
+
+      // 5. Validar escrow_id
       if (!boleto.escrow_id) {
         throw new Error('ID do escrow não encontrado no boleto. Não é possível liberar os USDT.');
       }
       
-      // Garantir escrow_id: se ausente, criar automaticamente e persistir
-      let escrowId = boleto.escrow_id;
-      if (!escrowId) {
-        const valorUsdtNum = Number(
-          boleto.valor_usdt ?? (typeof brlToUsdt === 'function' ? brlToUsdt(Number(boleto.valor || 0)) : 0)
-        );
-
-        const escrowCreate = await createEscrow({ valorUSDT: valorUsdtNum });
-        if (!escrowCreate?.success || !escrowCreate?.escrowId) {
-          throw new Error('Falha ao criar escrow automaticamente para este boleto.');
-        }
-        escrowId = escrowCreate.escrowId;
-
-        // Persistir no backend (melhor para rastreabilidade)
-        const identEscrow = boleto.numeroControle || boleto.numero_controle || boleto.id;
-        try {
-          await apiRequest(`/boletos/${identEscrow}/escrow`, {
-            method: 'PATCH',
-            body: {
-              user_id: user.uid,
-              escrow_id: escrowId,
-              tx_hash: escrowCreate.txHash
-            }
-          });
-        } catch (_) {}
-
-        boleto.escrow_id = escrowId;
+      if (typeof boleto.escrow_id !== 'string' && typeof boleto.escrow_id !== 'number') {
+        throw new Error('ID do escrow tem formato inválido.');
       }
 
-      // Verificar e usar endereço de carteira válido do comprador
-      const compradorAddress = candidatoEndereco;
-      if (!/^0x[a-fA-F0-9]{40}$/.test(String(candidatoEndereco))) {
-        throw new Error('Endereço da carteira do comprador inválido. Não é possível liberar os USDT.');
+      // 6. Validar conexão da carteira do vendedor
+      if (!address || !isConnected) {
+        throw new Error('Carteira do vendedor não conectada. Conecte sua carteira para continuar.');
       }
 
-      console.log('🔄 [DEBUG] Registrando comprador no contrato:', candidatoEndereco);
+      // 7. Validar user ID
+      if (!user || !user.uid) {
+        throw new Error('Usuário não autenticado. Faça login para continuar.');
+      }
+
+      // 8. Validar se não há outra baixa em andamento
+      if (boletoBaixandoId && boletoBaixandoId !== boletoId) {
+        throw new Error('Já existe uma baixa em andamento. Aguarde a conclusão antes de iniciar outra.');
+      }
+
+      console.log('✅ [BAIXA] Validações passaram. Processando baixa...');
+      console.log('🔄 [BAIXA] Escrow ID:', boleto.escrow_id);
+      console.log('🔄 [BAIXA] Endereço comprador:', enderecoLimpo);
+
+      setAlertInfo({
+        type: 'default',
+        title: 'Baixando boleto...',
+        description: 'Aguarde enquanto processamos a baixa do boleto e liberamos os USDT para o comprador.'
+      });
+
+      // 9. Registrar o comprador no escrow com validação adicional
+      console.log('🔄 [BAIXA] Registrando comprador no contrato...');
       
-      // PRIMEIRO: Registrar o comprador no escrow
-      const registerResult = await registerBuyer(boleto.escrow_id, candidatoEndereco);
+      if (!registerBuyer || typeof registerBuyer !== 'function') {
+        throw new Error('Função registerBuyer não disponível. Verifique a conexão com o contrato.');
+      }
+      
+      const registerResult = await registerBuyer(boleto.escrow_id, enderecoLimpo);
+      
+      if (!registerResult || typeof registerResult !== 'object') {
+        throw new Error('Resposta inválida do registro do comprador no contrato.');
+      }
       
       if (!registerResult.success) {
-        throw new Error('Falha ao registrar comprador no contrato');
+        const errorMsg = registerResult.error || registerResult.message || 'Erro desconhecido';
+        throw new Error(`Falha ao registrar comprador no contrato: ${errorMsg}`);
       }
 
-      console.log('✅ [DEBUG] Comprador registrado. Liberando pagamento...');
+      console.log('✅ [BAIXA] Comprador registrado. Liberando pagamento...');
 
-      // SEGUNDO: Liberar os USDT do contrato inteligente para o COMPRADOR
+      // 10. Liberar os USDT do contrato inteligente para o COMPRADOR com validação
+      if (!releaseEscrow || typeof releaseEscrow !== 'function') {
+        throw new Error('Função releaseEscrow não disponível. Verifique a conexão com o contrato.');
+      }
+      
       const result = await releaseEscrow({
         escrowId: boleto.escrow_id
       });
       
+      if (!result || typeof result !== 'object') {
+        throw new Error('Resposta inválida da liberação do escrow.');
+      }
+      
       if (!result.success) {
-        throw new Error('Falha ao liberar USDT do contrato para o comprador');
+        const errorMsg = result.error || result.message || 'Erro desconhecido';
+        throw new Error(`Falha ao liberar USDT do contrato para o comprador: ${errorMsg}`);
+      }
+      
+      if (!result.txHash || typeof result.txHash !== 'string') {
+        throw new Error('Hash da transação não retornado pela liberação do escrow.');
       }
 
-      // Depois, chamar o backend para baixar o boleto
-      // A API de baixar/liberar espera numero_controle no path
+      console.log('✅ [BAIXA] USDT liberados. TX Hash:', result.txHash);
+      console.log('🔄 [BAIXA] Atualizando backend...');
+
+      // 11. Atualizar o backend com validação robusta
       const identBaixar = boleto.numero_controle || boleto.numeroControle || boleto.id;
+      
+      if (!apiRequest || typeof apiRequest !== 'function') {
+        throw new Error('Função apiRequest não disponível. Verifique a conexão com a API.');
+      }
+      
       const responseData = await apiRequest(`/boletos/${identBaixar}/baixar`, {
         method: 'PATCH',
         body: {
           user_id: user.uid,
           wallet_address_vendedor: address,
-          wallet_address_comprador: candidatoEndereco,
+          wallet_address_comprador: enderecoLimpo,
           tx_hash: result.txHash
         }
       });
 
       if (responseData && responseData.success === false) {
-        throw new Error(responseData.message || 'Falha ao baixar boleto');
+        const errorMsg = responseData.message || responseData.error || 'Erro desconhecido';
+        throw new Error(`Falha ao baixar boleto no backend: ${errorMsg}`);
       }
 
+      console.log('✅ [BAIXA] Backend atualizado. Baixa concluída com sucesso!');
+
+      // 12. Mostrar sucesso com informações detalhadas
+      const enderecoExibicao = `${enderecoLimpo.substring(0, 6)}...${enderecoLimpo.substring(enderecoLimpo.length - 4)}`;
+      const txHashExibicao = `${result.txHash.substring(0, 10)}...`;
+      
       setAlertInfo({
         type: 'success',
         title: 'Boleto baixado com sucesso!',
-        description: `USDT liberados para o comprador (${candidatoEndereco.substring(0, 6)}...${candidatoEndereco.substring(candidatoEndereco.length - 4)}). TX: ${result.txHash.substring(0, 10)}...`
+        description: `USDT liberados para o comprador (${enderecoExibicao}). TX: ${txHashExibicao}`
       });
       setTimeout(() => setAlertInfo(null), 5000);
 
-      // Atualizar a lista de boletos
-      await fetchBoletosOptimized(true);
+      // 13. Atualizar a lista de boletos
+      if (fetchBoletosOptimized && typeof fetchBoletosOptimized === 'function') {
+        await fetchBoletosOptimized(true);
+      } else {
+        console.warn('⚠️ [BAIXA] Função fetchBoletosOptimized não disponível. Lista não será atualizada automaticamente.');
+      }
 
-      // Definir estado de sucesso
-      console.log('✅ Boleto baixado com sucesso, definindo status sucesso para:', boletoId);
-      setStatusBaixa(prev => {
-        const newState = { ...prev, [boletoId]: 'sucesso' };
-        console.log('🔄 Status atualizado:', newState);
-        return newState;
-      });
+      // 14. Definir estado de sucesso
+      setStatusBaixa(prev => ({ ...prev, [boletoId]: 'sucesso' }));
       
-      // Limpar estados após 3 segundos 
+      // 15. Limpar estados após 3 segundos 
       setTimeout(() => { 
-        console.log('🧹 Limpando estados após 3 segundos para:', boletoId); 
         setBoletoBaixandoId(null); 
-        setStatusBaixa(prev => { 
-          const newState = { ...prev, [boletoId]: null }; 
-          console.log('🔄 Estados limpos:', newState); 
-          return newState; 
-        }); 
+        setStatusBaixa(prev => ({ ...prev, [boletoId]: null })); 
       }, 3000);
       
     } catch (error) {
-      console.error('Erro ao processar baixa do boleto:', error);
+      console.error('❌ [BAIXA] Erro ao processar baixa do boleto:', error);
+      
       setAlertInfo({
         type: 'destructive',
-        title: 'Erro',
-        description: 'Erro ao processar baixa do boleto.'
+        title: 'Erro ao baixar boleto',
+        description: error.message || 'Erro desconhecido ao processar baixa do boleto.'
       });
+      setTimeout(() => setAlertInfo(null), 5000);
+      
+      // Limpar estados de loading
       setBoletoBaixandoId(null);
       setStatusBaixa(prev => ({ ...prev, [boletoId]: null }));
     }
