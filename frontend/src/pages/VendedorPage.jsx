@@ -1125,15 +1125,14 @@ const fetchBoletos = async () => {
       console.log('🔄 [BAIXA] Escrow ID para liberação:', boleto.escrow_id);
       
       // Adicionar timeout para evitar travamento infinito
-      const releasePromise = releaseEscrow({
-        escrowId: boleto.escrow_id
-      });
-      
       const timeoutPromise = new Promise((_, reject) => {
         setTimeout(() => reject(new Error('Timeout: Liberação do escrow demorou mais de 60 segundos')), 60000);
       });
       
-      const result = await Promise.race([releasePromise, timeoutPromise]);
+      const result = await Promise.race([
+        releaseEscrow({ escrowId: boleto.escrow_id }),
+        timeoutPromise
+      ]);
       
       if (!result?.success) {
         console.error('❌ [BAIXA] Falha na liberação do escrow:', result);
