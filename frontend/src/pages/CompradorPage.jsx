@@ -620,12 +620,23 @@ const CompradorPage = () => {
 
   // Função otimizada para buscar boletos disponíveis
   const fetchBoletosDisponiveis = async (forceRefresh = false) => {
-    if (!user?.uid) return;
+    console.log('🔍 fetchBoletosDisponiveis iniciada:', { user: user?.uid, forceRefresh });
+    
+    if (!user?.uid) {
+      console.warn('❌ Usuário não autenticado, cancelando busca de boletos');
+      return;
+    }
+
+    // Adicionar loading apenas se não for polling silencioso
+    if (forceRefresh) {
+      setLoadingBoletos(true);
+    }
 
     try {
       // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
       const timestamp = Date.now();
       const url = buildApiUrl(`/boletos?status=DISPONIVEL&t=${timestamp}`);
+      console.log('🌐 URL da requisição:', url);
       
       const headers = {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -633,39 +644,56 @@ const CompradorPage = () => {
         'Expires': '0'
       };
       
+      console.log('📡 Fazendo requisição para API...');
       const res = await fetch(url, { headers });
+      console.log('📡 Resposta recebida:', { status: res.status, statusText: res.statusText, ok: res.ok });
       
       if (!res.ok) {
-        console.error('Erro HTTP:', res.status, res.statusText);
+        console.error('❌ Erro HTTP:', res.status, res.statusText);
         throw new Error(`Erro ${res.status}: ${res.statusText}`);
       }
       
       const data = await res.json();
-      console.log('Dados recebidos da API:', data);
+      console.log('📊 Dados brutos recebidos da API:', data);
+      console.log('📊 Tipo dos dados:', typeof data, 'É array?', Array.isArray(data));
       
       const lista = Array.isArray(data) ? data : (data?.data || []);
+      console.log('📋 Lista extraída:', lista, 'Tamanho:', lista.length);
 
-      const boletosMapeados = lista.map(boleto => ({
-        ...boleto,
-        numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
-        codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
-        valor: boleto.valor_brl || boleto.valor || 0,
-        valor_usdt: boleto.valor_usdt || 0,
-        dataVencimento: boleto.vencimento || boleto.dataVencimento,
-        beneficiario: boleto.cpf_cnpj || boleto.beneficiario,
-        status: boleto.status
-      }));
+      const boletosMapeados = lista.map(boleto => {
+        const mapeado = {
+          ...boleto,
+          numeroBoleto: boleto.numero_controle || boleto.numeroBoleto,
+          codigoBarras: boleto.codigo_barras || boleto.codigoBarras,
+          valor: boleto.valor_brl || boleto.valor || 0,
+          valor_usdt: boleto.valor_usdt || 0,
+          dataVencimento: boleto.vencimento || boleto.dataVencimento,
+          beneficiario: boleto.cpf_cnpj || boleto.beneficiario,
+          status: boleto.status
+        };
+        console.log('🔄 Boleto mapeado:', mapeado);
+        return mapeado;
+      });
 
-      const boletosDisponiveis = boletosMapeados.filter(boleto => 
-        boleto.status === 'DISPONIVEL' || boleto.status === 'disponivel'
-      );
+      const boletosDisponiveis = boletosMapeados.filter(boleto => {
+        const isDisponivel = boleto.status === 'DISPONIVEL' || boleto.status === 'disponivel';
+        console.log(`🔍 Boleto ${boleto.numeroBoleto} - Status: ${boleto.status} - Disponível: ${isDisponivel}`);
+        return isDisponivel;
+      });
       
-      console.log('Boletos disponíveis encontrados:', boletosDisponiveis.length);
+      console.log('✅ Boletos disponíveis encontrados:', boletosDisponiveis.length);
+      console.log('📋 Lista final de boletos disponíveis:', boletosDisponiveis);
+      
       setBoletosDisponiveis(boletosDisponiveis);
       
     } catch (error) {
-      console.error('Erro ao buscar boletos disponíveis:', error);
+      console.error('❌ Erro ao buscar boletos disponíveis:', error);
+      console.error('❌ Stack trace:', error.stack);
       setBoletosDisponiveis([]);
+    } finally {
+      if (forceRefresh) {
+        setLoadingBoletos(false);
+      }
     }
   };
 
