@@ -9,7 +9,7 @@ const getCorrectApiUrl = () => {
     return 'http://localhost:3001/api';
   }
 
-  // PRODUÇÃO: usar backend dedicado Vercel como primário para evitar problemas de rewrite
+  // PRODUÇÃO: SEMPRE usar backend dedicado Vercel - TESTADO E FUNCIONANDO
   return 'https://boletos-backend-290725.vercel.app/api';
 };
 

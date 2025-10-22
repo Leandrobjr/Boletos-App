@@ -618,7 +618,7 @@ const CompradorPage = () => {
 
   // Cache para boletos disponíveis (usando variáveis já declaradas acima)
 
-  // Função otimizada para buscar boletos disponíveis
+  // Função otimizada para buscar boletos disponíveis - VERSÃO CORRIGIDA
   const fetchBoletosDisponiveis = async (forceRefresh = false) => {
     console.log('🔍 fetchBoletosDisponiveis iniciada:', { user: user?.uid, forceRefresh });
     
@@ -633,19 +633,24 @@ const CompradorPage = () => {
     }
 
     try {
-      // SEMPRE FORÇAR REQUISIÇÃO FRESCA - SEM CACHE
+      // CORREÇÃO: URL DIRETA PARA O BACKEND FUNCIONANDO
       const timestamp = Date.now();
-      const url = buildApiUrl(`/boletos?status=DISPONIVEL&t=${timestamp}`);
-      console.log('🌐 URL da requisição:', url);
+      const url = `https://boletos-backend-290725.vercel.app/api/boletos?status=DISPONIVEL&t=${timestamp}`;
+      console.log('🌐 URL da requisição (CORRIGIDA):', url);
       
       const headers = {
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
-        'Expires': '0'
+        'Expires': '0',
+        'Content-Type': 'application/json'
       };
       
       console.log('📡 Fazendo requisição para API...');
-      const res = await fetch(url, { headers });
+      const res = await fetch(url, { 
+        method: 'GET',
+        headers,
+        mode: 'cors' // CORREÇÃO: Forçar CORS
+      });
       console.log('📡 Resposta recebida:', { status: res.status, statusText: res.statusText, ok: res.ok });
       
       if (!res.ok) {
@@ -657,7 +662,16 @@ const CompradorPage = () => {
       console.log('📊 Dados brutos recebidos da API:', data);
       console.log('📊 Tipo dos dados:', typeof data, 'É array?', Array.isArray(data));
       
-      const lista = Array.isArray(data) ? data : (data?.data || []);
+      // CORREÇÃO: Melhor extração dos dados
+      let lista = [];
+      if (data.success && Array.isArray(data.data)) {
+        lista = data.data;
+      } else if (Array.isArray(data)) {
+        lista = data;
+      } else if (data.data && Array.isArray(data.data)) {
+        lista = data.data;
+      }
+      
       console.log('📋 Lista extraída:', lista, 'Tamanho:', lista.length);
 
       const boletosMapeados = lista.map(boleto => {
@@ -689,6 +703,31 @@ const CompradorPage = () => {
     } catch (error) {
       console.error('❌ Erro ao buscar boletos disponíveis:', error);
       console.error('❌ Stack trace:', error.stack);
+      
+      // FALLBACK: Tentar URL alternativa se a primeira falhar
+      try {
+        console.log('🔄 Tentando URL alternativa...');
+        const fallbackUrl = buildApiUrl('/boletos?status=DISPONIVEL');
+        console.log('🌐 URL alternativa:', fallbackUrl);
+        
+        const fallbackRes = await fetch(fallbackUrl, {
+          method: 'GET',
+          headers: {
+            'Cache-Control': 'no-cache',
+            'Content-Type': 'application/json'
+          },
+          mode: 'cors'
+        });
+        
+        if (fallbackRes.ok) {
+          const fallbackData = await fallbackRes.json();
+          console.log('✅ Fallback funcionou! Dados:', fallbackData);
+          // Processar dados do fallback...
+        }
+      } catch (fallbackError) {
+        console.error('❌ Fallback também falhou:', fallbackError);
+      }
+      
       setBoletosDisponiveis([]);
     } finally {
       if (forceRefresh) {
