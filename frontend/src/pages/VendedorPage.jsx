@@ -389,6 +389,29 @@ const fetchBoletos = async () => {
     try {
       setButtonMessage('Travando USDT...');
       
+      // Aguardar carregamento das funções do hook (solução definitiva)
+      console.log('🔄 [CADASTRO] Aguardando carregamento das funções do hook...');
+      
+      // Aguardar até que as funções estejam disponíveis (máximo 10 segundos)
+      let tentativas = 0;
+      const maxTentativas = 50; // 10 segundos (200ms * 50)
+      
+      while (!createEscrow && tentativas < maxTentativas) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        tentativas++;
+        
+        if (tentativas % 10 === 0) {
+          console.log(`🔄 [CADASTRO] Aguardando função createEscrow... (${tentativas * 200}ms)`);
+        }
+      }
+      
+      // Verificação final da função
+      if (!createEscrow || typeof createEscrow !== 'function') {
+        throw new Error('Função createEscrow não carregou. Recarregue a página e tente novamente.');
+      }
+      
+      console.log('✅ [CADASTRO] Função createEscrow carregada. Travando USDT...');
+      
       // Primeiro, travar USDT no contrato inteligente
       // Primeiro, travar USDT no escrow usando arquitetura universal
       const escrowResult = await createEscrow({
@@ -641,6 +664,19 @@ const fetchBoletos = async () => {
       
       // Abrir modal de conexão automaticamente
       try {
+        // Aguardar carregamento da função connectWallet
+        let tentativas = 0;
+        const maxTentativas = 25; // 5 segundos (200ms * 25)
+        
+        while (!connectWallet && tentativas < maxTentativas) {
+          await new Promise(resolve => setTimeout(resolve, 200));
+          tentativas++;
+        }
+        
+        if (!connectWallet || typeof connectWallet !== 'function') {
+          throw new Error('Função connectWallet não carregou.');
+        }
+        
         await connectWallet();
       } catch (error) {
         console.error('Erro ao abrir modal de conexão:', error);
@@ -1042,14 +1078,38 @@ const fetchBoletos = async () => {
         description: 'Aguarde enquanto processamos a baixa do boleto e liberamos os USDT para o comprador.'
       });
 
-      // 9. Registrar o comprador no escrow
-      console.log('🔄 [BAIXA] Registrando comprador no contrato...');
+      // 9. Aguardar carregamento das funções do hook (solução definitiva)
+      console.log('🔄 [BAIXA] Aguardando carregamento das funções do hook...');
       
-      // Verificar se a função registerBuyer está disponível
-      if (!registerBuyer) {
-        throw new Error('Função registerBuyer não está disponível. Verifique a conexão da carteira.');
+      // Aguardar até que as funções estejam disponíveis (máximo 10 segundos)
+      let tentativas = 0;
+      const maxTentativas = 50; // 10 segundos (200ms * 50)
+      
+      while ((!registerBuyer || !releaseEscrow || !apiRequest) && tentativas < maxTentativas) {
+        await new Promise(resolve => setTimeout(resolve, 200));
+        tentativas++;
+        
+        if (tentativas % 10 === 0) {
+          console.log(`🔄 [BAIXA] Aguardando funções... (${tentativas * 200}ms)`);
+        }
       }
       
+      // Verificação final das funções
+      if (!registerBuyer || typeof registerBuyer !== 'function') {
+        throw new Error('Função registerBuyer não carregou. Recarregue a página e tente novamente.');
+      }
+      
+      if (!releaseEscrow || typeof releaseEscrow !== 'function') {
+        throw new Error('Função releaseEscrow não carregou. Recarregue a página e tente novamente.');
+      }
+      
+      if (!apiRequest || typeof apiRequest !== 'function') {
+        throw new Error('Função apiRequest não carregou. Recarregue a página e tente novamente.');
+      }
+      
+      console.log('✅ [BAIXA] Todas as funções carregadas. Registrando comprador...');
+      
+      // 10. Registrar o comprador no escrow
       const registerResult = await registerBuyer(boleto.escrow_id, enderecoLimpo);
       
       if (!registerResult?.success) {
@@ -1058,12 +1118,7 @@ const fetchBoletos = async () => {
 
       console.log('✅ [BAIXA] Comprador registrado. Liberando pagamento...');
 
-      // 10. Liberar os USDT do contrato inteligente para o COMPRADOR
-      // Verificar se a função releaseEscrow está disponível
-      if (!releaseEscrow) {
-        throw new Error('Função releaseEscrow não está disponível. Verifique a conexão da carteira.');
-      }
-      
+      // 11. Liberar os USDT do contrato inteligente para o COMPRADOR
       const result = await releaseEscrow({
         escrowId: boleto.escrow_id
       });
@@ -1075,13 +1130,8 @@ const fetchBoletos = async () => {
       console.log('✅ [BAIXA] USDT liberados. TX Hash:', result.txHash);
       console.log('🔄 [BAIXA] Atualizando backend...');
 
-      // 11. Atualizar o backend
+      // 12. Atualizar o backend
       const identBaixar = boleto.numero_controle || boleto.numeroControle || boleto.id;
-      
-      // Verificar se a função apiRequest está disponível
-      if (!apiRequest) {
-        throw new Error('Função apiRequest não está disponível. Verifique a configuração da API.');
-      }
       
       const responseData = await apiRequest(`/boletos/${identBaixar}/baixar`, {
         method: 'PATCH',
