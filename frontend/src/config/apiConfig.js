@@ -9,8 +9,8 @@ const getCorrectApiUrl = () => {
     return 'http://localhost:3001/api';
   }
 
-  // PRODUÇÃO: consumir via caminho relativo para acionar o rewrite
-  return '/api';
+  // PRODUÇÃO: usar backend dedicado Vercel como primário para evitar problemas de rewrite
+  return 'https://boletos-backend-290725.vercel.app/api';
 };
 
 // URL BASE FIXA - NÃO PODE SER ALTERADA
@@ -127,13 +127,13 @@ export const apiRequest = async (endpoint, options = {}) => {
   const maxRetries = 2; // reduzir para evitar espera longa
   let lastError;
 
-  // Estratégia de fallback: se produção estiver usando caminho relativo /api, tentar backend dedicado
+  // Estratégia de fallback: usar caminho relativo como backup
   const candidates = [primaryUrl];
   const isLocal = primaryUrl.includes('localhost');
-  const isRelativeApi = primaryUrl.startsWith('/api');
+  const isVercelBackend = primaryUrl.includes('boletos-backend-290725.vercel.app');
   const disableBackup = options.disableBackup === true;
-  if (!isLocal && isRelativeApi && !disableBackup) {
-    candidates.push(`${API_BACKUP_URL}${endpoint}`);
+  if (!isLocal && isVercelBackend && !disableBackup) {
+    candidates.push('/api' + endpoint);
   }
 
   for (const url of candidates) {
