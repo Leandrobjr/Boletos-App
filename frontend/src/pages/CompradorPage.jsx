@@ -223,28 +223,50 @@ const CompradorPage = () => {
 
   const handleConectarCarteira = async () => {
     try {
-      console.log('🔄 [DEBUG] Iniciando conexão da carteira...');
+      console.log('🔄 [COMPRADOR] Iniciando conexão da carteira...');
+      
+      // Verificar se o hook está disponível
+      if (!connectWallet) {
+        console.error('❌ [COMPRADOR] Hook connectWallet não disponível');
+        throw new Error('Sistema de carteira não inicializado. Recarregue a página.');
+      }
       
       // Usar diretamente o hook useBoletoEscrowFixed
       const result = await connectWallet();
       
+      console.log('📊 [COMPRADOR] Resultado da conexão:', result);
+      
       if (result.success) {
+        console.log('✅ [COMPRADOR] Carteira conectada com sucesso!');
         setAlertInfo({
           type: 'success',
           title: 'Carteira conectada!',
-          description: 'Agora você pode escolher um boleto para comprar.'
+          description: `Conectado com sucesso! Endereço: ${result.address?.substring(0, 6)}...${result.address?.substring(result.address.length - 4)}`
         });
         setTimeout(() => setAlertInfo(null), 3000);
       } else {
+        console.error('❌ [COMPRADOR] Falha na conexão:', result.error);
         throw new Error(result.error || 'Erro desconhecido ao conectar carteira');
       }
       
     } catch (error) {
-      console.error('❌ [DEBUG] Erro ao conectar carteira:', error);
+      console.error('❌ [COMPRADOR] Erro ao conectar carteira:', error);
+      
+      // Mensagens de erro mais específicas
+      let errorMessage = error.message || 'Não foi possível conectar a carteira';
+      
+      if (error.message?.includes('User rejected')) {
+        errorMessage = 'Conexão cancelada pelo usuário. Aceite a conexão para continuar.';
+      } else if (error.message?.includes('No Ethereum provider')) {
+        errorMessage = 'Nenhuma carteira detectada. Instale MetaMask ou outra carteira compatível.';
+      } else if (error.message?.includes('network')) {
+        errorMessage = 'Erro de rede. Verifique sua conexão e tente novamente.';
+      }
+      
       setAlertInfo({
         type: 'destructive',
         title: 'Erro de conexão',
-        description: error.message || 'Não foi possível conectar a carteira'
+        description: errorMessage
       });
       setTimeout(() => setAlertInfo(null), 5000);
     }
