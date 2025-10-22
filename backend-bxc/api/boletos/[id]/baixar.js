@@ -79,7 +79,8 @@ module.exports = async (req, res) => {
     const update = await pool.query(
       `UPDATE boletos
          SET status = 'BAIXADO',
-             tx_hash = COALESCE($1, tx_hash)
+             tx_hash = COALESCE($1, tx_hash),
+             updated_at = NOW()
        WHERE id = $2
        RETURNING *`,
       [tx_hash || null, boleto.id]
@@ -87,7 +88,36 @@ module.exports = async (req, res) => {
 
     const atualizado = update.rows[0];
 
-    console.log('✅ Boleto baixado em produção:', atualizado.id || atualizado.numero_controle);
+    // Verificar se a atualização foi bem-sucedida
+    if (!atualizado) {
+      console.error('❌ Falha ao atualizar boleto - nenhuma linha afetada:', boleto.id);
+      return res.status(500).json({ 
+        error: 'Falha ao atualizar status do boleto', 
+        details: 'Nenhuma linha foi afetada na atualização' 
+      });
+    }
+
+    // Verificar se o status foi realmente atualizado
+    if (atualizado.status !== 'BAIXADO') {
+      console.error('❌ Status não foi atualizado corretamente:', {
+        esperado: 'BAIXADO',
+        atual: atualizado.status,
+        boleto_id: atualizado.id
+      });
+      return res.status(500).json({ 
+        error: 'Status do boleto não foi atualizado corretamente', 
+        details: `Status atual: ${atualizado.status}, esperado: BAIXADO` 
+      });
+    }
+
+    console.log('✅ Boleto baixado em produção:', {
+      id: atualizado.id,
+      numero_controle: atualizado.numero_controle,
+      status_anterior: boleto.status,
+      status_atual: atualizado.status,
+      tx_hash: atualizado.tx_hash
+    });
+    
     return res.status(200).json({ success: true, data: atualizado });
 
   } catch (error) {

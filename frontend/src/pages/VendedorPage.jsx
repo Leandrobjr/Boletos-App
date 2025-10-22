@@ -1155,11 +1155,22 @@ const fetchBoletos = async () => {
         }
       });
 
+      console.log('🔍 [BAIXA] Resposta do backend:', responseData);
+      console.log('🔍 [BAIXA] Status da resposta:', responseData?.success);
+      console.log('🔍 [BAIXA] Dados retornados:', responseData?.data);
+
       if (responseData?.success === false) {
-        throw new Error(`Falha ao baixar boleto no backend: ${responseData.message || 'Erro desconhecido'}`);
+        console.error('❌ [BAIXA] Backend retornou erro:', responseData);
+        throw new Error(`Falha ao baixar boleto no backend: ${responseData.message || responseData.error || 'Erro desconhecido'}`);
       }
 
-      console.log('✅ [BAIXA] Backend atualizado. Baixa concluída com sucesso!');
+      // Verificar se o status foi realmente atualizado
+      if (responseData?.data?.status !== 'BAIXADO') {
+        console.warn('⚠️ [BAIXA] Status do boleto não foi atualizado para BAIXADO:', responseData?.data?.status);
+        throw new Error(`Status do boleto não foi atualizado. Status atual: ${responseData?.data?.status || 'desconhecido'}`);
+      }
+
+      console.log('✅ [BAIXA] Backend atualizado. Status confirmado como BAIXADO!');
 
       // 12. Mostrar sucesso com informações detalhadas
       const enderecoExibicao = `${enderecoLimpo.substring(0, 6)}...${enderecoLimpo.substring(enderecoLimpo.length - 4)}`;
