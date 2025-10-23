@@ -5,7 +5,7 @@ import './styles/global.css'
 import './styles/shadcn-theme.css'
 import App from './App.jsx'
 import { BrowserRouter as Router } from 'react-router-dom';
-import { WagmiConfig } from 'wagmi';
+import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { wagmiConfig, chains } from './config/rainbowConfig';
@@ -36,7 +36,7 @@ if ('serviceWorker' in navigator) {
 
 createRoot(document.getElementById('root')).render(
   <StrictMode>
-    <WagmiConfig config={wagmiConfig}>
+    <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider chains={chains} modalSize="compact">
     <Router>
@@ -44,6 +44,6 @@ createRoot(document.getElementById('root')).render(
     </Router>
         </RainbowKitProvider>
       </QueryClientProvider>
-    </WagmiConfig>
+    </WagmiProvider>
   </StrictMode>,
 )
