@@ -1,25 +1,15 @@
-import { getDefaultWallets } from '@rainbow-me/rainbowkit';
-import { createConfig, http } from 'wagmi';
+import { getDefaultConfig } from '@rainbow-me/rainbowkit';
 import { polygon, polygonAmoy } from 'wagmi/chains';
-import { injected } from 'wagmi/connectors';
 
 // Configuração das chains suportadas - Wagmi v2
 const chains = [polygonAmoy, polygon];
 
-// Configuração do Wagmi v2
-const wagmiConfig = createConfig({
+// Configuração do Wagmi v2 com RainbowKit
+const wagmiConfig = getDefaultConfig({
+  appName: 'BoletoXCrypto',
+  projectId: 'YOUR_PROJECT_ID', // Substitua pelo seu Project ID do WalletConnect
   chains,
-  transports: {
-    [polygonAmoy.id]: http(),
-    [polygon.id]: http(),
-  },
-  connectors: [
-    injected({
-      // Desativando a conexão automática
-      shimDisconnect: true
-    })
-  ],
-  autoConnect: false
+  ssr: false, // Se você não estiver usando SSR
 });
 
 export { wagmiConfig, chains };

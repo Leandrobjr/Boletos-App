@@ -8,7 +8,7 @@ import { BrowserRouter as Router } from 'react-router-dom';
 import { WagmiProvider } from 'wagmi';
 import { RainbowKitProvider } from '@rainbow-me/rainbowkit';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { wagmiConfig, chains } from './config/rainbowConfig';
+import { wagmiConfig } from './config/rainbowConfig';
 import '@rainbow-me/rainbowkit/styles.css';
 
 console.log('main.jsx carregado');
@@ -38,10 +38,10 @@ createRoot(document.getElementById('root')).render(
   <StrictMode>
     <WagmiProvider config={wagmiConfig}>
       <QueryClientProvider client={queryClient}>
-        <RainbowKitProvider chains={chains} modalSize="compact">
-    <Router>
-      <App />
-    </Router>
+        <RainbowKitProvider modalSize="compact">
+          <Router>
+            <App />
+          </Router>
         </RainbowKitProvider>
       </QueryClientProvider>
     </WagmiProvider>
