@@ -244,7 +244,10 @@ module.exports = async (req, res) => {
         descricao,
         codigo_barras,
         cpf_cnpj,
-        instituicao
+        instituicao,
+        escrow_id, // ✅ Adicionar escrow_id
+        tx_hash,   // ✅ Adicionar tx_hash
+        data_travamento // ✅ Adicionar data_travamento
       } = req.body;
 
       console.log('📋 Dados recebidos:', {
@@ -256,7 +259,10 @@ module.exports = async (req, res) => {
         descricao,
         codigo_barras,
         cpf_cnpj,
-        instituicao
+        instituicao,
+        escrow_id, // ✅ Log do escrow_id
+        tx_hash,   // ✅ Log do tx_hash
+        data_travamento // ✅ Log da data_travamento
       });
 
       if (!numero_controle || !valor || !user_id) {
@@ -314,8 +320,9 @@ module.exports = async (req, res) => {
       const result = await pool.query(
         `INSERT INTO boletos (
           numero_controle, valor_brl, valor_usdt, vencimento, user_id, 
-          status, codigo_barras, cpf_cnpj, instituicao, criado_em
-        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW()) RETURNING *`,
+          status, codigo_barras, cpf_cnpj, instituicao, criado_em,
+          escrow_id, tx_hash, data_travamento
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), $10, $11, $12) RETURNING *`,
         [
           numero_controle, 
           valor, 
@@ -325,7 +332,10 @@ module.exports = async (req, res) => {
           'DISPONIVEL',
           codigo_barras || null,
           cpf_cnpj || null,
-          instituicao || null
+          instituicao || null,
+          escrow_id || null,  // ✅ Adicionar escrow_id
+          tx_hash || null,    // ✅ Adicionar tx_hash
+          data_travamento || null // ✅ Adicionar data_travamento
         ]
       );
 
