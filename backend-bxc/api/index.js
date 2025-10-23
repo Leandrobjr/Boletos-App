@@ -79,8 +79,7 @@ module.exports = async (req, res) => {
                 comprador_id = NULL,
                 wallet_address = NULL,
                 data_destravamento = $1,
-                data_travamento = NULL,
-                updated_at = $1
+                data_travamento = NULL
               WHERE id = $2
               RETURNING id, status, data_destravamento
             `, [agora.toISOString(), boleto.id]);

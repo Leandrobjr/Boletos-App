@@ -80,8 +80,7 @@ module.exports = async (req, res) => {
       `UPDATE boletos
          SET status = 'BAIXADO',
              tx_hash = COALESCE($1, tx_hash),
-             escrow_id = COALESCE($2, escrow_id),
-             updated_at = NOW()
+             escrow_id = COALESCE($2, escrow_id)
        WHERE id = $3
        RETURNING *`,
       [tx_hash || null, escrow_id || null, boleto.id]

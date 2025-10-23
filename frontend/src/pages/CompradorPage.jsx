@@ -278,6 +278,12 @@ const CompradorPage = () => {
     // Verificar se está na rede correta (sistema universal já gerencia isso)
     // Removido verificação manual - sistema universal já valida a rede
 
+    // Prevenir múltiplos cliques
+    if (etapaCompra === 3) {
+      console.log('⚠️ Boleto já está sendo processado, ignorando clique duplo');
+      return;
+    }
+
     setAlertInfo({
       type: 'default',
       title: 'Reservando boleto...',
@@ -748,19 +754,19 @@ const CompradorPage = () => {
     // eslint-disable-next-line
   }, [tab]);
 
-  // Polling para atualização automática de boletos (SILENCIOSO)
+  // Polling para atualização automática de boletos (OTIMIZADO)
   useEffect(() => {
     let interval;
     if (activeTab === 'meusBoletos' || activeTab === 'historico') {
       fetchMeusBoletosComLoading(); // Busca inicial com loading
       interval = setInterval(() => {
         fetchMeusBoletos(); // Polling silencioso sem loading
-      }, 5000); // 5 segundos como original
+      }, 15000); // 15 segundos - reduzido de 5s para melhor performance
     } else if (activeTab === 'comprar') {
       fetchBoletosDisponiveis(true); // Busca inicial com refresh forçado
       interval = setInterval(() => {
         fetchBoletosDisponiveis(); // Polling silencioso para livro de ordens
-      }, 3000); // 3 segundos para atualização mais frequente
+      }, 10000); // 10 segundos - reduzido de 3s para melhor performance
     }
     return () => {
       if (interval) clearInterval(interval);
@@ -1534,25 +1540,31 @@ const CompradorPage = () => {
                       </div>
                       <button
                         onClick={handleTravarBoleto}
+                        disabled={etapaCompra === 3} // Desabilitar se já está processando
                         style={{
-                          backgroundColor: '#16a34a',
+                          backgroundColor: etapaCompra === 3 ? '#9ca3af' : '#16a34a',
                           color: '#ffffff',
                           fontWeight: '600',
                           padding: '0.75rem 1.5rem',
                           borderRadius: '0.5rem',
                           boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
                           border: 'none',
-                          cursor: 'pointer',
+                          cursor: etapaCompra === 3 ? 'not-allowed' : 'pointer',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           gap: '0.75rem',
-                          transition: 'all 0.2s'
+                          transition: 'all 0.2s',
+                          opacity: etapaCompra === 3 ? 0.6 : 1
                         }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
+                        onMouseEnter={(e) => {
+                          if (etapaCompra !== 3) e.target.style.backgroundColor = '#15803d'
+                        }}
+                        onMouseLeave={(e) => {
+                          if (etapaCompra !== 3) e.target.style.backgroundColor = '#16a34a'
+                        }}
                       >
-                        <FaLock /> TRAVAR BOLETO
+                        <FaLock /> {etapaCompra === 3 ? 'PROCESSANDO...' : 'TRAVAR BOLETO'}
                       </button>
                     </>
                   ) : (

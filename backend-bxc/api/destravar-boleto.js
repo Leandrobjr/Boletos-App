@@ -96,8 +96,7 @@ module.exports = async (req, res) => {
         comprador_id = NULL,
         wallet_address = NULL,
         data_destravamento = $1,
-        data_travamento = NULL,
-        updated_at = $1
+        data_travamento = NULL
       WHERE id = $2
       RETURNING *
     `, [agora, boletoId]);
@@ -117,8 +116,7 @@ module.exports = async (req, res) => {
       boleto: {
         id: boletoAtualizado.id,
         status: boletoAtualizado.status,
-        data_destravamento: boletoAtualizado.data_destravamento,
-        updated_at: boletoAtualizado.updated_at
+        data_destravamento: boletoAtualizado.data_destravamento
       },
       timestamp: agora
     });
