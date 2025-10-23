@@ -74,9 +74,10 @@ export function NetworkStatus() {
   useEffect(() => {
     testAllRPCs();
     
-    // Teste automático a cada 2 minutos
-    const interval = setInterval(testAllRPCs, 120000);
-    return () => clearInterval(interval);
+    // DESABILITADO TEMPORARIAMENTE PARA CORRIGIR LOOP INFINITO
+    // // Teste automático a cada 2 minutos
+    // const interval = setInterval(testAllRPCs, 120000);
+    // return () => clearInterval(interval);
   }, []);
 
   const getStatusIcon = (status) => {

@@ -79,10 +79,10 @@ export function useBoletoEscrowUniversal() {
     // Verificar imediatamente
     checkSystemStatus();
 
-    // Verificar periodicamente (aumentado para 2 segundos para evitar spam)
-    const interval = setInterval(checkSystemStatus, 2000);
-
-    return () => clearInterval(interval);
+    // DESABILITADO TEMPORARIAMENTE PARA CORRIGIR LOOP INFINITO
+    // // Verificar periodicamente (aumentado para 2 segundos para evitar spam)
+    // const interval = setInterval(checkSystemStatus, 2000);
+    // return () => clearInterval(interval);
   }, [systemInfo?.isConnected, systemInfo?.address, systemInfo?.walletType]);
 
   /**

@@ -72,28 +72,32 @@ const WalletSyncChecker = ({ currentAddress, onForceReconnect }) => {
     }
   };
 
-  // 🔄 Efeito: Verificação automática
+  // 🔄 Efeito: Verificação DESABILITADA temporariamente
   useEffect(() => {
+    // DESABILITADO TEMPORARIAMENTE PARA CORRIGIR LOOP INFINITO
+    // checkWalletSync();
+    
+    // // Verificar a cada 5 segundos
+    // const interval = setInterval(checkWalletSync, 5000);
+    
+    // // Listener para mudanças de conta
+    // if (window.ethereum) {
+    //   const handleAccountsChanged = () => {
+    //     setTimeout(checkWalletSync, 500);
+    //   };
+      
+    //   window.ethereum.on('accountsChanged', handleAccountsChanged);
+      
+    //   return () => {
+    //     clearInterval(interval);
+    //     window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
+    //   };
+    // }
+    
+    // return () => clearInterval(interval);
+    
+    // VERIFICAÇÃO ÚNICA SEM POLLING
     checkWalletSync();
-    
-    // Verificar a cada 5 segundos
-    const interval = setInterval(checkWalletSync, 5000);
-    
-    // Listener para mudanças de conta
-    if (window.ethereum) {
-      const handleAccountsChanged = () => {
-        setTimeout(checkWalletSync, 500);
-      };
-      
-      window.ethereum.on('accountsChanged', handleAccountsChanged);
-      
-      return () => {
-        clearInterval(interval);
-        window.ethereum.removeListener('accountsChanged', handleAccountsChanged);
-      };
-    }
-    
-    return () => clearInterval(interval);
   }, [currentAddress]);
 
   // 🎨 Formatador de endereço

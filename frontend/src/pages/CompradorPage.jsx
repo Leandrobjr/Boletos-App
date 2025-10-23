@@ -754,23 +754,14 @@ const CompradorPage = () => {
     // eslint-disable-next-line
   }, [tab]);
 
-  // Polling para atualização automática de boletos (OTIMIZADO)
+  // Polling DESABILITADO temporariamente para corrigir loop infinito
   useEffect(() => {
-    let interval;
+    // BUSCA ÚNICA SEM POLLING AUTOMÁTICO
     if (activeTab === 'meusBoletos' || activeTab === 'historico') {
-      fetchMeusBoletosComLoading(); // Busca inicial com loading
-      interval = setInterval(() => {
-        fetchMeusBoletos(); // Polling silencioso sem loading
-      }, 15000); // 15 segundos - reduzido de 5s para melhor performance
+      fetchMeusBoletosComLoading();
     } else if (activeTab === 'comprar') {
-      fetchBoletosDisponiveis(true); // Busca inicial com refresh forçado
-      interval = setInterval(() => {
-        fetchBoletosDisponiveis(); // Polling silencioso para livro de ordens
-      }, 10000); // 10 segundos - reduzido de 3s para melhor performance
+      fetchBoletosDisponiveis(true);
     }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
   }, [activeTab, user?.uid]);
 
   const handleTabChange = (tab) => {
