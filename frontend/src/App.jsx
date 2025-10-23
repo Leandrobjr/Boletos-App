@@ -21,47 +21,6 @@ import ComprovantePage from './pages/ComprovantePage';
 import TestePage from './pages/TestePage';
 import AlterarCadastroPage from './pages/AlterarCadastroPage';
 
-// Cache Buster - Força invalidação automática
-const forceCacheClear = () => {
-  console.log('🔄 FORÇANDO LIMPEZA DE CACHE AUTOMÁTICA');
-  
-  // Limpar localStorage
-  try {
-    localStorage.clear();
-    console.log('✅ localStorage limpo');
-  } catch (e) {
-    console.log('❌ Erro ao limpar localStorage:', e);
-  }
-  
-  // Limpar sessionStorage
-  try {
-    sessionStorage.clear();
-    console.log('✅ sessionStorage limpo');
-  } catch (e) {
-    console.log('❌ Erro ao limpar sessionStorage:', e);
-  }
-  
-  // Limpar caches
-  if ('caches' in window) {
-    caches.keys().then(names => {
-      names.forEach(name => {
-        caches.delete(name);
-        console.log(`🗑️ Cache deletado: ${name}`);
-      });
-    });
-  }
-  
-  // Unregister Service Workers
-  if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.getRegistrations().then(registrations => {
-      registrations.forEach(registration => {
-        registration.unregister();
-        console.log('🔄 Service Worker desregistrado');
-      });
-    });
-  }
-};
-
 // Componente de rota protegida
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading, perfilVerificado } = useAuth();
@@ -96,7 +55,7 @@ function ProtectedRoute({ children }) {
     return <Navigate to="/login" replace />;
   }
 
-  // Bloquear acesso a rotas protegidas se cadastro incompleto (agora usando perfilVerificado)
+  // Bloquear acesso a rotas protegidas se cadastro incompleto
   if (typeof perfilVerificado !== 'undefined' && !perfilVerificado) {
     return <Navigate to="/alterar-cadastro" replace />;
   }
@@ -105,23 +64,6 @@ function ProtectedRoute({ children }) {
 }
 
 function AppRoutes() {
-  // Cache Buster DESABILITADO - Problema resolvido
-  // useEffect(() => {
-  //   const cacheVersion = localStorage.getItem('app_cache_version');
-  //   const currentVersion = Date.now().toString();
-  //   
-  //   if (cacheVersion !== currentVersion) {
-  //     console.log('🔄 VERSÃO DE CACHE DIFERENTE - FORÇANDO LIMPEZA');
-  //     forceCacheClear();
-  //     localStorage.setItem('app_cache_version', currentVersion);
-  //     
-  //     // Força reload após limpeza
-  //     setTimeout(() => {
-  //       window.location.reload(true);
-  //     }, 1000);
-  //   }
-  // }, []);
-
   return (
     <Routes>
       <Route path="/" element={<Layout />}>
@@ -164,7 +106,6 @@ function AppRoutes() {
 }
 
 function App() {
-  console.log('App.jsx carregado');
   return (
     <AuthProvider>
       <AppRoutes />
