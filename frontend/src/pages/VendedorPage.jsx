@@ -234,12 +234,13 @@ const fetchBoletos = async () => {
       // Verificar apenas boletos que estão AGUARDANDO PAGAMENTO há mais de 60 minutos
       verificarBoletosParaDestravar();
       
-      // Configurar verificação periódica a cada 5 minutos
-      const interval = setInterval(() => {
-        verificarBoletosParaDestravar();
-      }, 5 * 60 * 1000); // 5 minutos
-      
-      return () => clearInterval(interval);
+      // DESABILITADO TEMPORARIAMENTE PARA CORRIGIR LOOP INFINITO
+      // // Configurar verificação periódica a cada 5 minutos
+      // const interval = setInterval(() => {
+      //   verificarBoletosParaDestravar();
+      // }, 5 * 60 * 1000); // 5 minutos
+      // 
+      // return () => clearInterval(interval);
     }
   }, [boletos]);
 
@@ -1301,20 +1302,6 @@ const fetchBoletos = async () => {
           )}
 
           <Tabs value={activeTab} onValueChange={goToTab} className="w-full mb-6">
-            {isConnected && (
-              <div className="w-full mb-3 flex items-center justify-between">
-                <div className="text-sm text-green-900">
-                  {isOwner ? (
-                    <>Owner do contrato conectado: {address?.slice(0,6)}...{address?.slice(-4)}</>
-                  ) : (
-                    <>Carteira conectada: {address?.slice(0,6)}...{address?.slice(-4)} (não-owner)</>
-                  )}
-                </div>
-                <Button onClick={handleWithdrawFees} disabled={isLoading || !isOwner} className={`px-4 py-2 rounded text-white ${isOwner ? 'bg-green-700 hover:bg-green-800' : 'bg-gray-400 cursor-not-allowed'}`}>
-                  Coletar Taxas do Contrato
-                </Button>
-              </div>
-            )}
             <TabsList className="grid w-full grid-cols-3 bg-lime-300 p-1 rounded-xl mb-2">
               <TabsTrigger value="cadastrar" className="flex items-center justify-center text-lg font-bold py-3 h-12 data-[state=active]:bg-lime-600 data-[state=active]:text-white">
                 <FaFileInvoiceDollar className="mr-2" /> Cadastrar
@@ -1393,9 +1380,7 @@ const fetchBoletos = async () => {
                   className={`w-1/3 font-bold rounded-xl text-lg h-12 py-3 px-2 flex items-center justify-center transition ${isConnected ? 'bg-green-700 text-white' : 'bg-blue-600 hover:bg-blue-700 text-white'}`}
                   disabled={isConnected}
                 >
-                  {isConnected
-                    ? `Conectado: ${address ? address.slice(0,6) + '...' + address.slice(-4) : ''}`
-                    : 'Conectar Carteira'}
+                  {isConnected ? 'Carteira Conectada' : 'Conectar Carteira'}
                 </button>
                 <Button
                   type="button"
