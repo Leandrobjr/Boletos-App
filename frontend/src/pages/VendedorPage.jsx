@@ -187,10 +187,14 @@ const fetchBoletos = async () => {
     }
   }, [showComprovanteModal, selectedComprovante]);
 
-  // Cache de boletos para evitar requisições desnecessárias (ULTRA OTIMIZADO)
+  // Cache de boletos para evitar requisições desnecessárias (OTIMIZADO)
   const [lastFetchTime, setLastFetchTime] = useState(0);
   const [boletosCache, setBoletosCache] = useState(null);
-  const CACHE_DURATION = 0; // CACHE DESABILITADO TEMPORARIAMENTE PARA DEBUG
+  const CACHE_DURATION = 30000; // Cache de 30 segundos para melhor performance
+  
+  // Estados para paginação
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(10); // 10 boletos por página
   
   // LIMPAR TODO O CACHE LOCAL DO VENDEDOR
   useEffect(() => {
@@ -209,24 +213,42 @@ const fetchBoletos = async () => {
     }
   }, [user?.uid]);
 
-  // Função otimizada para buscar boletos com cache (ULTRA OTIMIZADA)
-  const fetchBoletosOptimized = async (forceRefresh = false) => {
+  // Função otimizada para buscar boletos com cache inteligente
+  const fetchBoletosOptimized = useCallback(async (forceRefresh = false) => {
     if (!user?.uid) return;
     
     const now = Date.now();
-    // SEMPRE FORÇAR REQUISIÇÃO REAL - CACHE DESABILITADO
-    console.log('🔄 [VENDEDOR] Forçando requisição real ao backend (cache desabilitado)');
     
+    // Verificar se pode usar cache
+    if (!forceRefresh && boletosCache && (now - lastFetchTime) < CACHE_DURATION) {
+      console.log('🚀 [VENDEDOR] Usando dados do cache para melhor performance');
+      setBoletos(boletosCache);
+      return;
+    }
+    
+    console.log('🔄 [VENDEDOR] Buscando dados atualizados do backend');
     await fetchBoletos();
     setLastFetchTime(now);
-    
-    // Não atualizar cache - sempre buscar dados frescos
-    setBoletosCache(null);
-  };
+  }, [user?.uid, boletosCache, lastFetchTime, CACHE_DURATION]);
+
+  // Memoização dos boletos paginados para melhor performance
+  const paginatedBoletos = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return boletos.slice(startIndex, endIndex);
+  }, [boletos, currentPage, itemsPerPage]);
+
+  // Calcular total de páginas
+  const totalPages = Math.ceil(boletos.length / itemsPerPage);
+
+  // Função para mudar página
+  const handlePageChange = useCallback((page) => {
+    setCurrentPage(page);
+  }, []);
 
   useEffect(() => {
     if (user?.uid) fetchBoletosOptimized();
-  }, [user?.uid]);
+  }, [user?.uid, fetchBoletosOptimized]);
 
   // Monitorar boletos para destravamento automático
   useEffect(() => {
@@ -1428,14 +1450,14 @@ const fetchBoletos = async () => {
                             </tr>
                           </thead>
                           <tbody>
-                            {boletos.length === 0 ? (
+                            {paginatedBoletos.length === 0 ? (
                               <tr>
                                 <td colSpan="8" className="py-4 px-4 text-center text-gray-500">
-                                  Nenhum boleto cadastrado.
+                                  {boletos.length === 0 ? 'Nenhum boleto cadastrado.' : 'Nenhum boleto nesta página.'}
                                 </td>
                               </tr>
                             ) : (
-                            boletos.map((boleto, idx) => {
+                            paginatedBoletos.map((boleto, idx) => {
                             return (
                               <tr key={`${boleto.id || boleto.numeroControle}-${idx}`} className="border-b border-gray-200 hover:bg-lime-50">
                                 <td className="py-3 px-4">{boleto.numeroControle}</td>
@@ -1665,6 +1687,34 @@ const fetchBoletos = async () => {
                       </tbody>
                     </table>
                   </div>
+                  
+                  {/* Controles de Paginação */}
+                  {boletos.length > 0 && (
+                    <div className="flex items-center justify-between mt-4 px-2">
+                      <div className="text-sm text-gray-600">
+                        Mostrando {((currentPage - 1) * itemsPerPage) + 1} a {Math.min(currentPage * itemsPerPage, boletos.length)} de {boletos.length} boletos
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <button
+                          onClick={() => handlePageChange(currentPage - 1)}
+                          disabled={currentPage === 1}
+                          className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          Anterior
+                        </button>
+                        <span className="text-sm text-gray-600">
+                          Página {currentPage} de {totalPages}
+                        </span>
+                        <button
+                          onClick={() => handlePageChange(currentPage + 1)}
+                          disabled={currentPage === totalPages}
+                          className="px-3 py-1 text-sm border rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50"
+                        >
+                          Próxima
+                        </button>
+                      </div>
+                    </div>
+                  )}
                     </Suspense>
                   )}
                 </CardContent>
