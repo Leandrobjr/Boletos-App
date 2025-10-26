@@ -2,7 +2,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://boletos-backend-290725.vercel.app/api/$1"
+      "destination": "https://backend-r8pkxysfz-leandro-botacin-juniors-projects.vercel.app/api/$1"
     },
     {
       "source": "/(.*)",
@@ -28,6 +28,14 @@
         {
           "key": "X-Vercel-Cache",
           "value": "MISS"
+        },
+        {
+          "key": "Cross-Origin-Opener-Policy",
+          "value": "same-origin-allow-popups"
+        },
+        {
+          "key": "Cross-Origin-Embedder-Policy",
+          "value": "unsafe-none"
         }
       ]
     },

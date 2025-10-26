@@ -20,6 +20,7 @@ import BalanceRefresher from '../components/BalanceRefresher';
 import StatusBadge from '../components/ui/status-badge';
 import API_CONFIG, { buildApiUrl } from '../config/apiConfig';
 import WalletConnector from '../components/wallet/WalletConnector';
+import { processFileForUpload, formatFileSize } from '../utils/fileCompression';
 
 // FORCE REBUILD - CORREÇÃO DEFINITIVA LAYOUT E MODAIS - CACHE BUSTER
 const CompradorPage = () => {
@@ -392,12 +393,21 @@ const CompradorPage = () => {
     }
   };
 
-  // Após envio de comprovante, buscar boletos atualizados do backend
-  const handleEnviarComprovante = (e) => {
+  // 📤 UPLOAD DIRETO VIA VERCEL BLOB - Bypass do limite 4.5MB
+  const handleEnviarComprovante = async (e) => {
+    console.log('🚀 handleEnviarComprovante chamada!', { event: e, comprovante });
     e.preventDefault();
+    
+    console.log('📋 Estado atual:', {
+      comprovante,
+      selectedBoleto,
+      etapaCompra,
+      showModal
+    });
     
     // Verificar se há um arquivo selecionado
     if (!comprovante) {
+      console.log('❌ Nenhum arquivo selecionado');
       setAlertInfo({
         type: 'destructive',
         title: 'Arquivo não selecionado',
@@ -409,9 +419,10 @@ const CompradorPage = () => {
 
     const file = comprovante;
 
+    console.log('✅ Arquivo selecionado:', comprovante.name, comprovante.size);
+
     // Validação de segurança do arquivo (tipo e tamanho)
     const allowedTypes = ['application/pdf','image/png','image/jpeg','image/jpg'];
-    const maxSizeMB = 8;
     if (!allowedTypes.includes(file.type)) {
       setAlertInfo({
         type: 'destructive',
@@ -421,11 +432,14 @@ const CompradorPage = () => {
       setTimeout(() => setAlertInfo(null), 4000);
       return;
     }
-    if (file.size > maxSizeMB * 1024 * 1024) {
+
+    // Validação de tamanho máximo (50MB para upload direto)
+    const maxSize = 50 * 1024 * 1024; // 50MB
+    if (file.size > maxSize) {
       setAlertInfo({
         type: 'destructive',
         title: 'Arquivo muito grande',
-        description: `Limite ${maxSizeMB}MB. Comprime ou envie versão menor.`
+        description: 'O arquivo deve ter no máximo 50MB.'
       });
       setTimeout(() => setAlertInfo(null), 4000);
       return;
@@ -434,97 +448,97 @@ const CompradorPage = () => {
     setAlertInfo({
       type: 'default',
       title: 'Enviando comprovante...',
-      description: 'Aguarde enquanto processamos seu comprovante.'
+      description: `Processando arquivo (${formatFileSize(file.size / (1024 * 1024))}). Aguarde...`
     });
 
-    // Converter arquivo para base64 para armazenamento
-    const reader = new FileReader();
-    reader.onload = async () => {
-      const comprovanteUrl = reader.result; // Base64 do arquivo
-      
-      try {
-        
-        // Enviar comprovante para o backend (usar rota sem /api/)
-        const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
-        const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.COMPROVANTE_BOLETO(ident)), {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            comprovante_url: comprovanteUrl,
-            filename: file.name,
-            filesize: file.size,
-            filetype: file.type
-          })
-        });
+    try {
+      // Converter arquivo para base64
+      const fileBase64 = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-        // Log da requisição para depuração
-        console.log('📤 Enviando comprovante para:', buildApiUrl(`/boletos/${ident}/comprovante`));
+      // Preparar dados para upload direto
+      const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
+      const uploadData = {
+        boleto_id: ident,
+        file_data: fileBase64,
+        filename: file.name,
+        filetype: file.type
+      };
+
+      // Log da requisição para depuração
+      console.log('📤 Enviando comprovante via upload direto para:', buildApiUrl('/upload-comprovante'));
+      console.log('📊 Tamanho original:', formatFileSize(file.size / (1024 * 1024)));
+      
+      // Enviar via upload direto (Vercel Blob)
+      const response = await fetch(buildApiUrl('/upload-comprovante'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(uploadData)
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => null);
+        console.error('❌ Falha no upload direto:', response.status, response.statusText, errorData);
         
-        if (!response.ok) {
-          const errorText = await response.text().catch(() => null);
-          console.error('❌ Falha ao enviar comprovante:', response.status, response.statusText, errorText || '');
-          throw new Error(`Erro ao enviar comprovante: ${response.status} ${response.statusText}`);
+        // Mensagens de erro específicas
+        if (response.status === 413) {
+          throw new Error('Arquivo muito grande para upload. Tente um arquivo menor.');
+        } else if (response.status === 404) {
+          throw new Error('Boleto não encontrado. Verifique se o boleto ainda está válido.');
+        } else {
+          throw new Error(errorData?.error || `Erro no upload: ${response.status} ${response.statusText}`);
         }
-        
-        // Tentar parsear JSON, mas tratar 200 como sucesso mesmo sem JSON
-        let boletoAtualizado = null;
-        let rawText = null;
-        const contentType = response.headers.get('content-type') || '';
-        try {
-          if (contentType.includes('application/json')) {
-            boletoAtualizado = await response.json();
-          } else {
-            rawText = await response.text();
-          }
-        } catch (parseErr) {
-          console.warn('⚠️ Resposta não-JSON ou parse falhou. Tratando como sucesso.', parseErr);
-        }
-        
-        // Log de sucesso claro no console
-        console.log('✅ Comprovante enviado com sucesso', {
-          status: response.status,
-          contentType,
-          data: boletoAtualizado || null,
-          text: rawText || null,
-        });
-        
-        // Atualizar o boleto selecionado com a URL do comprovante
-        setSelectedBoleto(prev => ({
-          ...prev,
-          comprovanteUrl: comprovanteUrl,
-          status: 'AGUARDANDO_BAIXA'
-        }));
-        
-        setEtapaCompra(4);
-        setTempoRestante(null);
-        setShowModal(false);
-        setActiveTab('meusBoletos');
-        
-        // Aguardar um pouco antes de buscar os boletos atualizados
-        setTimeout(async () => {
-          await fetchMeusBoletosComLoading();
-        }, 1000);
-        
-        setAlertInfo({
-          type: 'success',
-          title: 'Pagamento confirmado!',
-          description: `Comprovante enviado. Aguarde a confirmação da baixa pelo vendedor.`
-        });
-        setTimeout(() => {
-          setAlertInfo(null);
-        }, 5000);
-      } catch (error) {
-        console.error('Erro ao enviar comprovante:', error);
-        setAlertInfo({
-          type: 'destructive',
-          title: 'Erro ao enviar comprovante',
-          description: 'Não foi possível enviar o comprovante. Tente novamente.'
-        });
-        setTimeout(() => setAlertInfo(null), 3000);
       }
-    };
-    
-    reader.readAsDataURL(file);
+      
+      // Parsear resposta de sucesso
+      const uploadResult = await response.json();
+      
+      // Log de sucesso claro no console
+      console.log('✅ Upload direto concluído com sucesso:', {
+        status: response.status,
+        comprovante_url: uploadResult.data?.comprovante_url,
+        boleto_status: uploadResult.data?.status
+      });
+      
+      // Atualizar o boleto selecionado com os dados retornados
+      setSelectedBoleto(prev => ({
+        ...prev,
+        comprovanteUrl: uploadResult.data?.comprovante_url,
+        status: uploadResult.data?.status || 'AGUARDANDO_BAIXA'
+      }));
+      
+      setEtapaCompra(4);
+      setTempoRestante(null);
+      setShowModal(false);
+      setActiveTab('meusBoletos');
+      
+      // Aguardar um pouco antes de buscar os boletos atualizados
+      setTimeout(async () => {
+        await fetchMeusBoletosComLoading();
+      }, 1000);
+      
+      setAlertInfo({
+        type: 'success',
+        title: 'Pagamento confirmado!',
+        description: 'Comprovante enviado com sucesso. Aguarde a confirmação da baixa pelo vendedor.'
+      });
+      setTimeout(() => {
+        setAlertInfo(null);
+      }, 5000);
+      
+    } catch (error) {
+      console.error('❌ Erro no upload direto:', error);
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Erro ao enviar comprovante',
+        description: error.message || 'Não foi possível enviar o comprovante. Tente novamente.'
+      });
+      setTimeout(() => setAlertInfo(null), 5000);
+    }
   };
 
     // Abrir comprovante em nova aba (solução profissional definitiva)
@@ -1054,6 +1068,7 @@ const CompradorPage = () => {
                                         
                                         <button
                                           onClick={() => { 
+                                            console.log('🚀 Botão Enviar Comprovante clicado no dropdown!', boleto);
                                             setSelectedBoleto(boleto); 
                                             setEtapaCompra(3); 
                                             setShowModal(true); 
@@ -1658,7 +1673,13 @@ const CompradorPage = () => {
                       Realize o pagamento do boleto e envie o comprovante antes que o tempo acabe.
                     </p>
                   </div>
-                  <form onSubmit={handleEnviarComprovante} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <form 
+                    onSubmit={(e) => {
+                      console.log('🚀 Form onSubmit disparado!', { e, comprovante, selectedBoleto });
+                      handleEnviarComprovante(e);
+                    }}
+                    style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
+                  >
                     <div style={{
                       backgroundColor: '#eff6ff',
                       padding: '1rem',
@@ -1716,26 +1737,38 @@ const CompradorPage = () => {
                         <FaTimesCircle style={{ marginRight: '0.5rem' }} /> Cancelar
                       </button>
                       <button
-                        type="submit"
-                        style={{
-                          flex: 1,
-                          backgroundColor: '#16a34a',
-                          color: '#ffffff',
-                          padding: '0.75rem 1.5rem',
-                          borderRadius: '0.5rem',
-                          border: 'none',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '0.5rem',
-                          fontWeight: '600',
-                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
-                          transition: 'all 0.2s'
-                        }}
-                        onMouseEnter={(e) => e.target.style.backgroundColor = '#15803d'}
-                        onMouseLeave={(e) => e.target.style.backgroundColor = '#16a34a'}
-                      >
+                                        type="submit"
+                                        disabled={!comprovante}
+                                        style={{
+                                          flex: 1,
+                                          backgroundColor: comprovante ? '#16a34a' : '#9ca3af',
+                                          color: '#ffffff',
+                                          padding: '0.75rem 1.5rem',
+                                          borderRadius: '0.5rem',
+                                          border: 'none',
+                                          cursor: comprovante ? 'pointer' : 'not-allowed',
+                                          display: 'flex',
+                                          alignItems: 'center',
+                                          justifyContent: 'center',
+                                          gap: '0.5rem',
+                                          fontWeight: '600',
+                                          boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1)',
+                                          transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                          if (comprovante) e.target.style.backgroundColor = '#15803d';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                          if (comprovante) e.target.style.backgroundColor = '#16a34a';
+                                        }}
+                                        onClick={(e) => {
+                                          console.log('🚀 Botão submit clicado diretamente!', { comprovante, e });
+                                          if (!comprovante) {
+                                            e.preventDefault();
+                                            console.log('❌ Submit bloqueado - sem arquivo');
+                                          }
+                                        }}
+                                      >
                         <FaUpload style={{ marginRight: '0.5rem' }} /> Enviar Comprovante
                       </button>
                     </div>

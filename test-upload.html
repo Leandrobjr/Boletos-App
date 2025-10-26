@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teste de Upload de Comprovantes</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .endpoint-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+        }
+        .endpoint-section.test {
+            border-color: #4CAF50;
+            background-color: #f9fff9;
+        }
+        .endpoint-section.blob {
+            border-color: #2196F3;
+            background-color: #f9f9ff;
+        }
+        .endpoint-section.local {
+            border-color: #FF9800;
+            background-color: #fff9f0;
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        h2 {
+            color: #555;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .test button {
+            background-color: #4CAF50;
+        }
+        .blob button {
+            background-color: #2196F3;
+        }
+        .local button {
+            background-color: #FF9800;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .comparison {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 8px;
+            border: 2px solid #6c757d;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Upload de Comprovantes - Diagnóstico de Autenticação</h1>
+        
+        <!-- Endpoint de Teste (SEM Vercel Blob) -->
+        <div class="endpoint-section test">
+            <h2>🧪 Endpoint de Teste (SEM Vercel Blob)</h2>
+            <p><strong>URL:</strong> https://backend-h3vymvbgr-leandro-botacin-juniors-projects.vercel.app/api/test-upload</p>
+            <p><strong>Objetivo:</strong> Verificar se o problema é específico do Vercel Blob</p>
+            
+            <div class="form-group">
+                <label for="testBoletoId">ID do Boleto:</label>
+                <input type="text" id="testBoletoId" value="1761191527384">
+            </div>
+            
+            <div class="form-group">
+                <label for="testFile">Arquivo:</label>
+                <input type="file" id="testFile">
+            </div>
+            
+            <button onclick="testUpload()">🧪 Testar Upload SEM Blob</button>
+            <div id="testResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Endpoint Original (COM Vercel Blob) -->
+        <div class="endpoint-section blob">
+            <h2>📤 Endpoint Original (COM Vercel Blob)</h2>
+            <p><strong>URL:</strong> https://backend-h3vymvbgr-leandro-botacin-juniors-projects.vercel.app/api/upload-comprovante</p>
+            <p><strong>Objetivo:</strong> Testar o endpoint que usa Vercel Blob</p>
+            
+            <div class="form-group">
+                <label for="blobBoletoId">ID do Boleto:</label>
+                <input type="text" id="blobBoletoId" value="1761191527384">
+            </div>
+            
+            <div class="form-group">
+                <label for="blobFile">Arquivo:</label>
+                <input type="file" id="blobFile">
+            </div>
+            
+            <button onclick="blobUpload()">📤 Testar Upload COM Blob</button>
+            <div id="blobResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Teste Local -->
+        <div class="endpoint-section local">
+            <h2>🏠 Teste Local</h2>
+            <p><strong>URL:</strong> http://localhost:3000/api/test-upload</p>
+            <p><strong>Objetivo:</strong> Testar localmente para comparação</p>
+            
+            <div class="form-group">
+                <label for="localBoletoId">ID do Boleto:</label>
+                <input type="text" id="localBoletoId" value="1761191527384">
+            </div>
+            
+            <div class="form-group">
+                <label for="localFile">Arquivo:</label>
+                <input type="file" id="localFile">
+            </div>
+            
+            <button onclick="localUpload()">🏠 Testar Local</button>
+            <div id="localResult" class="result" style="display: none;"></div>
+        </div>
+
+        <!-- Comparação de Resultados -->
+        <div class="comparison">
+            <h2>📊 Análise Comparativa</h2>
+            <div id="comparison" class="info">
+                <p><strong>Conclusão do Teste:</strong></p>
+                <p>✅ <strong>Endpoint de teste SEM Vercel Blob:</strong> Também apresenta problema de autenticação</p>
+                <p>✅ <strong>Endpoint original COM Vercel Blob:</strong> Apresenta problema de autenticação</p>
+                <p>✅ <strong>Endpoint /api/hello:</strong> Também apresenta problema de autenticação</p>
+                <br>
+                <p><strong>🔍 Diagnóstico:</strong></p>
+                <p>O problema <strong>NÃO é específico do Vercel Blob</strong>. Todos os endpoints estão sendo redirecionados para autenticação SSO do Vercel.</p>
+                <br>
+                <p><strong>🎯 Causa Provável:</strong></p>
+                <p>• Configuração de autenticação a nível de conta/organização no Vercel</p>
+                <p>• Política de segurança ativada após criação do token BLOB_READ_WRITE_TOKEN</p>
+                <p>• Proteção automática de domínio ativada</p>
+                <br>
+                <p><strong>🛠️ Próximos Passos Recomendados:</strong></p>
+                <p>1. Verificar configurações de Security/Authentication na conta Vercel</p>
+                <p>2. Revisar configurações da organização/team no Vercel</p>
+                <p>3. Verificar se há políticas de SSO ativas</p>
+                <p>4. Considerar criar um novo projeto Vercel temporário para teste</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function fileToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        async function testUpload() {
+            const resultDiv = document.getElementById('testResult');
+            const boletoId = document.getElementById('testBoletoId').value;
+            const fileInput = document.getElementById('testFile');
+            
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'error', 'Por favor, selecione um arquivo');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, 'info', 'Processando upload de teste...');
+                
+                const file = fileInput.files[0];
+                const base64 = await fileToBase64(file);
+                
+                const response = await fetch('https://backend-h3vymvbgr-leandro-botacin-juniors-projects.vercel.app/api/test-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        boleto_id: boletoId,
+                        file_data: base64,
+                        filename: file.name,
+                        filetype: file.type
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultDiv, 'success', `✅ Sucesso!\n\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult(resultDiv, 'error', `❌ Erro ${response.status}:\n\n${JSON.stringify(result, null, 2)}`);
+                }
+            } catch (error) {
+                showResult(resultDiv, 'error', `❌ Erro de rede:\n\n${error.message}\n\nDetalhes: ${error.toString()}`);
+            }
+        }
+
+        async function blobUpload() {
+            const resultDiv = document.getElementById('blobResult');
+            const boletoId = document.getElementById('blobBoletoId').value;
+            const fileInput = document.getElementById('blobFile');
+            
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'error', 'Por favor, selecione um arquivo');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, 'info', 'Processando upload com Blob...');
+                
+                const file = fileInput.files[0];
+                const base64 = await fileToBase64(file);
+                
+                const response = await fetch('https://backend-h3vymvbgr-leandro-botacin-juniors-projects.vercel.app/api/upload-comprovante', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        boleto_id: boletoId,
+                        file_data: base64,
+                        filename: file.name,
+                        filetype: file.type
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultDiv, 'success', `✅ Sucesso!\n\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult(resultDiv, 'error', `❌ Erro ${response.status}:\n\n${JSON.stringify(result, null, 2)}`);
+                }
+            } catch (error) {
+                showResult(resultDiv, 'error', `❌ Erro de rede:\n\n${error.message}\n\nDetalhes: ${error.toString()}`);
+            }
+        }
+
+        async function localUpload() {
+            const resultDiv = document.getElementById('localResult');
+            const boletoId = document.getElementById('localBoletoId').value;
+            const fileInput = document.getElementById('localFile');
+            
+            if (!fileInput.files[0]) {
+                showResult(resultDiv, 'error', 'Por favor, selecione um arquivo');
+                return;
+            }
+
+            try {
+                showResult(resultDiv, 'info', 'Testando servidor local...');
+                
+                const file = fileInput.files[0];
+                const base64 = await fileToBase64(file);
+                
+                const response = await fetch('http://localhost:3000/api/test-upload', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        boleto_id: boletoId,
+                        file_data: base64,
+                        filename: file.name,
+                        filetype: file.type
+                    })
+                });
+
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showResult(resultDiv, 'success', `✅ Sucesso Local!\n\n${JSON.stringify(result, null, 2)}`);
+                } else {
+                    showResult(resultDiv, 'error', `❌ Erro Local ${response.status}:\n\n${JSON.stringify(result, null, 2)}`);
+                }
+            } catch (error) {
+                showResult(resultDiv, 'error', `❌ Erro de conexão local:\n\n${error.message}\n\nVerifique se o servidor local está rodando em http://localhost:3000`);
+            }
+        }
+
+        function showResult(element, type, message) {
+            element.style.display = 'block';
+            element.className = `result ${type}`;
+            element.textContent = message;
+        }
+    </script>
+</body>
+</html>

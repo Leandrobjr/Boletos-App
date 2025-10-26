@@ -71,6 +71,14 @@
       "destination": "/api/boletos/[id]/escrow?id=$1"
     },
     {
+      "source": "/api/upload-comprovante",
+      "destination": "/api/upload-comprovante"
+    },
+    {
+      "source": "/api/test-upload",
+      "destination": "/api/test-upload"
+    },
+    {
       "source": "/api/(.*)",
       "destination": "/api/$1"
     }
@@ -83,6 +91,29 @@
     {
       "path": "/api/auto-release-72h",
       "schedule": "0 * * * *" 
+    }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        {
+          "key": "Access-Control-Allow-Origin",
+          "value": "https://boletos-app-mocha.vercel.app"
+        },
+        {
+          "key": "Access-Control-Allow-Methods",
+          "value": "GET, POST, PUT, DELETE, OPTIONS"
+        },
+        {
+          "key": "Access-Control-Allow-Headers",
+          "value": "Content-Type, Authorization, X-Requested-With"
+        },
+        {
+          "key": "Access-Control-Max-Age",
+          "value": "86400"
+        }
+      ]
     }
   ]
 }
