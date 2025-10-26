@@ -423,7 +423,7 @@ const CompradorPage = () => {
 
     // Validação de segurança do arquivo (tipo e tamanho)
     const allowedTypes = ['application/pdf','image/png','image/jpeg','image/jpg'];
-    const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg'];
+    const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg', '.txt'];
     
     console.log('🔍 Validando tipo de arquivo:', file.type, 'permitidos:', allowedTypes);
     console.log('🔍 Nome do arquivo:', file.name);
