@@ -423,7 +423,10 @@ const CompradorPage = () => {
 
     // Validação de segurança do arquivo (tipo e tamanho)
     const allowedTypes = ['application/pdf','image/png','image/jpeg','image/jpg'];
+    console.log('🔍 Validando tipo de arquivo:', file.type, 'permitidos:', allowedTypes);
+    
     if (!allowedTypes.includes(file.type)) {
+      console.log('❌ Tipo de arquivo não permitido:', file.type);
       setAlertInfo({
         type: 'destructive',
         title: 'Tipo de arquivo não suportado',
@@ -435,7 +438,10 @@ const CompradorPage = () => {
 
     // Validação de tamanho máximo (50MB para upload direto)
     const maxSize = 50 * 1024 * 1024; // 50MB
+    console.log('🔍 Validando tamanho:', file.size, 'máximo:', maxSize);
+    
     if (file.size > maxSize) {
+      console.log('❌ Arquivo muito grande:', file.size);
       setAlertInfo({
         type: 'destructive',
         title: 'Arquivo muito grande',
@@ -445,6 +451,8 @@ const CompradorPage = () => {
       return;
     }
     
+    console.log('✅ Validações passaram, iniciando upload...');
+    
     setAlertInfo({
       type: 'default',
       title: 'Enviando comprovante...',
@@ -452,16 +460,28 @@ const CompradorPage = () => {
     });
 
     try {
+      console.log('🔄 Convertendo arquivo para base64...');
+      
       // Converter arquivo para base64
       const fileBase64 = await new Promise((resolve, reject) => {
         const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
+        reader.onload = () => {
+          console.log('✅ Conversão base64 concluída');
+          resolve(reader.result);
+        };
+        reader.onerror = (error) => {
+          console.error('❌ Erro na conversão base64:', error);
+          reject(error);
+        };
         reader.readAsDataURL(file);
       });
 
+      console.log('🔄 Preparando dados para upload...');
+      
       // Preparar dados para upload direto
       const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
+      console.log('🆔 Identificador do boleto:', ident);
+      
       const uploadData = {
         boleto_id: ident,
         file_data: fileBase64,
@@ -472,6 +492,14 @@ const CompradorPage = () => {
       // Log da requisição para depuração
       console.log('📤 Enviando comprovante via upload direto para:', buildApiUrl('/upload-comprovante'));
       console.log('📊 Tamanho original:', formatFileSize(file.size / (1024 * 1024)));
+      console.log('📋 Dados do upload:', {
+        boleto_id: uploadData.boleto_id,
+        filename: uploadData.filename,
+        filetype: uploadData.filetype,
+        base64_length: uploadData.file_data?.length
+      });
+      
+      console.log('🌐 Fazendo requisição fetch...');
       
       // Enviar via upload direto (Vercel Blob)
       const response = await fetch(buildApiUrl('/upload-comprovante'), {
@@ -479,6 +507,8 @@ const CompradorPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(uploadData)
       });
+      
+      console.log('📡 Resposta recebida:', response.status, response.statusText);
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -494,6 +524,8 @@ const CompradorPage = () => {
         }
       }
       
+      console.log('🔄 Parseando resposta JSON...');
+      
       // Parsear resposta de sucesso
       const uploadResult = await response.json();
       
@@ -501,8 +533,11 @@ const CompradorPage = () => {
       console.log('✅ Upload direto concluído com sucesso:', {
         status: response.status,
         comprovante_url: uploadResult.data?.comprovante_url,
-        boleto_status: uploadResult.data?.status
+        boleto_status: uploadResult.data?.status,
+        full_response: uploadResult
       });
+      
+      console.log('🔄 Atualizando estado do boleto...');
       
       // Atualizar o boleto selecionado com os dados retornados
       setSelectedBoleto(prev => ({
@@ -511,15 +546,22 @@ const CompradorPage = () => {
         status: uploadResult.data?.status || 'AGUARDANDO_BAIXA'
       }));
       
+      console.log('🔄 Atualizando interface...');
+      
       setEtapaCompra(4);
       setTempoRestante(null);
       setShowModal(false);
       setActiveTab('meusBoletos');
       
+      console.log('🔄 Agendando atualização da lista de boletos...');
+      
       // Aguardar um pouco antes de buscar os boletos atualizados
       setTimeout(async () => {
+        console.log('🔄 Buscando boletos atualizados...');
         await fetchMeusBoletosComLoading();
       }, 1000);
+      
+      console.log('✅ Processo completo! Mostrando mensagem de sucesso...');
       
       setAlertInfo({
         type: 'success',
@@ -532,6 +574,7 @@ const CompradorPage = () => {
       
     } catch (error) {
       console.error('❌ Erro no upload direto:', error);
+      console.error('❌ Stack trace:', error.stack);
       setAlertInfo({
         type: 'destructive',
         title: 'Erro ao enviar comprovante',
