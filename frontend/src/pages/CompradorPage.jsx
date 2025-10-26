@@ -423,10 +423,24 @@ const CompradorPage = () => {
 
     // Validação de segurança do arquivo (tipo e tamanho)
     const allowedTypes = ['application/pdf','image/png','image/jpeg','image/jpg'];
-    console.log('🔍 Validando tipo de arquivo:', file.type, 'permitidos:', allowedTypes);
+    const allowedExtensions = ['.pdf', '.png', '.jpg', '.jpeg'];
     
-    if (!allowedTypes.includes(file.type)) {
-      console.log('❌ Tipo de arquivo não permitido:', file.type);
+    console.log('🔍 Validando tipo de arquivo:', file.type, 'permitidos:', allowedTypes);
+    console.log('🔍 Nome do arquivo:', file.name);
+    
+    // Obter extensão do arquivo
+    const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+    console.log('🔍 Extensão detectada:', fileExtension);
+    
+    // Validar por MIME type OU extensão (fallback para casos como text/plain)
+    const isValidType = allowedTypes.includes(file.type);
+    const isValidExtension = allowedExtensions.includes(fileExtension);
+    
+    console.log('✅ MIME type válido:', isValidType);
+    console.log('✅ Extensão válida:', isValidExtension);
+    
+    if (!isValidType && !isValidExtension) {
+      console.log('❌ Arquivo rejeitado - MIME:', file.type, 'Extensão:', fileExtension);
       setAlertInfo({
         type: 'destructive',
         title: 'Tipo de arquivo não suportado',
@@ -435,6 +449,8 @@ const CompradorPage = () => {
       setTimeout(() => setAlertInfo(null), 4000);
       return;
     }
+    
+    console.log('✅ Arquivo aceito! MIME válido:', isValidType, 'Extensão válida:', isValidExtension);
 
     // Validação de tamanho máximo (50MB para upload direto)
     const maxSize = 50 * 1024 * 1024; // 50MB
