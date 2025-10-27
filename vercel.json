@@ -1,8 +1,15 @@
 {
   "version": 2,
-  "functions": {
-    "api/upload-comprovante.js": {
-      "runtime": "nodejs18.x"
+  "builds": [
+    {
+      "src": "api/upload-comprovante.js",
+      "use": "@vercel/node"
     }
-  }
+  ],
+  "routes": [
+    {
+      "src": "/api/upload-comprovante",
+      "dest": "/api/upload-comprovante.js"
+    }
+  ]
 }
