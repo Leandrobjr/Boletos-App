@@ -2,14 +2,14 @@
   "version": 2,
   "builds": [
     {
-      "src": "api/upload-comprovante.js",
+      "src": "api/**/*.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
-      "src": "/api/upload-comprovante",
-      "dest": "/api/upload-comprovante.js"
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
     }
   ]
 }
