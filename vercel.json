@@ -1,26 +1,7 @@
 {
-  "version": 2,
-  "builds": [
-    {
-      "src": "src/app/page.sx",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "src/app"
-      }
-    },
-    {
-      "src": "api/upload-comprovante.js",
-      "use": "@vercel/node"
+  "functions": {
+    "api/upload-comprovante.js": {
+      "runtime": "nodejs18.x"
     }
-  ],
-  "routes": [
-    {
-      "src": "/api/upload-comprovante",
-      "dest": "/api/upload-comprovante.js"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/src/app/page.sx"
-    }
-  ]
+  }
 }
