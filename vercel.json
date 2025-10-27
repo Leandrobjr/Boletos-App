@@ -1,7 +1,12 @@
 {
+  "version": 2,
   "functions": {
     "api/upload-comprovante.js": {
-      "runtime": "nodejs18.x"
+      "runtime": "nodejs18.x",
+      "maxDuration": 30
     }
+  },
+  "env": {
+    "NODE_ENV": "production"
   }
 }
