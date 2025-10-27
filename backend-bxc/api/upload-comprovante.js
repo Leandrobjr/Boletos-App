@@ -203,6 +203,9 @@ module.exports = async (req, res) => {
 
   } catch (error) {
     console.error('❌ [UPLOAD] Erro no upload:', error);
+    console.error('❌ [UPLOAD] Stack trace:', error.stack);
+    console.error('❌ [UPLOAD] Error name:', error.name);
+    console.error('❌ [UPLOAD] Error code:', error.code);
     
     // Erro específico do Vercel Blob
     if (error.message?.includes('blob')) {
@@ -212,9 +215,19 @@ module.exports = async (req, res) => {
       });
     }
 
+    // Erro específico do banco de dados
+    if (error.code === '42883' || error.message?.includes('operator does not exist')) {
+      console.error('❌ [UPLOAD] Erro de tipo de dados PostgreSQL:', error.message);
+      return res.status(500).json({ 
+        error: 'Erro de tipo de dados no banco',
+        details: error.message 
+      });
+    }
+
     res.status(500).json({ 
       error: 'Erro interno do servidor',
-      details: error.message 
+      details: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
     });
   }
 };
