@@ -85,9 +85,9 @@ module.exports = async (req, res) => {
       );
     } else if (isNumeric) {
       // Se é numérico, pode ser id INTEGER ou numero_controle
-      // CORREÇÃO: Usar a mesma lógica do commit 118bd1f que funcionava
+      // CORREÇÃO: Evitar conversão de UUID para text, usar apenas numero_controle
       boletoQuery = await pool.query(
-        'SELECT numero_controle, status FROM boletos WHERE numero_controle = $1 OR (id::text = $1)',
+        'SELECT numero_controle, status FROM boletos WHERE numero_controle = $1',
         [boleto_id]
       );
     } else {
@@ -155,8 +155,7 @@ module.exports = async (req, res) => {
       `;
       updateParams = [blob.url, filename, filetype || 'application/octet-stream', boleto_id];
     } else if (isNumeric) {
-      // Se é numérico, pode ser id INTEGER ou numero_controle
-      // CORREÇÃO: Usar a mesma lógica do commit 118bd1f que funcionava
+      // Se é numérico, usar apenas numero_controle para evitar erro de conversão
       updateQuery = `
         UPDATE boletos 
         SET 
@@ -168,7 +167,7 @@ module.exports = async (req, res) => {
             ELSE status 
           END,
           upload_em = NOW()
-        WHERE numero_controle = $4 OR (id::text = $4)
+        WHERE numero_controle = $4
         RETURNING *
       `;
       updateParams = [blob.url, filename, filetype || 'application/octet-stream', boleto_id];
