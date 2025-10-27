@@ -77,21 +77,15 @@ module.exports = async (req, res) => {
     const isUUID = uuidRegex.test(boleto_id);
     const isNumeric = /^\d+$/.test(boleto_id);
     
-    if (isUUID) {
-      // Se é UUID, comparar apenas com id
+    // CORREÇÃO: Como id é BIGINT (não UUID), sempre usar conversão numérica
+    if (isNumeric) {
+      // Se é numérico, usar como id BIGINT
       boletoQuery = await pool.query(
         'SELECT numero_controle, status FROM boletos WHERE id = $1',
-        [boleto_id]
-      );
-    } else if (isNumeric) {
-      // Se é numérico, pode ser id INTEGER ou numero_controle
-      // CORREÇÃO: Evitar conversão de UUID para text, usar apenas numero_controle
-      boletoQuery = await pool.query(
-        'SELECT numero_controle, status FROM boletos WHERE numero_controle = $1',
-        [boleto_id]
+        [parseInt(boleto_id)]
       );
     } else {
-      // Se não é UUID nem numérico, tratar apenas como numero_controle
+      // Se não é numérico, usar como numero_controle (string)
       boletoQuery = await pool.query(
         'SELECT numero_controle, status FROM boletos WHERE numero_controle = $1',
         [boleto_id]
@@ -132,13 +126,11 @@ module.exports = async (req, res) => {
 
     console.log('✅ [UPLOAD] Upload concluído:', blob.url);
 
-    // Atualizar boleto no banco com a URL do comprovante
-    // Usar a mesma lógica de detecção de tipo para o UPDATE
-    let updateQuery;
-    let updateParams;
+    // CORREÇÃO: Simplificar lógica de UPDATE baseada nos achados do debug
+    let updateQuery, updateParams;
     
-    if (isUUID) {
-      // Se é UUID, atualizar apenas por id
+    if (isNumeric) {
+      // Se é numérico, usar como id BIGINT
       updateQuery = `
         UPDATE boletos 
         SET 
@@ -153,26 +145,9 @@ module.exports = async (req, res) => {
         WHERE id = $4
         RETURNING *
       `;
-      updateParams = [blob.url, filename, filetype || 'application/octet-stream', boleto_id];
-    } else if (isNumeric) {
-      // Se é numérico, usar apenas numero_controle para evitar erro de conversão
-      updateQuery = `
-        UPDATE boletos 
-        SET 
-          comprovante_url = $1,
-          comprovante_filename = $2,
-          comprovante_filetype = $3,
-          status = CASE 
-            WHEN status = 'TRAVADO' THEN 'AGUARDANDO_BAIXA'
-            ELSE status 
-          END,
-          upload_em = NOW()
-        WHERE numero_controle = $4
-        RETURNING *
-      `;
-      updateParams = [blob.url, filename, filetype || 'application/octet-stream', boleto_id];
+      updateParams = [blob.url, filename, filetype || 'application/octet-stream', parseInt(boleto_id)];
     } else {
-      // Se não é UUID nem numérico, atualizar apenas por numero_controle
+      // Se não é numérico, usar como numero_controle (string)
       updateQuery = `
         UPDATE boletos 
         SET 
