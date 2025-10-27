@@ -1,0 +1,13 @@
+{
+  "functions": {
+    "backend-bxc/api/*.js": {
+      "runtime": "nodejs18.x"
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/backend-bxc/api/$1"
+    }
+  ]
+}
