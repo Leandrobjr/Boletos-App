@@ -1,13 +1,7 @@
 {
   "functions": {
-    "backend-bxc/api/*.js": {
+    "api/upload-comprovante.js": {
       "runtime": "nodejs18.x"
     }
-  },
-  "rewrites": [
-    {
-      "source": "/api/(.*)",
-      "destination": "/backend-bxc/api/$1"
-    }
-  ]
+  }
 }
