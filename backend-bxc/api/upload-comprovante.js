@@ -20,13 +20,18 @@ const corsHeaders = {
   'Access-Control-Max-Age': '86400'
 };
 
-// Configuração do banco
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require',
-  ssl: {
-    rejectUnauthorized: false
-  }
-});
+// Configuração do banco - só usar PostgreSQL em produção
+let pool = null;
+const isProduction = process.env.NODE_ENV === 'production' || process.env.VERCEL;
+
+if (isProduction) {
+  pool = new Pool({
+    connectionString: process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require',
+    ssl: {
+      rejectUnauthorized: false
+    }
+  });
+}
 
 module.exports = async (req, res) => {
   // Adicionar headers CORS
@@ -57,6 +62,14 @@ module.exports = async (req, res) => {
     // Verificar se o boleto existe
     // Corrigir comparação de tipos: tratar id como UUID ou INTEGER dependendo do formato
     let boletoQuery;
+    // Verificar se estamos em produção para usar PostgreSQL
+    if (!isProduction || !pool) {
+      return res.status(503).json({ 
+        error: 'Serviço disponível apenas em produção',
+        message: 'Upload de comprovante funciona apenas no ambiente de produção com banco PostgreSQL'
+      });
+    }
+
     let queryParams;
     
     // Verificar se boleto_id parece ser um UUID
