@@ -6,6 +6,16 @@
       "maxDuration": 30
     }
   },
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index"
+    }
+  ],
   "env": {
     "NODE_ENV": "production"
   }
