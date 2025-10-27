@@ -20,7 +20,8 @@
     "pg": "^8.11.3",
     "axios": "^1.6.0",
     "dotenv": "^17.2.1",
-    "ethers": "^6.15.0"
+    "ethers": "^6.15.0",
+    "@vercel/blob": "^0.23.4"
   },
   "keywords": [
     "boleto",
