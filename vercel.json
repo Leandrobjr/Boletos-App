@@ -1,19 +1,15 @@
 {
   "version": 2,
   "functions": {
-    "api/upload-comprovante.js": {
+    "api/*.js": {
       "runtime": "nodejs18.x",
       "maxDuration": 30
     }
   },
-  "routes": [
+  "rewrites": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/api/index"
+      "source": "/api/(.*)",
+      "destination": "/api/$1"
     }
   ],
   "env": {
