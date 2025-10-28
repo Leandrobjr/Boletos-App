@@ -2,6 +2,7 @@
   "name": "bxc-boletos-app",
   "version": "1.0.0",
   "description": "BoletoXCrypto - Sistema completo de boletos com criptomoedas",
+  "type": "module",
   "engines": {
     "node": ">=18.0.0"
   },
