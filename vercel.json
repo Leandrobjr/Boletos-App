@@ -9,7 +9,20 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/api/$1",
+      "headers": {
+        "Cache-Control": "no-cache, no-store, must-revalidate",
+        "Pragma": "no-cache",
+        "Expires": "0"
+      }
     }
-  ]
+  ],
+  "functions": {
+    "api/upload-comprovante.js": {
+      "maxDuration": 30
+    },
+    "api/debug-upload.js": {
+      "maxDuration": 30
+    }
+  }
 }
