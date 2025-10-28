@@ -27,6 +27,10 @@ module.exports = async (req, res) => {
   }
 
   try {
+    console.log('🚀 Iniciando upload-comprovante...');
+    console.log('📝 Body recebido:', req.body);
+    console.log('🔗 DATABASE_URL existe:', !!process.env.DATABASE_URL);
+    
     const { boleto_id, file_data, filename, filetype } = req.body;
 
     if (!boleto_id || !file_data || !filename) {
@@ -136,10 +140,18 @@ module.exports = async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Erro no upload:', error);
+    console.error('❌ Erro detalhado no upload:', error);
+    console.error('📍 Stack trace:', error.stack);
+    console.error('🔍 Tipo do erro:', error.name);
+    console.error('💬 Mensagem:', error.message);
     
     return res.status(500).json({ 
       error: 'Erro interno do servidor',
+      details: error.message,
+      timestamp: new Date().toISOString()
+    });
+  }
+};
       details: error.message
     });
   }
