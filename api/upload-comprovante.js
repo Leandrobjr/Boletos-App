@@ -37,26 +37,25 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verificar se o boleto existe - SEMPRE buscar por numero_controle como INTEGER
+    // Verificar se o boleto existe - buscar por numero_controle como STRING
     console.log('🔍 Buscando boleto por numero_controle:', boleto_id);
     
-    const boletoIdInt = parseInt(boleto_id);
-    if (isNaN(boletoIdInt)) {
+    if (!boleto_id) {
       return res.status(400).json({ 
-        error: 'boleto_id deve ser um número válido',
+        error: 'boleto_id é obrigatório',
         received: boleto_id
       });
     }
     
     const boletoQuery = await pool.query(
-      'SELECT id, numero_controle, status FROM boletos WHERE numero_controle = $1::integer',
-      [boletoIdInt]
+      'SELECT id, numero_controle, status FROM boletos WHERE numero_controle = $1',
+      [boleto_id.toString()]
     );
 
     if (boletoQuery.rows.length === 0) {
       return res.status(404).json({ 
         error: 'Boleto não encontrado', 
-        numero_controle: boletoIdInt 
+        numero_controle: boleto_id 
       });
     }
 
@@ -89,8 +88,8 @@ module.exports = async (req, res) => {
       contentType: filetype || 'application/octet-stream'
     });
 
-    // Atualizar o boleto - SEMPRE por numero_controle como INTEGER
-    console.log('💾 Atualizando boleto por numero_controle:', boletoIdInt);
+    // Atualizar o boleto - buscar por numero_controle como STRING
+    console.log('💾 Atualizando boleto por numero_controle:', boleto_id);
     
     const updateQuery = `
       UPDATE boletos 
@@ -103,7 +102,7 @@ module.exports = async (req, res) => {
           ELSE status 
         END,
         upload_em = NOW()
-      WHERE numero_controle = $4::integer
+      WHERE numero_controle = $4
       RETURNING *
     `;
     
@@ -111,13 +110,13 @@ module.exports = async (req, res) => {
       blob.url, 
       filename, 
       filetype || 'application/octet-stream', 
-      boletoIdInt
+      boleto_id.toString()
     ]);
 
     if (updateResult.rows.length === 0) {
       return res.status(404).json({ 
         error: 'Boleto não encontrado para atualização',
-        numero_controle: boletoIdInt
+        numero_controle: boleto_id
       });
     }
 
