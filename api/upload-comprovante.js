@@ -49,7 +49,7 @@ module.exports = async (req, res) => {
     }
     
     const boletoQuery = await pool.query(
-      'SELECT id, numero_controle, status FROM boletos WHERE numero_controle = $1',
+      'SELECT id, numero_controle, status FROM boletos WHERE numero_controle = $1::integer',
       [boletoIdInt]
     );
 
@@ -103,7 +103,7 @@ module.exports = async (req, res) => {
           ELSE status 
         END,
         upload_em = NOW()
-      WHERE numero_controle = $4
+      WHERE numero_controle = $4::integer
       RETURNING *
     `;
     
