@@ -40,16 +40,20 @@ module.exports = async (req, res) => {
     
     const { boleto_id, file_data, filename, filetype } = req.body;
     
-    console.log('🔍 DEBUG: boleto_id:', boleto_id, 'type:', typeof boleto_id);
+    // CORREÇÃO: Tratar boleto_id como numero_controle
+    const numero_controle = boleto_id;
+    
+    console.log('🔍 DEBUG: boleto_id recebido:', boleto_id, 'type:', typeof boleto_id);
+    console.log('🔍 DEBUG: tratando como numero_controle:', numero_controle);
     console.log('🔍 DEBUG: filename:', filename);
     console.log('🔍 DEBUG: filetype:', filetype);
     console.log('🔍 DEBUG: file_data length:', file_data ? file_data.length : 'null');
 
-    if (!boleto_id || !file_data || !filename) {
+    if (!numero_controle || !file_data || !filename) {
       console.log('🔍 DEBUG: Dados obrigatórios ausentes');
       return res.status(400).json({ 
-        error: 'Dados obrigatórios: boleto_id, file_data, filename',
-        debug: { boleto_id: !!boleto_id, file_data: !!file_data, filename: !!filename }
+        error: 'Dados obrigatórios: numero_controle, file_data, filename',
+        debug: { numero_controle: !!numero_controle, file_data: !!file_data, filename: !!filename }
       });
     }
 
@@ -66,17 +70,13 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Análise detalhada do boleto_id
-    const boletoIdStr = String(boleto_id).trim();
-    const isNumeric = /^\d+$/.test(boletoIdStr);
-    const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(boletoIdStr);
+    // CORREÇÃO: Simplificar - sempre usar numero_controle
+    const numeroControleStr = String(numero_controle).trim();
     
-    console.log('🔍 DEBUG: Análise do boleto_id:', {
-      original: boleto_id,
-      string: boletoIdStr,
-      isNumeric,
-      isUUID,
-      length: boletoIdStr.length
+    console.log('🔍 DEBUG: Processando numero_controle:', {
+      original: numero_controle,
+      string: numeroControleStr,
+      length: numeroControleStr.length
     });
 
     // Teste simples de query primeiro
@@ -92,42 +92,25 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Agora teste a query específica
+    // CORREÇÃO: Buscar sempre por numero_controle
     let boletoQuery;
-    console.log('🔍 DEBUG: Executando query de busca...');
+    console.log('🔍 DEBUG: Executando query de busca por numero_controle...');
     
     try {
-      if (isNumeric) {
-        const numeroControle = parseInt(boletoIdStr);
-        console.log('🔍 DEBUG: Buscando por numero_controle:', numeroControle);
-        
-        boletoQuery = await pool.query(
-          'SELECT id, numero_controle, status FROM boletos WHERE numero_controle = $1',
-          [numeroControle]
-        );
-        console.log('🔍 DEBUG: Query numérica executada com sucesso');
-      } else if (isUUID) {
-        console.log('🔍 DEBUG: Buscando por ID UUID:', boletoIdStr);
-        
-        boletoQuery = await pool.query(
-          'SELECT id, numero_controle, status FROM boletos WHERE id = $1::uuid',
-          [boletoIdStr]
-        );
-        console.log('🔍 DEBUG: Query UUID executada com sucesso');
-      } else {
-        console.log('🔍 DEBUG: Formato inválido');
-        return res.status(400).json({ 
-          error: 'Formato de boleto_id inválido',
-          debug: { isNumeric, isUUID, received: boletoIdStr }
-        });
-      }
+      const numeroControle = parseInt(numeroControleStr);
+      console.log('🔍 DEBUG: Buscando por numero_controle:', numeroControle);
+      
+      boletoQuery = await pool.query(
+        'SELECT id, numero_controle, status FROM boletos WHERE numero_controle = $1',
+        [numeroControle]
+      );
+      console.log('🔍 DEBUG: Query executada com sucesso, resultados:', boletoQuery.rows.length);
     } catch (queryError) {
       console.error('🔍 DEBUG: ERRO NA QUERY DE BUSCA:', queryError.message);
       console.error('🔍 DEBUG: Stack trace:', queryError.stack);
       console.error('🔍 DEBUG: Query details:', {
-        isNumeric,
-        isUUID,
-        boletoIdStr,
+        numeroControleStr,
+        numeroControle: parseInt(numeroControleStr),
         originalBoletoId: boleto_id
       });
       
@@ -135,9 +118,8 @@ module.exports = async (req, res) => {
         error: 'Erro na query de busca',
         details: queryError.message,
         debug: {
-          isNumeric,
-          isUUID,
-          boletoIdStr,
+          numeroControleStr,
+          numeroControle: parseInt(numeroControleStr),
           originalBoletoId: boleto_id,
           stack: queryError.stack
         }
@@ -149,7 +131,7 @@ module.exports = async (req, res) => {
     if (boletoQuery.rows.length === 0) {
       return res.status(404).json({ 
         error: 'Boleto não encontrado',
-        debug: { boleto_id: boletoIdStr, isNumeric, isUUID }
+        debug: { numero_controle: numeroControleStr }
       });
     }
 
