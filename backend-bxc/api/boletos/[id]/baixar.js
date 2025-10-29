@@ -57,11 +57,22 @@ module.exports = async (req, res) => {
 
     const { tx_hash, wallet_address_vendedor, wallet_address_comprador, user_id, escrow_id } = req.body || {};
 
-    // Buscar boleto por numero_controle OU id
-    const select = await pool.query(
-      `SELECT * FROM boletos WHERE numero_controle = $1 OR id::text = $1 LIMIT 1`,
+    // Buscar boleto por numero_controle OU id (corrigido para evitar erro uuid = text)
+    let select;
+    
+    // Primeiro tenta buscar por numero_controle (string)
+    select = await pool.query(
+      `SELECT * FROM boletos WHERE numero_controle = $1 LIMIT 1`,
       [String(id)]
     );
+    
+    // Se não encontrou e o id parece ser UUID, tenta buscar por id
+    if (select.rows.length === 0 && id.length === 36 && id.includes('-')) {
+      select = await pool.query(
+        `SELECT * FROM boletos WHERE id = $1 LIMIT 1`,
+        [id]
+      );
+    }
 
     if (select.rows.length === 0) {
       return res.status(404).json({ error: 'Boleto não encontrado', ident: id });
