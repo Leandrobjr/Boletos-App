@@ -494,16 +494,16 @@ const CompradorPage = () => {
 
       console.log('🔄 Preparando dados para upload...');
       
-      // ✅ CORREÇÃO: Usar numero_controle diretamente
-      const numeroControle = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto;
-      console.log('🆔 Numero controle do boleto:', numeroControle);
+      // ✅ TEMPORÁRIO: Voltar para boleto_id até deployment do endpoint -final
+      const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
+      console.log('🆔 Identificador do boleto:', ident);
       
-      if (!numeroControle) {
-        throw new Error('Número de controle do boleto não encontrado');
+      if (!ident) {
+        throw new Error('Identificador do boleto não encontrado');
       }
       
       const uploadData = {
-        numero_controle: numeroControle,
+        boleto_id: ident,
         file_data: fileBase64,
         filename: file.name,
         filetype: file.type
@@ -513,7 +513,7 @@ const CompradorPage = () => {
       console.log('📤 Enviando comprovante via upload direto para:', buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_COMPROVANTE));
       console.log('📊 Tamanho original:', formatFileSize(file.size / (1024 * 1024)));
       console.log('📋 Dados do upload:', {
-        numero_controle: uploadData.numero_controle,
+        boleto_id: uploadData.boleto_id,
         filename: uploadData.filename,
         filetype: uploadData.filetype,
         base64_length: uploadData.file_data?.length
