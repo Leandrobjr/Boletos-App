@@ -44,22 +44,23 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Converter boleto_id para INTEGER
-    console.log('🔢 Convertendo boleto_id para INTEGER:', boleto_id);
-    const numeroControle = parseInt(boleto_id);
+    // Validar boleto_id como string numérica
+    console.log('🔢 Validando boleto_id:', boleto_id);
+    const numeroControle = String(boleto_id).trim();
     
-    if (isNaN(numeroControle) || numeroControle <= 0) {
+    // Verificar se é uma string numérica válida
+    if (!/^\d+$/.test(numeroControle) || numeroControle.length === 0) {
       console.log('❌ boleto_id inválido:', boleto_id);
       return res.status(400).json({ 
-        error: 'boleto_id deve ser um número inteiro positivo',
+        error: 'boleto_id deve ser um número válido',
         received: boleto_id,
-        converted: numeroControle
+        processed: numeroControle
       });
     }
 
     console.log('✅ Número de controle válido:', numeroControle);
 
-    // BUSCAR BOLETO - Query simples com INTEGER
+    // BUSCAR BOLETO - Query com STRING
     console.log('🔍 Buscando boleto no banco...');
     const boletoQuery = 'SELECT numero_controle, status FROM boletos WHERE numero_controle = $1 LIMIT 1';
     const boletoParams = [numeroControle];
