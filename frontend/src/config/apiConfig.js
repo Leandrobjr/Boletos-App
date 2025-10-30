@@ -29,7 +29,7 @@ const API_CONFIG = {
     RESERVAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/reservar`,
     LIBERAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/liberar`,
     COMPROVANTE_BOLETO: (numeroControle) => `/boletos/${numeroControle}/comprovante`,
-    UPLOAD_COMPROVANTE: '/upload-comprovante',  // Endpoint temporário até deployment do -final
+    UPLOAD_COMPROVANTE: '/upload-comprovante-final',
     BAIXAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/baixar`,
     CANCELAR_BOLETO: (id) => `/boletos/${id}/cancelar`,
     DISPUTA_BOLETO: (id) => `/boletos/${id}/disputa`,

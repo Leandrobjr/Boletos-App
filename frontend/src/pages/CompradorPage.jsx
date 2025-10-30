@@ -503,7 +503,7 @@ const CompradorPage = () => {
       }
       
       const uploadData = {
-        boleto_id: ident,
+        numero_controle: ident,
         file_data: fileBase64,
         filename: file.name,
         filetype: file.type
@@ -513,7 +513,7 @@ const CompradorPage = () => {
       console.log('📤 Enviando comprovante via upload direto para:', buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_COMPROVANTE));
       console.log('📊 Tamanho original:', formatFileSize(file.size / (1024 * 1024)));
       console.log('📋 Dados do upload:', {
-        boleto_id: uploadData.boleto_id,
+        numero_controle: uploadData.numero_controle,
         filename: uploadData.filename,
         filetype: uploadData.filetype,
         base64_length: uploadData.file_data?.length
