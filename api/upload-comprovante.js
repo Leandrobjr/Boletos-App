@@ -37,7 +37,7 @@ module.exports = async (req, res) => {
       });
     }
 
-    // Verificar se o boleto existe - buscar por numero_controle como STRING
+    // Verificar se o boleto existe - CORREÇÃO: usar CAST para compatibilidade
     console.log('🔍 Buscando boleto por numero_controle:', boleto_id);
     
     if (!boleto_id) {
@@ -46,10 +46,11 @@ module.exports = async (req, res) => {
         received: boleto_id
       });
     }
-    
+
+    // CORREÇÃO: Usar CAST para evitar erro de tipo UUID vs TEXT
     const boletoQuery = await pool.query(
-      'SELECT id, numero_controle, status FROM boletos WHERE numero_controle = $1',
-      [boleto_id.toString()]
+      'SELECT id, numero_controle, status FROM boletos WHERE CAST(numero_controle AS TEXT) = $1',
+      [String(boleto_id)]
     );
 
     if (boletoQuery.rows.length === 0) {
