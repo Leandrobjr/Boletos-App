@@ -1,0 +1,6 @@
+# Deploy Trigger
+# Este arquivo força um novo deploy no Vercel
+# Timestamp: 2025-01-28 11:45:00
+# Motivo: Forçar deploy após correção do numero_controle
+
+Deploy ID: force-deploy-numero-controle-fix
