@@ -96,7 +96,7 @@ module.exports = async (req, res) => {
         // Buscar por ID UUID
         console.log('🆔 Buscando por ID UUID:', boletoIdStr);
         boletoQuery = await pool.query(
-          'SELECT id, numero_controle, status FROM boletos WHERE id = $1::uuid',
+          'SELECT id, numero_controle, status FROM boletos WHERE id = $1',
           [boletoIdStr]
         );
       } else {
@@ -219,7 +219,7 @@ module.exports = async (req, res) => {
               ELSE status 
             END,
             upload_em = NOW()
-          WHERE id = $4::uuid
+          WHERE id = $4
           RETURNING *
         `;
         updateParams = [blob.url, filename, filetype || 'application/octet-stream', boletoIdStr];

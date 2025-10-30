@@ -506,7 +506,7 @@ const CompradorPage = () => {
       };
 
       // Log da requisição para depuração
-      console.log('📤 Enviando comprovante via upload direto para:', buildApiUrl('/upload-comprovante'));
+      console.log('📤 Enviando comprovante via upload direto para:', buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_COMPROVANTE));
       console.log('📊 Tamanho original:', formatFileSize(file.size / (1024 * 1024)));
       console.log('📋 Dados do upload:', {
         boleto_id: uploadData.boleto_id,
@@ -518,7 +518,7 @@ const CompradorPage = () => {
       console.log('🌐 Fazendo requisição fetch...');
       
       // Enviar via upload direto (Vercel Blob)
-      const response = await fetch(buildApiUrl('/upload-comprovante'), {
+      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_COMPROVANTE), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(uploadData)
@@ -712,9 +712,9 @@ const CompradorPage = () => {
     }
 
     try {
-      // CORREÇÃO: URL CORRETA PARA O BACKEND FUNCIONANDO
+      // CORREÇÃO: URL CORRETA PARA O BACKEND LOCAL
       const timestamp = Date.now();
-      const url = `https://boletos-app-mocha.vercel.app/api/boletos?status=DISPONIVEL&t=${timestamp}`;
+      const url = buildApiUrl(`/boletos?status=DISPONIVEL&t=${timestamp}`);
       console.log('🌐 URL da requisição (CORRIGIDA):', url);
       
       const headers = {

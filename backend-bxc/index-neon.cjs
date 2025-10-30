@@ -783,6 +783,95 @@ app.get('/perfil/:firebase_uid', async (req, res) => {
   }
 });
 
+// Rota para upload de comprovante (desenvolvimento local)
+app.post('/upload-comprovante', async (req, res) => {
+  try {
+    console.log('🚀 Upload de comprovante (desenvolvimento local)...');
+    
+    const { boleto_id, file_data, filename, filetype } = req.body;
+
+    if (!boleto_id || !file_data || !filename) {
+      return res.status(400).json({ 
+        error: 'Dados obrigatórios: boleto_id, file_data, filename'
+      });
+    }
+
+    // Converter boleto_id para número (numero_controle)
+    const numeroControle = parseInt(String(boleto_id).trim());
+    if (isNaN(numeroControle) || numeroControle <= 0) {
+      return res.status(400).json({ 
+        error: 'boleto_id deve ser um número positivo válido',
+        received: boleto_id
+      });
+    }
+
+    console.log('🔍 Buscando boleto com numero_controle:', numeroControle);
+
+    // Buscar boleto por numero_controle
+    const boleto = await getQuery(
+      'SELECT numero_controle, status FROM boletos WHERE numero_controle = $1',
+      [numeroControle]
+    );
+
+    if (!boleto) {
+      return res.status(404).json({ 
+        error: 'Boleto não encontrado',
+        numero_controle: numeroControle
+      });
+    }
+
+    console.log('✅ Boleto encontrado:', boleto);
+
+    // Em desenvolvimento, simular o upload salvando apenas a URL como base64
+    const comprovanteUrl = `data:${filetype || 'application/pdf'};base64,${file_data.includes(',') ? file_data.split(',')[1] : file_data}`;
+    
+    console.log('💾 Atualizando boleto...');
+    
+    // Atualizar boleto no banco
+    const updateResult = await runQuery(`
+      UPDATE boletos 
+      SET 
+        comprovante_url = $1,
+        comprovante_filename = $2,
+        comprovante_filetype = $3,
+        status = CASE 
+          WHEN status = 'TRAVADO' THEN 'AGUARDANDO_BAIXA'
+          ELSE status 
+        END,
+        upload_em = NOW()
+      WHERE numero_controle = $4
+    `, [comprovanteUrl, filename, filetype || 'application/pdf', numeroControle]);
+
+    // Buscar boleto atualizado
+    const boletoAtualizado = await getQuery(
+      'SELECT numero_controle, status, comprovante_url FROM boletos WHERE numero_controle = $1',
+      [numeroControle]
+    );
+
+    console.log('✅ Boleto atualizado:', boletoAtualizado);
+
+    // Resposta de sucesso
+    return res.status(200).json({
+      success: true,
+      message: 'Comprovante enviado com sucesso!',
+      data: {
+        numero_controle: boletoAtualizado.numero_controle,
+        status: boletoAtualizado.status,
+        comprovante_url: boletoAtualizado.comprovante_url,
+        filename: filename,
+        upload_timestamp: new Date().toISOString()
+      }
+    });
+
+  } catch (error) {
+    console.error('❌ Erro no upload:', error);
+    return res.status(500).json({ 
+      error: 'Erro interno do servidor',
+      details: error.message
+    });
+  }
+});
+
 // Middleware de tratamento de erros
 app.use((error, req, res, next) => {
   console.error('Erro não tratado:', error);

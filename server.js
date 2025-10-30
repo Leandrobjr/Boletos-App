@@ -1,12 +1,12 @@
-const express = require('express');
-const cors = require('cors');
-const { Pool } = require('pg');
-const axios = require('axios');
+import express from 'express';
+import cors from 'cors';
+import { Pool } from 'pg';
+import axios from 'axios';
 
-// 💰 SISTEMA DE TAXAS DINÂMICAS
-const { DynamicFeeServiceFactory } = require('./src/services/DynamicFeeService');
-const { TimerServiceFactory } = require('./src/services/TimerService');
-const { EnhancedBoletoController } = require('./src/controllers/EnhancedBoletoController');
+// 💰 SISTEMA DE TAXAS DINÂMICAS (TEMPORARIAMENTE DESABILITADO)
+// import { DynamicFeeServiceFactory } from './src/services/DynamicFeeService.js';
+// import { TimerServiceFactory } from './src/services/TimerService.js';
+// import { EnhancedBoletoController } from './src/controllers/EnhancedBoletoController.js';
 
 const app = express();
 const PORT = 3001;
@@ -111,8 +111,12 @@ let boletosStorage = [
 ];
 
 // PERSISTÊNCIA EM ARQUIVO JSON
-const fs = require('fs');
-const path = require('path');
+import fs from 'fs';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 const STORAGE_FILE = path.join(__dirname, 'boletos-storage.json');
 
 // Carregar dados do arquivo se existir
@@ -147,19 +151,20 @@ boletosStorage = loadStorage();
 console.log('🔍 [DEBUG] boletosStorage carregado:', boletosStorage.length, 'boletos');
 console.log('🔍 [DEBUG] Boletos no storage:', boletosStorage.map(b => ({ id: b.id, numero_controle: b.numero_controle, status: b.status })));
 
-// 💰 INICIALIZAR SERVIÇOS DE TAXA DINÂMICA
-const feeService = DynamicFeeServiceFactory.create();
-const timerService = TimerServiceFactory.create();
-const enhancedController = new EnhancedBoletoController();
+// 💰 INICIALIZAR SERVIÇOS DE TAXA DINÂMICA (TEMPORARIAMENTE DESABILITADO)
+// const feeService = DynamicFeeServiceFactory.create();
+// const timerService = TimerServiceFactory.create();
+// const enhancedController = new EnhancedBoletoController();
 
-console.log('💰 [TAXAS DINÂMICAS] Serviços inicializados');
+// console.log('💰 [TAXAS DINÂMICAS] Serviços inicializados');
 
 // Middleware
 app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// 💰 ROTA PARA CONSULTAR TAXAS DINÂMICAS
+// 💰 ROTA PARA CONSULTAR TAXAS DINÂMICAS (TEMPORARIAMENTE DESABILITADA)
+/*
 app.get('/api/taxas/:numeroControle', async (req, res) => {
   try {
     const { numeroControle } = req.params;
@@ -210,8 +215,10 @@ app.get('/api/taxas/:numeroControle', async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
+*/
 
-// 📊 ROTA PARA ESTATÍSTICAS DO SISTEMA
+// 📊 ROTA PARA ESTATÍSTICAS DO SISTEMA (TEMPORARIAMENTE DESABILITADA)
+/*
 app.get('/api/sistema/stats', async (req, res) => {
   try {
     const stats = {
@@ -237,6 +244,7 @@ app.get('/api/sistema/stats', async (req, res) => {
     res.status(500).json({ error: 'Erro interno do servidor' });
   }
 });
+*/
 
 // Configuração do banco Neon (DESABILITADO NO AMBIENTE DEV)
 // const pool = new Pool({

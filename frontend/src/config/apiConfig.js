@@ -15,8 +15,8 @@ const API_BACKUP_URL = 'https://boletos-app-mocha.vercel.app/api';
 
 // Configuração da API
 const API_CONFIG = {
-  // PRODUÇÃO: Usar o deployment correto onde o arquivo existe
-  BASE_URL: 'https://bxc-boletos-bxmaayze4-leandro-botacin-juniors-projects.vercel.app',
+  // PRODUÇÃO: Usar o deployment mais recente
+  BASE_URL: 'https://bxc-boletos-m1ku6p07o-leandro-botacin-juniors-projects.vercel.app',
   
   // Endpoints da API
   ENDPOINTS: {
