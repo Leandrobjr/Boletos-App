@@ -1,11 +1,5 @@
 {
   "version": 2,
-  "builds": [
-    {
-      "src": "api/**/*.js",
-      "use": "@vercel/node"
-    }
-  ],
   "routes": [
     {
       "src": "/api/(.*)",
@@ -19,6 +13,12 @@
   ],
   "functions": {
     "api/upload-comprovante.js": {
+      "maxDuration": 30
+    },
+    "api/upload-comprovante-v2.js": {
+      "maxDuration": 30
+    },
+    "api/upload-comprovante-final.js": {
       "maxDuration": 30
     },
     "api/debug-upload.js": {

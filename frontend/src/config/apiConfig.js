@@ -1,19 +1,12 @@
 // Configuração da API
 
-// FORÇAR URL BASEADA NO AMBIENTE - padronizar produção com caminho relativo /api
+// FORÇAR SEMPRE PRODUÇÃO - VERCEL BACKEND
 const getCorrectApiUrl = () => {
-  const currentHost = window.location.hostname;
-
-  // LOCAL: sempre apontar para o backend local com /api
-  if (currentHost === 'localhost' || currentHost === '127.0.0.1') {
-    return 'http://localhost:3001/api';
-  }
-
-  // PRODUÇÃO: SEMPRE usar backend dedicado Vercel - TESTADO E FUNCIONANDO
+  // SEMPRE usar backend de produção Vercel - NUNCA ambiente local
   return 'https://boletos-app-mocha.vercel.app/api';
 };
 
-// URL BASE FIXA - NÃO PODE SER ALTERADA
+// URL BASE FIXA - SEMPRE PRODUÇÃO
 const API_BASE_URL = getCorrectApiUrl();
 // BACKUP EM PRODUÇÃO: backend dedicado Vercel
 const API_BACKUP_URL = 'https://boletos-app-mocha.vercel.app/api';
@@ -22,7 +15,8 @@ const API_BACKUP_URL = 'https://boletos-app-mocha.vercel.app/api';
 
 // Configuração da API
 const API_CONFIG = {
-  BASE_URL: API_BASE_URL,
+  // PRODUÇÃO: Usar SEMPRE a aplicação correta no Vercel
+  BASE_URL: 'https://boletos-app-mocha.vercel.app',
   
   // Endpoints da API
   ENDPOINTS: {
@@ -35,6 +29,7 @@ const API_CONFIG = {
     RESERVAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/reservar`,
     LIBERAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/liberar`,
     COMPROVANTE_BOLETO: (numeroControle) => `/boletos/${numeroControle}/comprovante`,
+    UPLOAD_COMPROVANTE: '/upload-comprovante-final',  // Endpoint correto que existe no Vercel
     BAIXAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/baixar`,
     CANCELAR_BOLETO: (id) => `/boletos/${id}/cancelar`,
     DISPUTA_BOLETO: (id) => `/boletos/${id}/disputa`,
