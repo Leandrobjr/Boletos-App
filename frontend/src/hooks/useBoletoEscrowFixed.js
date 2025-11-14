@@ -60,72 +60,48 @@ export const useBoletoEscrowFixed = () => {
     try {
       setIsLoading(true);
       setError(null);
-      
-      // Verificar se existe ethereum provider
-      if (!window.ethereum) {
-        throw new Error('Nenhuma carteira detectada. Instale MetaMask ou outra carteira compatível!');
+
+      const injected = window.ethereum;
+      const providerLike = injected?.providers?.length
+        ? injected.providers.find((p) => typeof p.request === 'function')
+        : injected;
+
+      if (!providerLike || typeof providerLike.request !== 'function') {
+        throw new Error('Nenhuma carteira detectada. Use o botão WalletConnect ou instale MetaMask.');
       }
 
-      // Solicitar conexão
-      const accounts = await window.ethereum.request({
-        method: 'eth_requestAccounts'
-      });
-
+      const accounts = await providerLike.request({ method: 'eth_requestAccounts' });
       if (!accounts || accounts.length === 0) {
         throw new Error('Nenhuma conta disponível na carteira');
       }
 
       const selectedAccount = accounts[0];
 
-      // Verificar rede atual
-      const chainId = await window.ethereum.request({ method: 'eth_chainId' });
-      const currentNetworkId = parseInt(chainId, 16);
-      const isCorrectNetwork = currentNetworkId === DEV_CONFIG.NETWORK.id;
-      
-      if (!isCorrectNetwork) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: `0x${DEV_CONFIG.NETWORK.id.toString(16)}` }]
-          });
-        } catch (switchError) {
-          if (switchError.code === 4902) {
-            await window.ethereum.request({
-              method: 'wallet_addEthereumChain',
-              params: [{
-                chainId: `0x${DEV_CONFIG.NETWORK.id.toString(16)}`,
-                chainName: 'Polygon Amoy Testnet',
-                nativeCurrency: {
-                  name: 'MATIC',
-                  symbol: 'MATIC',
-                  decimals: 18
-                },
-                rpcUrls: ['https://rpc-amoy.polygon.technology'],
-                blockExplorerUrls: ['https://amoy.polygonscan.com/']
-              }]
-            });
-          } else {
-            throw new Error('Troque para a rede Polygon Amoy para continuar.');
-          }
-        }
+      let isCorrectNetwork = false;
+      try {
+        const chainIdHex = await providerLike.request({ method: 'eth_chainId' });
+        const currentNetworkId = parseInt(chainIdHex, 16);
+        isCorrectNetwork = currentNetworkId === DEV_CONFIG.NETWORK.id;
+      } catch (_) {
+        isCorrectNetwork = false;
       }
 
-      // Definir estados
+      // Não forçar troca de rede na conexão inicial — continuar mesmo em rede diferente
       setAddress(selectedAccount);
       setIsConnected(true);
-      setNetworkCorrect(true);
-      
-      // Carregar owner do contrato
+      setNetworkCorrect(!!isCorrectNetwork);
+
+      // Carregar owner do contrato (best-effort)
       try {
-        const provider = new ethers.BrowserProvider(window.ethereum);
+        const provider = new ethers.BrowserProvider(providerLike);
         const escrowRead = new ethers.Contract(DEV_CONFIG.P2P_ESCROW, P2P_ESCROW_ABI, await provider.getSigner());
         const currentOwner = await escrowRead.owner();
         setOwnerAddress(currentOwner);
       } catch (ownerError) {
         console.warn('Erro ao carregar owner do contrato:', ownerError);
       }
-      
-      return { success: true, address: selectedAccount };
+
+      return { success: true, address: selectedAccount, networkCorrect: !!isCorrectNetwork };
 
     } catch (error) {
       setError(error.message);

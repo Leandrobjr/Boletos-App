@@ -21,6 +21,7 @@ import StatusBadge from '../components/ui/status-badge';
 import API_CONFIG, { buildApiUrl } from '../config/apiConfig';
 import WalletConnector from '../components/wallet/WalletConnector';
 import { processFileForUpload, formatFileSize } from '../utils/fileCompression';
+import { uploadDebugger, addDebugControls } from '../utils/debugLogger';
 
 // FORCE REBUILD - CORREÇÃO DEFINITIVA LAYOUT E MODAIS - CACHE BUSTER
 const CompradorPage = () => {
@@ -1559,6 +1560,10 @@ const CompradorPage = () => {
                       Conectar Carteira
                     </h3>
                     <p style={{ color: '#1e40af', fontSize: '0.875rem' }}>Para prosseguir com a compra, conecte sua carteira digital.</p>
+                  </div>
+                  {/* Suporte adicional a WalletConnect/RainbowKit */}
+                  <div style={{ background: '#f8fafc', border: '1px dashed #cbd5e1', borderRadius: '0.5rem' }}>
+                    <WalletConnector />
                   </div>
                   <button
                     onClick={handleConectarCarteira}
