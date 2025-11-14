@@ -511,7 +511,10 @@ const CompradorPage = () => {
       };
 
       // Log da requisição para depuração
-      console.log('📤 Enviando comprovante via upload direto para:', buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_COMPROVANTE));
+      const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
+      const comprovanteEndpoint = API_CONFIG.ENDPOINTS.COMPROVANTE_BOLETO(ident);
+      const uploadUrl = buildApiUrl(comprovanteEndpoint);
+      console.log('📤 Enviando comprovante (backend externo) para:', uploadUrl);
       console.log('📊 Tamanho original:', formatFileSize(file.size / (1024 * 1024)));
       console.log('📋 Dados do upload:', {
         numero_controle: uploadData.numero_controle,
@@ -521,12 +524,17 @@ const CompradorPage = () => {
       });
       
       console.log('🌐 Fazendo requisição fetch...');
-      
-      // Enviar via upload direto (Vercel Blob)
-      const response = await fetch(buildApiUrl(API_CONFIG.ENDPOINTS.UPLOAD_COMPROVANTE), {
-        method: 'POST',
+
+      // Enviar base64 diretamente para backend externo (/boletos/:id/comprovante)
+      const response = await fetch(uploadUrl, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(uploadData)
+        body: JSON.stringify({
+          comprovante: fileBase64,
+          filename: file.name,
+          filesize: file.size,
+          filetype: file.type
+        })
       });
       
       console.log('📡 Resposta recebida:', response.status, response.statusText);
@@ -551,9 +559,9 @@ const CompradorPage = () => {
       const uploadResult = await response.json();
       
       // Log de sucesso claro no console
-      console.log('✅ Upload direto concluído com sucesso:', {
+      console.log('✅ Upload concluído (backend externo):', {
         status: response.status,
-        comprovante_url: uploadResult.data?.comprovante_url,
+        comprovante_url: uploadResult.data?.comprovante_url || uploadResult.data?.comprovante,
         boleto_status: uploadResult.data?.status,
         full_response: uploadResult
       });
@@ -563,7 +571,7 @@ const CompradorPage = () => {
       // Atualizar o boleto selecionado com os dados retornados
       setSelectedBoleto(prev => ({
         ...prev,
-        comprovanteUrl: uploadResult.data?.comprovante_url,
+        comprovanteUrl: uploadResult.data?.comprovante_url || uploadResult.data?.comprovante,
         status: uploadResult.data?.status || 'AGUARDANDO_BAIXA'
       }));
       
