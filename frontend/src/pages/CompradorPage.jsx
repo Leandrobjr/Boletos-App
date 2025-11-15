@@ -511,7 +511,7 @@ const CompradorPage = () => {
       };
 
       // Log da requisição para depuração
-      const ident = selectedBoleto.numero_controle || selectedBoleto.numeroBoleto || selectedBoleto.id;
+      
       const comprovanteEndpoint = API_CONFIG.ENDPOINTS.COMPROVANTE_BOLETO(ident);
       const uploadUrl = buildApiUrl(comprovanteEndpoint);
       console.log('📤 Enviando comprovante (backend externo) para:', uploadUrl);
