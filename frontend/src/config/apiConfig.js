@@ -2,8 +2,10 @@
 
 // FORÇAR SEMPRE PRODUÇÃO - VERCEL BACKEND
 const getCorrectApiUrl = () => {
-  // SEMPRE usar backend de produção Vercel - NUNCA ambiente local
-  return 'https://boletos-app-mocha.vercel.app/api';
+  const envUrl = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL
+    ? import.meta.env.VITE_API_BASE_URL
+    : (typeof process !== 'undefined' && process.env && process.env.VITE_API_BASE_URL ? process.env.VITE_API_BASE_URL : null);
+  return envUrl || 'https://bxc-boletos-m1ku6p07o-leandro-botacin-juniors-projects.vercel.app/api';
 };
 
 // URL BASE FIXA - SEMPRE PRODUÇÃO
@@ -125,7 +127,7 @@ export const apiRequest = async (endpoint, options = {}) => {
   // Estratégia de fallback: usar caminho relativo como backup
   const candidates = [primaryUrl];
   const isLocal = primaryUrl.includes('localhost');
-  const isVercelBackend = primaryUrl.includes('boletos-app-mocha.vercel.app');
+  const isVercelBackend = primaryUrl.includes('vercel.app');
   const disableBackup = options.disableBackup === true;
   if (!isLocal && isVercelBackend && !disableBackup) {
     candidates.push('/api' + endpoint);
