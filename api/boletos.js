@@ -4,7 +4,7 @@ const { Pool } = require('pg');
 let pool;
 
 const createConnection = async () => {
-  const connectionString = 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
+  const connectionString = process.env.DATABASE_URL || 'postgresql://neondb_owner:npg_dPQtsIq53OVc@ep-billowing-union-ac0fqn9p-pooler.sa-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require';
   
   try {
     console.log('🔗 [DB] Criando nova conexão com Neon PostgreSQL...');
@@ -159,18 +159,29 @@ module.exports = async (req, res) => {
       if (numeroControle) {
         console.log(`🔍 Buscando boleto por numero_controle: ${numeroControle}`);
         const currentPool = await getPool();
-        const result = await currentPool.query('SELECT * FROM boletos WHERE numero_controle = $1', [numeroControle]);
-        
+        let result = await currentPool.query('SELECT * FROM boletos WHERE numero_controle = $1 LIMIT 1', [numeroControle]);
+
+        if (result.rows.length === 0 && /^\d+$/.test(String(numeroControle))) {
+          const numeroInt = parseInt(String(numeroControle), 10);
+          if (!isNaN(numeroInt)) {
+            result = await currentPool.query('SELECT * FROM boletos WHERE numero_controle = $1 LIMIT 1', [numeroInt]);
+          }
+        }
+
+        if (result.rows.length === 0) {
+          result = await currentPool.query('SELECT * FROM boletos WHERE CAST(numero_controle AS TEXT) = $1 LIMIT 1', [String(numeroControle)]);
+        }
+
         if (result.rows.length === 0) {
           return res.status(404).json({
             success: false,
             message: 'Boleto não encontrado'
           });
         }
-        
+
         return res.status(200).json({
           success: true,
-          data: result.rows[0], // Retorna apenas o boleto encontrado
+          data: result.rows[0],
           count: 1
         });
       }
@@ -198,7 +209,7 @@ module.exports = async (req, res) => {
           SELECT id, numero_controle, codigo_barras, cpf_cnpj, valor_brl, valor_usdt, 
                  vencimento, instituicao, status, criado_em 
           FROM boletos 
-          WHERE status IN ('DISPONIVEL', 'pendente')
+          WHERE status IN ('DISPONIVEL', 'AGUARDANDO_PAGAMENTO', 'AGUARDANDO_BAIXA')
           ORDER BY criado_em DESC 
           LIMIT 50
         `;
