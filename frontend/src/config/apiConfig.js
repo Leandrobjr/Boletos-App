@@ -105,6 +105,14 @@ export const apiRequest = async (endpoint, options = {}) => {
     ...(options.headers || {}),
     ...extraHeaders,
   };
+  try {
+    const bypassToken = (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_VERCEL_BYPASS_TOKEN)
+      || (typeof process !== 'undefined' && process.env && process.env.VITE_VERCEL_BYPASS_TOKEN)
+      || null;
+    if (bypassToken) {
+      initialHeaders['x-vercel-protection-bypass'] = bypassToken;
+    }
+  } catch {}
   
   let body = options.body;
   let headers = { ...initialHeaders };
