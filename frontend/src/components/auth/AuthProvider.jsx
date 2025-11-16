@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
       setPerfilCheckLoading(true);
       // Adiciona log para depuração
       const firebaseUid = user.uid;
-      fetch(buildApiUrl(`/perfil/${firebaseUid}`))
+      fetch(buildApiUrl(`/perfil?uid=${firebaseUid}`))
         .then(res => res.json())
         .then(data => {
           const nomeValido = data && (data.nome || data.nome_completo);

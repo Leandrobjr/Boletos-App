@@ -120,7 +120,7 @@ const AlterarCadastroPage = () => {
         email: user.email || ''
       }));
 
-      fetch(buildApiUrl(`/perfil/${user.uid}`))
+      fetch(buildApiUrl(`/perfil?uid=${user.uid}`))
         .then(res => res.json())
         .then(data => {
           if (data) {
