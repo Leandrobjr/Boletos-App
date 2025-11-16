@@ -27,7 +27,7 @@ const API_CONFIG = {
     PERFIL: '/perfil',
     BOLETOS_USUARIO: (uid) => `/boletos/usuario/${uid}`,
     BOLETOS_COMPRADOS: (uid) => `/boletos/comprados/${uid}`,
-    PERFIL_USUARIO: (uid) => `/perfil/${uid}`,
+    PERFIL_USUARIO: (uid) => `/perfil?uid=${uid}`,
     RESERVAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/reservar`,
     LIBERAR_BOLETO: (numeroControle) => `/boletos/${numeroControle}/liberar`,
     COMPROVANTE_BOLETO: (numeroControle) => `/boletos/${numeroControle}/comprovante`,
