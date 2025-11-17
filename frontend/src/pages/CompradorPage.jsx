@@ -470,6 +470,20 @@ const CompradorPage = () => {
       return;
     }
     
+    // Checar status do boleto antes de enviar
+    const statusAtual = selectedBoleto?.status || '';
+    const statusNorm = (statusAtual || '').toString().replace(/\s+/g, '_').toUpperCase();
+    const podeEnviar = ['PENDENTE_PAGAMENTO', 'AGUARDANDO_PAGAMENTO'].includes(statusNorm);
+    if (!podeEnviar) {
+      setAlertInfo({
+        type: 'destructive',
+        title: 'Envio indisponível',
+        description: 'O boleto deve estar PENDENTE/AGUARDANDO PAGAMENTO para aceitar comprovante.'
+      });
+      setTimeout(() => setAlertInfo(null), 4000);
+      return;
+    }
+
     console.log('✅ Validações passaram, iniciando upload...');
     setUploadingComprovante(true);
     
@@ -1819,15 +1833,15 @@ const CompradorPage = () => {
                       </button>
                       <button
                                         type="submit"
-                                        disabled={!comprovante || uploadingComprovante}
+                                        disabled={!comprovante || uploadingComprovante || !(['PENDENTE_PAGAMENTO','AGUARDANDO_PAGAMENTO'].includes((selectedBoleto?.status || '').toString().replace(/\s+/g,'_').toUpperCase()))}
                                         style={{
                                           flex: 1,
-                                          backgroundColor: uploadingComprovante ? '#9ca3af' : (comprovante ? '#16a34a' : '#9ca3af'),
+                                          backgroundColor: uploadingComprovante ? '#9ca3af' : (!comprovante || !(['PENDENTE_PAGAMENTO','AGUARDANDO_PAGAMENTO'].includes((selectedBoleto?.status || '').toString().replace(/\s+/g,'_').toUpperCase())) ? '#9ca3af' : '#16a34a'),
                                           color: '#ffffff',
                                           padding: '0.75rem 1.5rem',
                                           borderRadius: '0.5rem',
                                           border: 'none',
-                                          cursor: uploadingComprovante ? 'wait' : (comprovante ? 'pointer' : 'not-allowed'),
+                                          cursor: uploadingComprovante ? 'wait' : ((!comprovante || !(['PENDENTE_PAGAMENTO','AGUARDANDO_PAGAMENTO'].includes((selectedBoleto?.status || '').toString().replace(/\s+/g,'_').toUpperCase()))) ? 'not-allowed' : 'pointer'),
                                           display: 'flex',
                                           alignItems: 'center',
                                           justifyContent: 'center',
@@ -1837,20 +1851,20 @@ const CompradorPage = () => {
                                           transition: 'all 0.2s'
                                         }}
                                         onMouseEnter={(e) => {
-                                          if (comprovante && !uploadingComprovante) e.target.style.backgroundColor = '#15803d';
+                                          if (comprovante && !uploadingComprovante && ['PENDENTE_PAGAMENTO','AGUARDANDO_PAGAMENTO'].includes((selectedBoleto?.status || '').toString().replace(/\s+/g,'_').toUpperCase())) e.target.style.backgroundColor = '#15803d';
                                         }}
                                         onMouseLeave={(e) => {
-                                          if (comprovante && !uploadingComprovante) e.target.style.backgroundColor = '#16a34a';
+                                          if (comprovante && !uploadingComprovante && ['PENDENTE_PAGAMENTO','AGUARDANDO_PAGAMENTO'].includes((selectedBoleto?.status || '').toString().replace(/\s+/g,'_').toUpperCase())) e.target.style.backgroundColor = '#16a34a';
                                         }}
                                         onClick={(e) => {
                                           console.log('🚀 Botão submit clicado diretamente!', { comprovante, e });
-                                          if (!comprovante || uploadingComprovante) {
+                                          if (!comprovante || uploadingComprovante || !(['PENDENTE_PAGAMENTO','AGUARDANDO_PAGAMENTO'].includes((selectedBoleto?.status || '').toString().replace(/\s+/g,'_').toUpperCase()))) {
                                             e.preventDefault();
                                             console.log('❌ Submit bloqueado - sem arquivo');
                                           }
                                         }}
                                       >
-                        <FaUpload style={{ marginRight: '0.5rem' }} /> {uploadingComprovante ? 'Enviando Comprovante...' : 'Enviar Comprovante'}
+                        <FaUpload style={{ marginRight: '0.5rem' }} /> {uploadingComprovante ? 'Enviando Comprovante...' : (!(['PENDENTE_PAGAMENTO','AGUARDANDO_PAGAMENTO'].includes((selectedBoleto?.status || '').toString().replace(/\s+/g,'_').toUpperCase())) ? 'Indisponível' : 'Enviar Comprovante')}
                       </button>
                     </div>
                   </form>
