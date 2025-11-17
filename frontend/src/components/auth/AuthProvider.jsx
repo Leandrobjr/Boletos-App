@@ -7,7 +7,7 @@ import {
   signOutUser 
 } from '../../services/tokenAuthManager';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { buildApiUrl } from '../../config/apiConfig';
+import API_CONFIG, { buildApiUrl, apiRequest } from '../../config/apiConfig';
 
 // Criar contexto de autenticação
 const AuthContext = createContext(null);
@@ -124,8 +124,7 @@ export const AuthProvider = ({ children }) => {
       setPerfilCheckLoading(true);
       // Adiciona log para depuração
       const firebaseUid = user.uid;
-      fetch(buildApiUrl(`/perfil?uid=${firebaseUid}`))
-        .then(res => res.json())
+      apiRequest(API_CONFIG.ENDPOINTS.PERFIL_USUARIO(firebaseUid))
         .then(data => {
           const nomeValido = data && (data.nome || data.nome_completo);
           const telefoneValido = data && data.telefone;

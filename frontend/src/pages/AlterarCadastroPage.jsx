@@ -3,7 +3,7 @@ import { useAuth } from '../components/auth/AuthProvider';
 import { useNavigate } from 'react-router-dom';
 import { auth } from '../services/firebaseConfig';
 import { updateProfile, updatePassword } from 'firebase/auth';
-import { buildApiUrl } from '../config/apiConfig';
+import API_CONFIG, { buildApiUrl, apiRequest } from '../config/apiConfig';
 
 const AlterarCadastroPage = () => {
   const { user } = useAuth();
@@ -120,8 +120,7 @@ const AlterarCadastroPage = () => {
         email: user.email || ''
       }));
 
-      fetch(buildApiUrl(`/perfil?uid=${user.uid}`))
-        .then(res => res.json())
+      apiRequest(API_CONFIG.ENDPOINTS.PERFIL_USUARIO(user.uid))
         .then(data => {
           if (data) {
             setFormData(prev => ({
@@ -176,20 +175,15 @@ const AlterarCadastroPage = () => {
 
       // Salvar dados no backend
       if (user) {
-        const response = await fetch(buildApiUrl('/perfil'), {
+        await apiRequest(API_CONFIG.ENDPOINTS.PERFIL, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+          body: {
             firebase_uid: user.uid,
             nome: formData.nome.trim(),
             email: formData.email.trim(),
             telefone: formData.telefone
-          })
+          }
         });
-
-        if (!response.ok) {
-          throw new Error('Erro ao salvar dados no servidor');
-        }
       }
 
       setSuccessMessage('Dados atualizados com sucesso! Redirecionando...');

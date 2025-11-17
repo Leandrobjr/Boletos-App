@@ -5,13 +5,13 @@ const getCorrectApiUrl = () => {
   const envUrl = typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_BASE_URL
     ? import.meta.env.VITE_API_BASE_URL
     : (typeof process !== 'undefined' && process.env && process.env.VITE_API_BASE_URL ? process.env.VITE_API_BASE_URL : null);
-  return envUrl || 'https://bxc-boletos-m1ku6p07o-leandro-botacin-juniors-projects.vercel.app/api';
+  return envUrl || '/api';
 };
 
 // URL BASE FIXA - SEMPRE PRODUÇÃO
 const API_BASE_URL = getCorrectApiUrl();
 // BACKUP EM PRODUÇÃO: backend dedicado Vercel
-const API_BACKUP_URL = 'https://boletos-app-mocha.vercel.app/api';
+const API_BACKUP_URL = '/api';
 
 
 
