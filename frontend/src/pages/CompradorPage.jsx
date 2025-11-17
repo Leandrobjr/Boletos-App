@@ -38,6 +38,7 @@ const CompradorPage = () => {
   const [copiedCodigoBarras, setCopiedCodigoBarras] = useState(false);
   const [showComprovanteModal, setShowComprovanteModal] = useState(false);
   const [selectedComprovante, setSelectedComprovante] = useState(null);
+  const [uploadingComprovante, setUploadingComprovante] = useState(false);
   // Removido viewer lateral por simplicidade/performance
 
   // Hook fixo para usar com contratos Enhanced
@@ -263,6 +264,7 @@ const CompradorPage = () => {
         description: errorMessage
       });
       setTimeout(() => setAlertInfo(null), 5000);
+      setUploadingComprovante(false);
     }
   };
 
@@ -469,6 +471,7 @@ const CompradorPage = () => {
     }
     
     console.log('✅ Validações passaram, iniciando upload...');
+    setUploadingComprovante(true);
     
     setAlertInfo({
       type: 'default',
@@ -600,6 +603,7 @@ const CompradorPage = () => {
       setTimeout(() => {
         setAlertInfo(null);
       }, 5000);
+      setUploadingComprovante(false);
       
     } catch (error) {
       console.error('❌ Erro no upload direto:', error);
@@ -1781,6 +1785,7 @@ const CompradorPage = () => {
                           borderRadius: '0.375rem'
                         }}
                         className="focus:border-blue-500 focus:ring-blue-500"
+                        disabled={uploadingComprovante}
                       />
                       <p style={{ color: '#1e40af', fontSize: '0.875rem', marginTop: '0.5rem' }}>Aceita imagens (JPG, PNG) e PDFs</p>
                     </div>
@@ -1814,15 +1819,15 @@ const CompradorPage = () => {
                       </button>
                       <button
                                         type="submit"
-                                        disabled={!comprovante}
+                                        disabled={!comprovante || uploadingComprovante}
                                         style={{
                                           flex: 1,
-                                          backgroundColor: comprovante ? '#16a34a' : '#9ca3af',
+                                          backgroundColor: uploadingComprovante ? '#9ca3af' : (comprovante ? '#16a34a' : '#9ca3af'),
                                           color: '#ffffff',
                                           padding: '0.75rem 1.5rem',
                                           borderRadius: '0.5rem',
                                           border: 'none',
-                                          cursor: comprovante ? 'pointer' : 'not-allowed',
+                                          cursor: uploadingComprovante ? 'wait' : (comprovante ? 'pointer' : 'not-allowed'),
                                           display: 'flex',
                                           alignItems: 'center',
                                           justifyContent: 'center',
@@ -1832,20 +1837,20 @@ const CompradorPage = () => {
                                           transition: 'all 0.2s'
                                         }}
                                         onMouseEnter={(e) => {
-                                          if (comprovante) e.target.style.backgroundColor = '#15803d';
+                                          if (comprovante && !uploadingComprovante) e.target.style.backgroundColor = '#15803d';
                                         }}
                                         onMouseLeave={(e) => {
-                                          if (comprovante) e.target.style.backgroundColor = '#16a34a';
+                                          if (comprovante && !uploadingComprovante) e.target.style.backgroundColor = '#16a34a';
                                         }}
                                         onClick={(e) => {
                                           console.log('🚀 Botão submit clicado diretamente!', { comprovante, e });
-                                          if (!comprovante) {
+                                          if (!comprovante || uploadingComprovante) {
                                             e.preventDefault();
                                             console.log('❌ Submit bloqueado - sem arquivo');
                                           }
                                         }}
                                       >
-                        <FaUpload style={{ marginRight: '0.5rem' }} /> Enviar Comprovante
+                        <FaUpload style={{ marginRight: '0.5rem' }} /> {uploadingComprovante ? 'Enviando Comprovante...' : 'Enviar Comprovante'}
                       </button>
                     </div>
                   </form>
