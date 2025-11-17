@@ -16,6 +16,7 @@ const API_BACKUP_URL = '/api';
 
 
 // Configuração da API
+const DEBUG = !!((typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_DEBUG_LOGS) || (typeof process !== 'undefined' && process.env && process.env.VITE_DEBUG_LOGS));
 const API_CONFIG = {
   // PRODUÇÃO: Usar o deployment mais recente
   BASE_URL: 'https://bxc-boletos-m1ku6p07o-leandro-botacin-juniors-projects.vercel.app',
@@ -63,19 +64,23 @@ const fetchWithTimeout = async (url, options = {}, timeoutMs = 20000) => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
-    console.log(`🌐 [API] Fazendo requisição para: ${url}`);
-    console.log(`🌐 [API] Método: ${options.method || 'GET'}`);
-    console.log(`🌐 [API] Headers:`, options.headers);
-    console.log(`🌐 [API] Body:`, options.body);
+    if (DEBUG) {
+      console.log(`🌐 [API] Fazendo requisição para: ${url}`);
+      console.log(`🌐 [API] Método: ${options.method || 'GET'}`);
+      console.log(`🌐 [API] Headers:`, options.headers);
+      console.log(`🌐 [API] Body:`, options.body);
+    }
     
     const resp = await fetch(url, { ...options, signal: controller.signal });
     
-    console.log(`🌐 [API] Resposta recebida - Status: ${resp.status}`);
-    console.log(`🌐 [API] Headers da resposta:`, Object.fromEntries(resp.headers.entries()));
+    if (DEBUG) {
+      console.log(`🌐 [API] Resposta recebida - Status: ${resp.status}`);
+      console.log(`🌐 [API] Headers da resposta:`, Object.fromEntries(resp.headers.entries()));
+    }
     
     return resp;
   } catch (error) {
-    console.error(`❌ [API] Erro na requisição para ${url}:`, error);
+    if (DEBUG) console.error(`❌ [API] Erro na requisição para ${url}:`, error);
     throw error;
   } finally {
     clearTimeout(timer);
@@ -129,7 +134,7 @@ export const apiRequest = async (endpoint, options = {}) => {
     body,
   };
 
-  const maxRetries = 2; // reduzir para evitar espera longa
+  const maxRetries = 1;
   let lastError;
 
   // Estratégia de fallback: usar caminho relativo como backup
@@ -146,13 +151,15 @@ export const apiRequest = async (endpoint, options = {}) => {
       try {
         const response = await fetchWithTimeout(url, defaultOptions, 20000);
         
-        console.log(`🔍 [API] Processando resposta de ${url}`);
-        console.log(`🔍 [API] Status da resposta: ${response.status}`);
-        console.log(`🔍 [API] OK: ${response.ok}`);
+        if (DEBUG) {
+          console.log(`🔍 [API] Processando resposta de ${url}`);
+          console.log(`🔍 [API] Status da resposta: ${response.status}`);
+          console.log(`🔍 [API] OK: ${response.ok}`);
+        }
         
         if (!response.ok) {
           const errorText = await response.text().catch(() => 'Erro desconhecido');
-          console.error(`❌ [API] Resposta não OK - Status: ${response.status}, Texto: ${errorText}`);
+          if (DEBUG) console.error(`❌ [API] Resposta não OK - Status: ${response.status}, Texto: ${errorText}`);
           
           // Não repetir em erros 4xx (cliente)
           if (response.status >= 400 && response.status < 500) {
@@ -163,26 +170,26 @@ export const apiRequest = async (endpoint, options = {}) => {
         }
         
         const contentType = response.headers.get('content-type') || '';
-        console.log(`🔍 [API] Content-Type: ${contentType}`);
+        if (DEBUG) console.log(`🔍 [API] Content-Type: ${contentType}`);
         
         if (contentType.includes('application/json')) {
           const jsonData = await response.json();
-          console.log(`✅ [API] Dados JSON recebidos:`, jsonData);
+          if (DEBUG) console.log(`✅ [API] Dados JSON recebidos:`, jsonData);
           return jsonData;
         }
         
         // Fallback para texto em sucesso
         const textData = await response.text();
-        console.log(`✅ [API] Dados de texto recebidos:`, textData);
+        if (DEBUG) console.log(`✅ [API] Dados de texto recebidos:`, textData);
         return { success: true, text: textData };
         
       } catch (error) {
-        console.error(`❌ [API] Erro na tentativa ${attempt}/${maxRetries} para ${url}:`, error);
+        if (DEBUG) console.error(`❌ [API] Erro na tentativa ${attempt}/${maxRetries} para ${url}:`, error);
         lastError = error;
         // Em AbortError ou network error, aplicar backoff exponencial
         if (attempt < maxRetries) {
-          const delay = Math.pow(2, attempt) * 1000; // 2s, 4s
-          console.log(`⏳ [API] Aguardando ${delay}ms antes da próxima tentativa...`);
+          const delay = 1000;
+          if (DEBUG) console.log(`⏳ [API] Aguardando ${delay}ms antes da próxima tentativa...`);
           await new Promise(resolve => setTimeout(resolve, delay));
         }
       }

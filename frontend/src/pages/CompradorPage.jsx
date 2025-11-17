@@ -602,10 +602,7 @@ const CompradorPage = () => {
       console.log('🔄 Agendando atualização da lista de boletos...');
       
       // Aguardar um pouco antes de buscar os boletos atualizados
-      setTimeout(async () => {
-        console.log('🔄 Buscando boletos atualizados...');
-        await fetchMeusBoletosComLoading();
-      }, 1000);
+      setActiveTab('meusBoletos');
       
       console.log('✅ Processo completo! Mostrando mensagem de sucesso...');
       
